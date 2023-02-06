@@ -1,4 +1,3 @@
-# pipic
 <p align="center">
 <img src="docs/pipic_logo.png" width="300">
 </p>
