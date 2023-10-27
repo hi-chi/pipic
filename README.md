@@ -54,7 +54,7 @@ For Linux / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
 
 To use $\pi$-PIC one needs three files:
 -	so-file of the $\pi$-PIC Python module ([download](https://github.com/hi-chi/pipic/releases/) or [compile](#code-compilation))   
--	`pipic_tools.py`: the file secribing the $\pi$-PIC interfaces
+-	[pipic_tools.py](src/pipic_tools.py): the file describing the $\pi$-PIC interfaces
 - your own Python script that describes your simulation setup (create or modify one of the [examples](examples))
 
 Place all of these files in your project folder. Import the $\pi$-PIC module and needed Python packages thus:
