@@ -16,7 +16,7 @@ Contact: arkady.gonoskov@physics.gu.se
 # Overview
 $\pi$-PIC provides all tools necessary for designing simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. To get started one can:
 - [Use a precompiled module](download?)
-- [Compile a module yourself](Code-compilation)
+- [Compile a module yourself](#code-compilation)
 
 The basic layout of use includes five elements: 
 - creating a container with cells with given parameters
@@ -53,7 +53,7 @@ For Linux / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
 # Example
 
 To use $\pi$-PIC one needs three files:
--	so-file of the $\pi$-PIC Python module ([download](download?) or [compile](Code-compilation))   
+-	so-file of the $\pi$-PIC Python module ([download](download?) or [compile](#code-compilation))   
 -	`pipic_tools.py`: the file secribing the $\pi$-PIC interfaces
 - your own Python script that describes your simulation setup (create or modify one of the [examples](examples))
 
@@ -81,7 +81,7 @@ Here we instruct the container to use first-order energy-conserving solver and a
 > [!NOTE]
 > Note that all physical quantities are in CGS units.
 
-To add particles one first defines the density as a function of coordinate ($x=$`r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electronCharge` and mass `electronMass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in [$`L/4, L/4`$]$ at temperature `Temperature` (two-thirds of the average kinetic energy). Assuming `XMax=-XMin=L/2` this corresponds to 100 particles per cell (ppc) on average.   
+To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electronCharge` and mass `electronMass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in $`[L/4, L/4`] at temperature `Temperature` (two-thirds of the average kinetic energy). Assuming `XMax=-XMin=L/2` this corresponds to 100 particles per cell (ppc) on average.   
 ```
 @cfunc(type_addParticles)
 def density_callback(r, dataDouble, dataInt):
