@@ -1,12 +1,11 @@
 #Basic setup for a laser pulse interation with a solid-density plasma layer 
-#for results see fig. 6 in arXiv:2302.01893
+#for results see Sec. 8 in arXiv:2302.01893
 import pipic
 from pipic_tools import *
 import matplotlib.pyplot as plt
+import numpy as np
 import matplotlib.colors as plt_col
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from math import *
-import numpy as np
 #===========================SIMULATION INITIALIZATION===========================
 wavelength = 1e-4
 nx, XMin, XMax = 128, -8*wavelength, 8*wavelength
@@ -20,9 +19,8 @@ def cos2shape(x, plateauSize, transitionSize):
     return (abs(x) < plateauSize/2 + transitionSize)* \
            (1 - (abs(x) > plateauSize/2)* \
            sin(0.5*pi*(abs(x) - plateauSize/2)/transitionSize)**2)
-
 #---------------------setting solver and simulation region----------------------
-sim = pipic.ec(nx=nx, ny=ny, XMin=XMin, XMax=XMax, YMin=YMin, YMax=YMax) 
+sim=pipic.init(solver='ec2',nx=nx,ny=ny,XMin=XMin,XMax=XMax,YMin=YMin,YMax=YMax) 
 #---------------------------setting field of the pulse--------------------------
 amplitude_a0 = 100
 omega = 2*pi*lightVelocity/wavelength
@@ -77,7 +75,7 @@ def field_callback(ind, r, E, B, dataDouble, dataInt):
 #-----------------------------seting plasma-------------------------------------
 N_cr = electronMass*omega**2/(4*pi*electronCharge**2)
 density = 100*N_cr
-DebyeLength = 0.1*wavelength/64.0
+DebyeLength = 0.08165*wavelength/64.0
 Temperature = 4*pi*density*(electronCharge**2)*DebyeLength**2
 particlesPerCell = 100
 @cfunc(type_addParticles)
@@ -140,7 +138,6 @@ def plot_Density():
     plot1.set_data(oN)
 #----------------------------1dfield output-------------------------------------
 oEp = numpy.zeros((2*nx,),dtype=numpy.double) #field P-component of the pulse
-oEs = numpy.zeros((2*nx,),dtype=numpy.double) #field S-component of the pulse
 EpSize = 8*wavelength # size of the output
 @cfunc(type_it2r)
 def E_it2r(it, r, dataDouble, dataInt):
@@ -158,25 +155,17 @@ axs[1].set_xlim([0, EpSize])
 axs[1].set_ylim([-maxField, maxField])
 axs[1].set(xlabel='$x$ (cm)', ylabel='$E_p$ (cgs units)')
 x_axis = np.linspace(0, EpSize, oEp.shape[0])
-sim.customFieldLoop(oEp.shape[0],E_it2r.address,get_Ep.address,addressOf(oEp))
-sim.customFieldLoop(oEp.shape[0],E_it2r.address,get_Ep.address,addressOf(oEs))
 plot_Ep, = axs[1].plot(x_axis, oEp)
-#plot_Es, = axs[1].plot(x_axis, oEs)
 with open('res_.npy', 'rb') as f: # reading data of RES computation
     res_X_0 = np.load(f)
     res_Ep = -np.load(f)
     res_Es = -np.load(f)
 res_X = res_X_0 + -arrivalDelay*lightVelocity
 plot_res_Ep, = axs[1].plot(res_X, res_Ep)
-#plot_res_Es, = axs[1].plot(res_X, res_Es)
-
 def plot_E(i):
     sim.customFieldLoop(numberOfIterations=oEp.shape[0], it2r=E_it2r.address, \
                         field2data=get_Ep.address, dataDouble=addressOf(oEp))
-    sim.customFieldLoop(numberOfIterations=oEs.shape[0], it2r=E_it2r.address, \
-                        field2data=get_Es.address, dataDouble=addressOf(oEs))
     plot_Ep.set_ydata(oEp)
-    #plot_Es.set_ydata(oEs)
     res_X = res_X_0 + ((-arrivalDelay + i*timeStep)*lightVelocity + \
             wavelength*cos(incidenceAngle)) # due to surface being at 0.5 \mu m
     plot_res_Ep.set_xdata(res_X)
@@ -184,11 +173,11 @@ def plot_E(i):
         with open('im21_Ep_' + str(nx) + '.npy', 'wb') as f:
             np.save(f, x_axis)
             np.save(f, oEp)
-            #np.save(f, Ez_out)
-    #plot_res_Es.set_xdata(res_X)
-
 #===============================SIMULATION======================================
-dataInt = numpy.zeros((1, ), dtype=int) # data for passing the iteration number
+outputFolder = 'laser_solid_interaction_output'
+if not os.path.exists(outputFolder):
+   os.makedirs(outputFolder)
+dataInt = numpy.zeros((1, ), dtype=numpy.intc) # data for passing the iteration number
 for i in range(figStride*21 + 1):
     print(i, '/', figStride*21 + 1)
     dataInt[0] = i
@@ -198,5 +187,5 @@ for i in range(figStride*21 + 1):
         plot_Field()
         plot_Density()
         plot_E(i)
-        fig.savefig('figs/im' + str(int(i/figStride)) + '.png', dpi=300)
+        fig.savefig(outputFolder+'/im'+str(int(i/figStride))+'.png',dpi=300)
     sim.advance(timeStep=timeStep)

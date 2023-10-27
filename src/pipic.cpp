@@ -56,59 +56,41 @@ void pipic_info()
     cout << "You should have received a copy of the GNU General Public License along with pi-PIC. If not, see"<< endl;
     cout << "<https://www.gnu.org/licenses/>." << endl;
     cout << "---------------------------------------------------------------------------------------------------------" << endl;
-    cout << "You are currently using version 0.1." << endl;
+    cout << "You are currently using version 1.0" << endl;
     cout << "Website: https://github.com/hi-chi/pipic" << endl;
     cout << "To notify about bugs and/or request functionality extensions contact arkady.gonoskov@gu.se." << endl;
     cout << "---------------------------------------------------------------------------------------------------------" << endl;
 }
  
 PYBIND11_MODULE(pipic, object) {
-    object.def("info", &pipic_info, "Info about piPIC");
+    object.def("info", &pipic_info, "Info about pi-PIC");
     object.attr("lightVelocity") = lightVelocity;
     object.attr("electronCharge") = electronCharge;
     object.attr("electronMass") = electronMass;
     object.attr("protonMass") = protonMass;
 
-    py::class_<pipic_boris>(object, "boris")
-        .def(py::init<int, double, double, int, double, double, int, double, double>(), 
-        py::arg("nx"), py::arg("XMin"), py::arg("XMax"), py::arg("ny")=1, py::arg("YMin")=-0.5, py::arg("YMax")=0.5, py::arg("nz")=1, py::arg("ZMin")=-0.5, py::arg("ZMax")=0.5)
-        .def_readonly("nx", &pipic_boris::nx)
-        .def_readonly("XMin", &pipic_boris::XMin)
-        .def_readonly("XMax", &pipic_boris::XMax)
-        .def_readonly("ny", &pipic_boris::ny)
-        .def_readonly("YMin", &pipic_boris::YMin)
-        .def_readonly("YMax", &pipic_boris::YMax)
-        .def_readonly("nz", &pipic_boris::nz)
-        .def_readonly("ZMin", &pipic_boris::ZMin)
-        .def_readonly("ZMax", &pipic_boris::ZMax)
-        .def("getNumberOfParticles", &pipic_boris::getNumberOfParticles)
-        .def("addParticles", &pipic_boris::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("particleLoop", &pipic_boris::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("fieldLoop", &pipic_boris::pyFieldLoop, py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0, py::arg("useOmp") = false)
-        .def("customFieldLoop", &pipic_boris::pyCustomFieldLoop, py::arg("numberOfIterations"), py::arg("it2r"), py::arg("field2data"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("advance", &pipic_boris::pyAdvance, py::arg("timeStep"), py::arg("numberOfIterations") = 1)
-        .def("setShufflingPolicy", &pipic_boris::pySetShufflingPolicy, py::arg("cellSuffleProbability") = 1, py::arg("doubleLoop") = true)
-    ;
-
-    py::class_<pipic_ec>(object, "ec")
-        .def(py::init<int, double, double, int, double, double, int, double, double>(), 
-        py::arg("nx"), py::arg("XMin"), py::arg("XMax"), py::arg("ny")=1, py::arg("YMin")=-0.5, py::arg("YMax")=0.5, py::arg("nz")=1, py::arg("ZMin")=-0.5, py::arg("ZMax")=0.5)
-        .def_readonly("nx", &pipic_ec::nx)
-        .def_readonly("XMin", &pipic_ec::XMin)
-        .def_readonly("XMax", &pipic_ec::XMax)
-        .def_readonly("ny", &pipic_ec::ny)
-        .def_readonly("YMin", &pipic_ec::YMin)
-        .def_readonly("YMax", &pipic_ec::YMax)
-        .def_readonly("nz", &pipic_ec::nz)
-        .def_readonly("ZMin", &pipic_ec::ZMin)
-        .def_readonly("ZMax", &pipic_ec::ZMax)
-        .def("getNumberOfParticles", &pipic_ec::getNumberOfParticles)
-        .def("addParticles", &pipic_ec::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("particleLoop", &pipic_ec::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("fieldLoop", &pipic_ec::pyFieldLoop, py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0, py::arg("useOmp") = false)
-        .def("customFieldLoop", &pipic_ec::pyCustomFieldLoop, py::arg("numberOfIterations"), py::arg("it2r"), py::arg("field2data"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("advance", &pipic_ec::pyAdvance, py::arg("timeStep"), py::arg("numberOfIterations") = 1)
-        .def("setShufflingPolicy", &pipic_boris::pySetShufflingPolicy, py::arg("cellSuffleProbability") = 1, py::arg("doubleLoop") = true)
-        .def("logPolicy", &pipic_ec::pyLogPolicy, py::arg("logToFile") = true, py::arg("logToScreen") = false)
+    py::class_<pipic>(object, "init")
+        .def(py::init<string, int, double, double, int, double, double, int, double, double>(), 
+        py::arg("solver"), py::arg("nx"), py::arg("XMin"), py::arg("XMax"), py::arg("ny")=1, py::arg("YMin")=-0.5, py::arg("YMax")=0.5, py::arg("nz")=1, py::arg("ZMin")=-0.5, py::arg("ZMax")=0.5)
+        .def_readonly("nx", &pipic::nx)
+        .def_readonly("XMin", &pipic::XMin)
+        .def_readonly("XMax", &pipic::XMax)
+        .def_readonly("ny", &pipic::ny)
+        .def_readonly("YMin", &pipic::YMin)
+        .def_readonly("YMax", &pipic::YMax)
+        .def_readonly("nz", &pipic::nz)
+        .def_readonly("ZMin", &pipic::ZMin)
+        .def_readonly("ZMax", &pipic::ZMax)
+        .def("getNumberOfParticles", &pipic::getNumberOfParticles)
+        .def("addParticles", &pipic::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("particleLoop", &pipic::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("fieldLoop", &pipic::pyFieldLoop, py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0, py::arg("useOmp") = false)
+        .def("customFieldLoop", &pipic::pyCustomFieldLoop, py::arg("numberOfIterations"), py::arg("it2r"), py::arg("field2data"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("advance", &pipic::pyAdvance, py::arg("timeStep"), py::arg("numberOfIterations") = 1)
+        .def("fourierSolverSettings", &pipic::pyFourierSolverSettings, py::arg("divergenceCleaning") = -1, py::arg("sin2_kFilter") = -1)
+        .def("logPolicy", &pipic::pyLogPolicy, py::arg("logToFile") = true, py::arg("logToScreen") = false)
+        .def("setRngGenSeed", &pipic::setRngGenSeed, py::arg("seed"))
+        .def("getTypeIndex", &pipic::getTypeIndex, py::arg("typeName"))
+        .def("addHandler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
     ;
 }
