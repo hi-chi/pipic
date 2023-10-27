@@ -15,7 +15,7 @@ Contact: arkady.gonoskov@physics.gu.se
 
 # Overview
 $\pi$-PIC provides all tools necessary for designing simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. To get started one can:
-- [Use a precompiled module](download?)
+- [Use a precompiled module](https://github.com/hi-chi/pipic/releases/)
 - [Compile a module yourself](#code-compilation)
 
 The basic layout of use includes five elements: 
@@ -53,7 +53,7 @@ For Linux / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
 # Example
 
 To use $\pi$-PIC one needs three files:
--	so-file of the $\pi$-PIC Python module ([download](download?) or [compile](#code-compilation))   
+-	so-file of the $\pi$-PIC Python module ([download](https://github.com/hi-chi/pipic/releases/) or [compile](#code-compilation))   
 -	`pipic_tools.py`: the file secribing the $\pi$-PIC interfaces
 - your own Python script that describes your simulation setup (create or modify one of the [examples](examples))
 
