@@ -2,7 +2,7 @@
 <img src="docs/pipic_logo.png" width="300">
 </p>
 
-$\pi$-PIC (pi-PIC, Python-controlled Interactive PIC) is an open-source collection of relativistic particle-in-cell solvers featuring
+$\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collection of relativistic particle-in-cell solvers featuring
 - exact energy conservation;
 - absence of numerical dispersion.
 
