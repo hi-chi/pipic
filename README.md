@@ -6,7 +6,7 @@ $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collectio
 - exact energy conservation;
 - absence of numerical dispersion.
 
-The solvers provide a way to eliminate or suppress numerical artefacts (instabilities, heating, Cherenkov radiation, etc.) permitting larger space and time steps, as well as lower number of particles per cell.
+The solvers provide a way to eliminate or suppress numerical artefacts (instabilities, heating, numerical Cherenkov radiation, etc.) permitting larger space and time steps, as well as lower number of particles per cell.
 Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For the description of underlying methods see https://arxiv.org/abs/2302.01893.
 
 ---
@@ -28,7 +28,7 @@ The basic layout of use includes five elements:
 Below we demonstrate the use of these elements in a simple [example](examples). A complete list of supported interfaces can be found [here](docs/interfaces.md). The development of extensions is detailed and exemplified [here](docs/making_extentions.md). 
 
 # Code compilation 
-For Linux / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
+For Linux / macOS / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
 - Install:
     - Python 3
     - [`gcc`](https://gcc.gnu.org/)
@@ -50,6 +50,7 @@ For Linux / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
     cmake .
     make
     ```
+- To use compilers other than default, set the `CC` and `CXX` environment variables prior to running `cmake`, or pass the compilers as arguments to `cmake` using the `-DCMAKE_C_COMPILER=` and `-DCMAKE_CXX_COMPILER=` flags.
 # Example
 
 To use $\pi$-PIC one needs three files:
