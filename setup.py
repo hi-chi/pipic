@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 pipic_cpp_module = Pybind11Extension(
-    'pipic',
+    '_pipic',
     sorted(glob('src/*.cpp')),
     language='c++')
 
@@ -64,7 +64,7 @@ class BuildExt(build_ext):
         opts = self.c_opts.get(ct, [])
         if sys.platform == 'darwin':
             if has_flag(self.compiler, '-stdlib=libc++'):
-                opts.append('-stdlib=libc++')
+                pass# opts.append('-stdlib=libc++')
         if ct == 'unix':
             opts.append("-DVERSION_INFO='{}'"
                         .format(self.distribution.get_version()))
@@ -77,6 +77,8 @@ class BuildExt(build_ext):
         opts.append('-O3')
         opts.append('-shared')
         opts.append('-fPIC')
+        opts.append('-fopenmp')
+        opts.append('-lfftw3')
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = opts
@@ -122,14 +124,15 @@ classifiers = [
 if __name__ == '__main__':
 
     setup(
-        name='pipicc',
+        name='pipic',
         version=version,
         author='pipic developer group',
         description=description,
         long_description=long_description,
         ext_modules=[pipic_cpp_module],
         install_requires=['matplotlib',
-                          'numpy'],
+                          'numpy',
+                          'numba'],
         packages=find_packages(),
         python_requires='>=3.8',
         cmdclass={'build_ext': BuildExt},
