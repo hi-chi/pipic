@@ -19,7 +19,7 @@ Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 // Description: Here we define necessary cfunc decorators, as well as interfaces for code extension.
 '''
-import pipic
+import _pipic as pipic
 import ctypes
 from numba import cfunc, types, carray, double, int32
 import numpy, os, time
