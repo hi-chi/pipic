@@ -103,6 +103,7 @@ with open('pipic/__init__.py', encoding='utf-8') as fd:
 
 version = re.search("__version__ = '(.*)'", lines).group(1)
 maintainer = re.search("__maintainer__ = '(.*)'", lines).group(1)
+maintainer_email = re.search("__maintainer_email__ = '(.*)'", lines).group(1)
 description = re.search("__description__ = '(.*)'", lines).group(1)
 url = re.search("__url__ = '(.*)'", lines).group(1)
 license = re.search("__license__ = '(.*)'", lines).group(1)
@@ -126,7 +127,8 @@ if __name__ == '__main__':
     setup(
         name='pipic',
         version=version,
-        author='pipic developer group',
+        maintainer=maintainer,
+        maintainer_email=maintainer_email,
         description=description,
         long_description=long_description,
         ext_modules=[pipic_cpp_module],
