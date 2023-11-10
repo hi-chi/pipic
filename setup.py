@@ -75,7 +75,7 @@ class BuildExt(build_ext):
             opts.append("/DVERSION_INFO=\\'{}\\'"
                         .format(self.distribution.get_version()))
         opts.append('-O3')
-        opts.append('-shared')
+        #opts.append('-shared')
         opts.append('-fPIC')
         opts.append('-fopenmp')
         opts.append('-lfftw3')
