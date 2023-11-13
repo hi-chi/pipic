@@ -1,5 +1,5 @@
-from pipic.pipic_tools import *
-import _pipic as pipic
+import pipic
+from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
 

@@ -1,6 +1,6 @@
 #Demonstration of energy conservation (figs. 5 and 6 in arXiv:2302.01893)
 import pipic
-from pipic_tools import *
+from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
 #===========================SIMULATION INITIALIZATION===========================

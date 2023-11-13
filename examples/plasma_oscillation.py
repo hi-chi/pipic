@@ -1,6 +1,6 @@
 # This is the file used for producing fig. 2 in arXiv:2302.01893.
 import pipic
-from pipic_tools import *
+from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
 #===========================SIMULATION INITIALIZATION===========================

@@ -2,6 +2,7 @@
 """
 Main module of the pipic package.
 """
+from _pipic import *
 
 __project__ = 'pipic'
 __description__ = 'A Python library for particle-in-cell plasma simulation.'

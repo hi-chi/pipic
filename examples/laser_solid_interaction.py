@@ -1,7 +1,7 @@
 #Basic setup for a laser pulse interation with a solid-density plasma layer 
 #for results see Sec. 8 in arXiv:2302.01893
 import pipic
-from pipic_tools import *
+from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors as plt_col
