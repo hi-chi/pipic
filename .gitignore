@@ -114,6 +114,9 @@ ENV/
 *.ipr
 .idea/
 
+# VScode project settings
+.vscode/
+
 # mkdocs documentation
 /site
 
