@@ -1,4 +1,4 @@
-'''
+"""
 -------------------------------------------------------------------------------------------------------
 This file is part of pi-PIC.
 pi-PIC, Copyright 2023 Arkady Gonoskov
@@ -18,7 +18,7 @@ Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 // Description: Here we define necessary cfunc decorators, as well as interfaces for code extension.
-'''
+"""
 import _pipic as pipic
 import ctypes
 from numba import cfunc, types, carray, double, int32
@@ -26,12 +26,12 @@ import numpy, os, time
 from numba.experimental import jitclass
 from math import *
 
-def addressOf(data):
+def address_of(data):
     if data.dtype == numpy.double:
         return ctypes.addressof(data.ctypes.data_as(ctypes.POINTER(ctypes.c_double)).contents)
     if data.dtype == numpy.intc:
         return ctypes.addressof(data.ctypes.data_as(ctypes.POINTER(ctypes.c_int)).contents)
-        
+
 type_addParticles = types.double(types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.int32))
 type_particleLoop = types.void(types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.uint64), types.CPointer(types.double), types.CPointer(types.int32))
 type_fieldLoop = types.void(types.CPointer(types.int32), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.int32))
@@ -39,19 +39,19 @@ type_it2r = types.void(types.CPointer(types.int32), types.CPointer(types.double)
 type_field2data = types.void(types.CPointer(types.int32), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.int32))
 type_handler = types.void(types.CPointer(types.int32), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.double), types.CPointer(types.int32))
 
-electronCharge = pipic.electronCharge
-electronMass = pipic.electronMass
-lightVelocity = pipic.lightVelocity
+electron_charge = pipic.electron_charge
+electron_mass = pipic.electron_mass
+light_velocity = pipic.light_velocity
 
 @jitclass([('x', int32), ('y', int32), ('z', int32),])
-class int3:
+class Int3:
     def __init__(self, x = 0, y = 0, z = 0):
         self.x = x
         self.y = y
         self.z = z
 
 @jitclass([('x', double), ('y', double), ('z', double),])
-class double3:
+class Double3:
     def __init__(self, x = 0, y = 0, z = 0):
         self.x = x
         self.y = y
@@ -68,16 +68,16 @@ class double3:
     def norm2(self) -> float:
         return self.x*self.x + self.y*self.y + self.z*self.z
     def __add__(self, other):
-        return double3(self.x + other.x, self.y + other.y, self.z + other.z)
+        return Double3(self.x + other.x, self.y + other.y, self.z + other.z)
     def __sub__(self, other):
-        return double3(self.x - other.x, self.y - other.y, self.z - other.z)
+        return Double3(self.x - other.x, self.y - other.y, self.z - other.z)
     def __iadd__(self, other):
         self.x += other.x
         self.y += other.y
         self.z += other.z
         return self
     def __mul__(self, other):
-        return double3(self.x * other, self.y * other, self.z * other)
+        return Double3(self.x * other, self.y * other, self.z * other)
     def __imul__(self, other):
         self.x *= other
         self.y *= other
@@ -85,7 +85,7 @@ class double3:
         return self
     
     def cross(self, b):
-        return double3(self.y*b.z-self.z*b.y, self.z*b.x-self.x*b.z, self.x*b.y-self.y*b.x)
+        return Double3(self.y * b.z - self.z * b.y, self.z * b.x - self.x * b.z, self.x * b.y - self.y * b.x)
     
     def dot(self, b) -> float:
         return self.x*b.x + self.y*b.y + self.z*b.z
@@ -104,7 +104,7 @@ struct_cellInterface = [
 double_uint64_1 = 4.9406564584124654417657e-324 # double with binary code of uint64(1), workaround for particle type setting
 
 @jitclass(struct_cellInterface)
-class cellInterface:
+class CellInterface:
     def __init__(self, I, D, F, P, NP):
         self.I = I
         self.D = D
@@ -134,10 +134,10 @@ class cellInterface:
     def dim(self): # dimensionality of the simulation at hand
         return self.I[6]
     @property
-    def aNum(self): # number of additional attributes of particles
+    def a_num(self): # number of additional attributes of particles
         return self.I[7]
     @property
-    def PType(self): # type index of the particles being processed, can be fetched via getTypeIndex(typeName)
+    def p_type(self): # type index of the particles being processed, can be fetched via getTypeIndex(typeName)
         return self.I[8]
     @property
     def PSize(self): # size of the subset of particles to be processed
@@ -149,62 +149,62 @@ class cellInterface:
     def NPSize(self):
         return self.I[11] # number of current thread
     @property
-    def gridType(self):
+    def grid_type(self):
         return self.I[12] # number of current thread
     @property
-    def threadNum(self):
+    def thread_num(self):
         return self.I[13] # number of current thread
     @property
-    def gloablMinX(self): # x-minimum of the entire simulation region
+    def global_min_x(self): # x-minimum of the entire simulation region
         return self.D[0]
     @property
-    def gloablMinY(self): # y-minimum of the entire simulation region
+    def global_min_y(self): # y-minimum of the entire simulation region
         return self.D[1]
     @property
-    def gloablMinZ(self): # z-minimum of the entire simulation region
+    def global_min_z(self): # z-minimum of the entire simulation region
         return self.D[2]
     @property
-    def gloablMaxX(self): # x-maximum of the entire simulation region
+    def global_max_x(self): # x-maximum of the entire simulation region
         return self.D[3]
     @property
-    def gloablMaxY(self): # y-maximum of the entire simulation region
+    def global_max_y(self): # y-maximum of the entire simulation region
         return self.D[4]
     @property
-    def gloablMaxZ(self): # z-maximum of the entire simulation region
+    def global_max_z(self): # z-maximum of the entire simulation region
         return self.D[5]
     @property
-    def stepX(self): # x-step of the grid
+    def step_x(self): # x-step of the grid
         return self.D[6]
     @property
-    def stepY(self): # y-step of the grid
+    def step_y(self): # y-step of the grid
         return self.D[7]
     @property
-    def stepZ(self): # z-step of the grid
+    def step_z(self): # z-step of the grid
         return self.D[8]
     @property
-    def invStepX(self): # inverse step along x
+    def inv_step_x(self): # inverse step along x
         return self.D[9]
     @property
-    def invStepY(self): # inverse step along y
+    def inv_step_y(self): # inverse step along y
         return self.D[10]
     @property
-    def invStepZ(self): # inverse step along z
+    def inv_step_z(self): # inverse step along z
         return self.D[11]
     @property
-    def timeStep(self): # time step
+    def time_step(self): # time step
         return self.D[12] 
     @property
-    def PCharge(self): # charge of particles being processed
+    def p_charge(self): # charge of particles being processed
         return self.D[13] 
     @property
-    def PMass(self): # charge of particles being processed
+    def p_mass(self): # charge of particles being processed
         return self.D[14] 
     @property
-    def cellMin(self): # minimum of the cell being processed
-        return double3(self.D[0] + self.I[0]*self.D[6], self.D[1] + self.I[1]*self.D[7], self.D[2] + self.I[2]*self.D[8])
+    def cell_min(self): # minimum of the cell being processed
+        return Double3(self.D[0] + self.I[0] * self.D[6], self.D[1] + self.I[1] * self.D[7], self.D[2] + self.I[2] * self.D[8])
     @property
-    def cellMax(self): # minimum of the cell being processed
-        return double3(self.D[0] + (self.I[0]+1)*self.D[6], self.D[1] + (self.I[1]+1)*self.D[7], self.D[2] + (self.I[2]+1)*self.D[8])
+    def cell_max(self): # minimum of the cell being processed
+        return Double3(self.D[0] + (self.I[0] + 1) * self.D[6], self.D[1] + (self.I[1] + 1) * self.D[7], self.D[2] + (self.I[2] + 1) * self.D[8])
     
     def get_r(self, ip, r): 
         size = 8 + self.I[7]
@@ -244,7 +244,7 @@ class cellInterface:
         size = 8 + self.I[7]
         self.P[ip*size + 7 + ia] = a
     
-    def addParticle(self, r, p, w, typeIndex): # additional attributes (if any) myst be set by NP_set_a()
+    def add_particle(self, r, p, w, typeIndex): # additional attributes (if any) myst be set by NP_set_a()
         if self.I[11] < self.I[10]:
             self.I[11] += 1
             ip = self.I[11]
@@ -265,7 +265,7 @@ class cellInterface:
         size = 8 + self.I[7]
         self.NP[ip*size + 7 + ia] = a
 
-    def interpolateField(self, r, E, B):
+    def interpolate_field(self, r, E, B):
         if self.I[12] == 0:
             if self.c_init == 0:
                 self.c_ = numpy.zeros(8, dtype=numpy.double)

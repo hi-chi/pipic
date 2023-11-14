@@ -64,33 +64,33 @@ void pipic_info()
  
 PYBIND11_MODULE(_pipic, object) {
     object.def("info", &pipic_info, "Info about pi-PIC");
-    object.attr("lightVelocity") = lightVelocity;
-    object.attr("electronCharge") = electronCharge;
-    object.attr("electronMass") = electronMass;
-    object.attr("protonMass") = protonMass;
+    object.attr("light_velocity") = lightVelocity;
+    object.attr("electron_charge") = electronCharge;
+    object.attr("electron_mass") = electronMass;
+    object.attr("proton_mass") = protonMass;
 
     py::class_<pipic>(object, "init")
         .def(py::init<string, int, double, double, int, double, double, int, double, double>(), 
-        py::arg("solver"), py::arg("nx"), py::arg("XMin"), py::arg("XMax"), py::arg("ny")=1, py::arg("YMin")=-0.5, py::arg("YMax")=0.5, py::arg("nz")=1, py::arg("ZMin")=-0.5, py::arg("ZMax")=0.5)
+        py::arg("solver"), py::arg("nx"), py::arg("xmin"), py::arg("xmax"), py::arg("ny")=1, py::arg("ymin")=-0.5, py::arg("ymax")=0.5, py::arg("nz")=1, py::arg("zmin")=-0.5, py::arg("zmax")=0.5)
         .def_readonly("nx", &pipic::nx)
-        .def_readonly("XMin", &pipic::XMin)
-        .def_readonly("XMax", &pipic::XMax)
+        .def_readonly("xmin", &pipic::XMin)
+        .def_readonly("xmax", &pipic::XMax)
         .def_readonly("ny", &pipic::ny)
-        .def_readonly("YMin", &pipic::YMin)
-        .def_readonly("YMax", &pipic::YMax)
+        .def_readonly("ymax", &pipic::YMin)
+        .def_readonly("ymin", &pipic::YMax)
         .def_readonly("nz", &pipic::nz)
-        .def_readonly("ZMin", &pipic::ZMin)
-        .def_readonly("ZMax", &pipic::ZMax)
-        .def("getNumberOfParticles", &pipic::getNumberOfParticles)
-        .def("addParticles", &pipic::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("particleLoop", &pipic::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("fieldLoop", &pipic::pyFieldLoop, py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0, py::arg("useOmp") = false)
-        .def("customFieldLoop", &pipic::pyCustomFieldLoop, py::arg("numberOfIterations"), py::arg("it2r"), py::arg("field2data"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
-        .def("advance", &pipic::pyAdvance, py::arg("timeStep"), py::arg("numberOfIterations") = 1)
-        .def("fourierSolverSettings", &pipic::pyFourierSolverSettings, py::arg("divergenceCleaning") = -1, py::arg("sin2_kFilter") = -1)
-        .def("logPolicy", &pipic::pyLogPolicy, py::arg("logToFile") = true, py::arg("logToScreen") = false)
-        .def("setRngGenSeed", &pipic::setRngGenSeed, py::arg("seed"))
-        .def("getTypeIndex", &pipic::getTypeIndex, py::arg("typeName"))
-        .def("addHandler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def_readonly("zmin", &pipic::ZMin)
+        .def_readonly("zmax", &pipic::ZMax)
+        .def("get_number_of_particles", &pipic::getNumberOfParticles)
+        .def("add_particles", &pipic::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("particle_loop", &pipic::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("field_loop", &pipic::pyFieldLoop, py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0, py::arg("use_omp") = false)
+        .def("custom_field_loop", &pipic::pyCustomFieldLoop, py::arg("number_of_iterations"), py::arg("it2r"), py::arg("field2data"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
+        .def("advance", &pipic::pyAdvance, py::arg("time_step"), py::arg("number_of_iterations") = 1)
+        .def("fourier_solver_settings", &pipic::pyFourierSolverSettings, py::arg("divergence_cleaning") = -1, py::arg("sin2_kfilter") = -1)
+        .def("log_policy", &pipic::pyLogPolicy, py::arg("log_to_file") = true, py::arg("log_to_screen") = false)
+        .def("set_rng_gen_seed", &pipic::setRngGenSeed, py::arg("seed"))
+        .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
+        .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("dataDouble") = 0, py::arg("dataInt") = 0)
     ;
 }
