@@ -137,6 +137,7 @@ if __name__ == '__main__':
         install_requires=['matplotlib',
                           'numpy',
                           'numba'],
+        package_data = {"pipic": ["__init__.pyi"]},
         packages=find_packages(),
         python_requires='>=3.8',
         cmdclass={'build_ext': BuildExt},
