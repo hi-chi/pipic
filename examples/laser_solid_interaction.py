@@ -1,8 +1,6 @@
 #Basic setup for a laser pulse interation with a solid-density plasma layer 
 #for results see Sec. 8 in arXiv:2302.01893
 import pipic
-from pipic import types
-from pipic.consts import *
 from pipic.tools import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as plt_col
@@ -45,7 +43,7 @@ def pulse(eta, phi):
     return (abs(eta-2*np.pi)< 2*np.pi)* \
            np.sin(eta/4)**3*(np.cos(eta/4)*np.sin(eta+phi)+np.sin(eta/4)*np.cos(eta+phi))
 
-@cfunc(types.field_loop)
+@cfunc(field_loop)
 def field_callback(ind, r, E, B, data_double, data_int):
     if data_int[0] == 0 or ymax - r[1] < boundarySize:
         # computing longitudinal and transverse coordinates:
@@ -88,7 +86,7 @@ debye_length = 0.08165*wavelength/64.0
 temperature = 4 * np.pi * density * (electron_charge ** 2) * debye_length ** 2
 particlesPerCell = 100
 
-@cfunc(types.add_particles)
+@cfunc(add_particles)
 def density_callback(r, data_double, data_int):# callback function 
     return density*cos2shape(r[1] + wavelength, wavelength, wavelength) 
 sim.add_particles(name='electron', number=int(nx*ny*0.25*particlesPerCell),
@@ -119,7 +117,7 @@ fig.add_axes(cax)
 bar0 = fig.colorbar(plot0, cax=cax, orientation="vertical")
 bar0.set_label(label='$B_z$ (CGS)')
 
-@cfunc(types.field_loop)
+@cfunc(field_loop)
 def fieldBz_cb(ind, r, E, B, data_double, data_int):
     Bz = carray(data_double, oBz.shape, dtype=np.double)
     Bz[ind[1], ind[0]] = B[2]
@@ -131,7 +129,7 @@ def plot_field():
 #----------------------------density output-------------------------------------
 oN = np.zeros((ny, nx), dtype=np.double)
 
-@cfunc(types.particle_loop)
+@cfunc(particle_loop)
 def density_cb(r, p, w, id, data_double, data_int):   
     ix = int(oN.shape[1]*(r[0] - xmin)/(xmax - xmin))
     iy = int(oN.shape[0]*(r[1] - ymin)/(ymax - ymin))
@@ -160,18 +158,18 @@ def plot_density():
 oEp = np.zeros((2*nx,),dtype=np.double) #field P-component of the pulse
 EpSize = 8*wavelength # size of the output
 
-@cfunc(types.it2r)
+@cfunc(it2r)
 def E_it2r(it, r, data_double, data_int):
     lCoord = (it[0] + 0.5)*EpSize/oEp.shape[0]
     r[0] = lCoord*np.sin(incidenceAngle)
     r[1] = lCoord*np.cos(incidenceAngle)
     r[2] = 0
 
-@cfunc(types.field2data)
+@cfunc(field2data)
 def get_Ep(it, r, E, B, data_double, data_int):
     data_double[it[0]] = -E[0]*np.cos(incidenceAngle) + E[1]*np.sin(incidenceAngle)
 
-@cfunc(types.field2data)
+@cfunc(field2data)
 def get_Es(it, r, E, B, data_double, data_int):
     data_double[it[0]] = E[2]
 

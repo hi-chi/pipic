@@ -1,6 +1,4 @@
 import pipic
-from pipic import types
-from pipic.consts import *
 from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +21,7 @@ time_step = plasma_period/64
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(types.add_particles)
+@cfunc(add_particles)
 def density_callback(r, data_double, data_int):
     return density * (abs(r[0]) < l/4)
 
@@ -32,7 +30,7 @@ sim.add_particles(name='electron', number=500*nx,
                   temperature=temperature, density=density_callback.address)
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(types.field_loop)
+@cfunc(field_loop)
 def setField_callback(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4*np.pi * r[0] / (xmax-xmin)) * (abs(r[0]) < l/4)
 
@@ -47,7 +45,7 @@ xpx_dist = np.zeros((64, 128), dtype=np.double)
 pxLim = 5 * np.sqrt(temperature * electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1] / (xmax-xmin)) * (xpx_dist.shape[0] / (2 * pxLim))
 
-@cfunc(types.particle_loop)
+@cfunc(particle_loop)
 def xpx_callback(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1] * (r[0] - xmin) / (xmax-xmin))
     iy = int(xpx_dist.shape[0] * 0.5 * (1 + p[0] / pxLim))
@@ -72,11 +70,11 @@ def plot_xpx():
 # -------------------------preparing output of Ex(x)-----------------------------
 Ex = np.zeros((32,), dtype=np.double)
 
-@cfunc(types.it2r)
+@cfunc(it2r)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax-xmin) / Ex.shape[0]
 
-@cfunc(types.field2data)
+@cfunc(field2data)
 def get_Ex(it, r, E, B, data_double, data_int):
     data_double[it[0]] = E[0]
 

@@ -3,10 +3,10 @@
 Main module of the pipic package.
 """
 from _pipic import *
-from .tools import *
-from .types import *
-from .consts import *
-from .interfaces import *
+import pipic.types as types
+import pipic.consts as consts
+import pipic.ctypes as ctypes
+import pipic.interfaces as interfaces
 
 __project__ = 'pipic'
 __description__ = 'A Python library for particle-in-cell plasma simulation.'

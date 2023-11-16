@@ -5,6 +5,7 @@ from numba.experimental import jitclass
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
 __all__ = ['CellInterface']
 
+
 _struct_cellInterface = [
     ('I', types.CPointer(types.int32)),
     ('D', types.CPointer(types.double)),
