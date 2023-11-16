@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from .handlers import add_particles, particle_loop, field_loop, it2r, field2data, handler
+from .callbacks import (add_particles_callback,
+                        particle_loop_callback,
+                        field_loop_callback,
+                        it2r_callback,
+                        field2data_callback,
+                        handler_callback)
 from .int3 import Int3
 from .double3 import Double3
 
-__all__ = ['add_particles',
-           'particle_loop',
-           'field_loop',
-           'it2r',
-           'field2data',
-           'handler',
+__all__ = ['add_particles_callback',
+           'particle_loop_callback',
+           'field_loop_callback',
+           'it2r_callback',
+           'field2data_callback',
+           'handler_callback',
            'Int3',
            'Double3']
 
