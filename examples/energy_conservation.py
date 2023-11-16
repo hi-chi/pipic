@@ -74,7 +74,7 @@ fig.colorbar(plot0, ax=axs[0], location='right')
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(name='electron', handler=xpx_callback.address,
-                     data_double=address_of(xpx_dist))
+                      data_double=addressof(xpx_dist))
     plot0.set_data(xpx_dist)
 
 #--------------------preparing output of kinetic energy-------------------------
@@ -89,7 +89,7 @@ def kineticEn_cb(r, p, w, id, data_double, data_int):
 def getKineticEn(sim):
     kineticEnergy[0] = 0
     sim.particle_loop(name='electron', handler=kineticEn_cb.address,
-                     data_double=address_of(kineticEnergy))
+                      data_double=addressof(kineticEnergy))
     return kineticEnergy[0]
 
 #--------------------preparing output of field energy-------------------------
@@ -103,7 +103,7 @@ def fieldEn_cb(ind, r, E, B, data_double, data_int):
 
 def getFieldEnergy(sim):
     fieldEnergy[0] = 0
-    sim.field_loop(handler=fieldEn_cb.address, data_double=address_of(fieldEnergy))
+    sim.field_loop(handler=fieldEn_cb.address, data_double=addressof(fieldEnergy))
     return fieldEnergy[0]
 
 

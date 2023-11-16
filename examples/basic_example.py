@@ -64,7 +64,7 @@ fig.colorbar(plot0, ax=axs[0], location='right')
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(name='electron', handler=xpx_callback.address,
-                      data_double=address_of(xpx_dist))
+                      data_double=addressof(xpx_dist))
     plot0.set_data(xpx_dist)
 
 # -------------------------preparing output of Ex(x)-----------------------------
@@ -86,7 +86,7 @@ plot_Ex_, = axs[1].plot(x_axis, Ex)
 
 def plot_Ex():
     sim.custom_field_loop(number_of_iterations=Ex.shape[0], it2r=Ex_it2r.address,
-                          field2data=get_Ex.address, data_double=address_of(Ex))
+                          field2data=get_Ex.address, data_double=addressof(Ex))
     plot_Ex_.set_ydata(Ex)
 
 

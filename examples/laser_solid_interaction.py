@@ -123,7 +123,7 @@ def fieldBz_cb(ind, r, E, B, data_double, data_int):
     Bz[ind[1], ind[0]] = B[2]
 
 def plot_field():
-    sim.field_loop(handler=fieldBz_cb.address, data_double=address_of(oBz))
+    sim.field_loop(handler=fieldBz_cb.address, data_double=addressof(oBz))
     plot0.set_data(oBz)
 
 #----------------------------density output-------------------------------------
@@ -151,7 +151,7 @@ bar1.set_label(label='$N/N_0$')
 def plot_density():
     oN.fill(0)
     sim.particle_loop(name='electron', handler=density_cb.address,
-                     data_double=address_of(oN))
+                      data_double=addressof(oN))
     plot1.set_data(oN)
 
 #----------------------------1dfield output-------------------------------------
@@ -189,7 +189,7 @@ plot_res_Ep, = axs[1].plot(res_X, res_Ep)
 
 def plot_E(i):
     sim.custom_field_loop(number_of_iterations=oEp.shape[0], it2r=E_it2r.address,
-                        field2data=get_Ep.address, data_double=address_of(oEp))
+                          field2data=get_Ep.address, data_double=addressof(oEp))
     plot_Ep.set_ydata(oEp)
     res_X = res_X_0 + ((-arrivalDelay + i*time_step) * light_velocity +
                        wavelength * np.cos(incidenceAngle)) # due to surface being at 0.5 \mu m
@@ -208,8 +208,8 @@ data_int = np.zeros((1, ), dtype=np.intc) # data for passing the iteration numbe
 for i in range(figStride*21 + 1):
     print(i, '/', figStride*21 + 1)
     data_int[0] = i
-    sim.field_loop(handler=field_callback.address, data_int=address_of(data_int),
-                  use_omp=True)
+    sim.field_loop(handler=field_callback.address, data_int=addressof(data_int),
+                   use_omp=True)
     if i%figStride == 0:
         plot_field()
         plot_density()

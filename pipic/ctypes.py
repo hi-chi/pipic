@@ -23,9 +23,9 @@ import ctypes
 import numpy as np
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
-__all__ = ['address_of']
+__all__ = ['addressof']
 
-def address_of(data):
+def addressof(data):
     if data.dtype == np.double:
         return ctypes.addressof(data.ctypes.data_as(ctypes.POINTER(ctypes.c_double)).contents)
     if data.dtype == np.intc:
