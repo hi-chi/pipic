@@ -58,55 +58,55 @@ class CellInterface:
         return self.I[6]
 
     @property
-    def a_num(self):  # number of additional attributes of particles
+    def number_of_attributes(self):  # number of additional attributes of particles
         return self.I[7]
 
     @property
-    def p_type(self):  # type index of the particles being processed, can be fetched via getTypeIndex(typeName)
+    def particle_type_index(self):  # type index of the particles being processed, can be fetched via getTypeIndex(typeName)
         return self.I[8]
 
     @property
-    def PSize(self):  # size of the subset of particles to be processed
+    def particle_subset_size(self):  # size of the subset of particles to be processed
         return self.I[9]
 
     @property
-    def NPcapacity(self):
+    def particle_buffer_capacity(self):
         return self.I[10]  # capacity of the buffer for new particles, cannot be exceeded
 
     @property
-    def NPSize(self):
-        return self.I[11]  # number of current thread
+    def particle_buffer_size(self):
+        return self.I[11]  #
 
     @property
     def grid_type(self):
-        return self.I[12]  # number of current thread
+        return self.I[12]  #
 
     @property
     def thread_num(self):
         return self.I[13]  # number of current thread
 
     @property
-    def global_min_x(self):  # x-minimum of the entire simulation region
+    def global_xmin(self):  # x-minimum of the entire simulation region
         return self.D[0]
 
     @property
-    def global_min_y(self):  # y-minimum of the entire simulation region
+    def global_ymin(self):  # y-minimum of the entire simulation region
         return self.D[1]
 
     @property
-    def global_min_z(self):  # z-minimum of the entire simulation region
+    def global_zmin(self):  # z-minimum of the entire simulation region
         return self.D[2]
 
     @property
-    def global_max_x(self):  # x-maximum of the entire simulation region
+    def global_xmax(self):  # x-maximum of the entire simulation region
         return self.D[3]
 
     @property
-    def global_max_y(self):  # y-maximum of the entire simulation region
+    def global_ymax(self):  # y-maximum of the entire simulation region
         return self.D[4]
 
     @property
-    def global_max_z(self):  # z-maximum of the entire simulation region
+    def global_zmax(self):  # z-maximum of the entire simulation region
         return self.D[5]
 
     @property
@@ -138,11 +138,11 @@ class CellInterface:
         return self.D[12]
 
     @property
-    def p_charge(self):  # charge of particles being processed
+    def particle_charge(self):  # charge of particles being processed
         return self.D[13]
 
     @property
-    def p_mass(self):  # charge of particles being processed
+    def particle_mass(self):  # charge of particles being processed
         return self.D[14]
 
     @property
@@ -155,45 +155,49 @@ class CellInterface:
         return Double3(self.D[0] + (self.I[0] + 1) * self.D[6], self.D[1] + (self.I[1] + 1) * self.D[7],
                        self.D[2] + (self.I[2] + 1) * self.D[8])
 
-    def get_r(self, ip, r):
+    def get_r(self, idx, r):
+        """r is 3d position coordinate."""
         size = 8 + self.I[7]
-        r.x = self.P[ip * size + 0]
-        r.y = self.P[ip * size + 1]
-        r.z = self.P[ip * size + 2]
+        r.x = self.P[idx * size + 0]
+        r.y = self.P[idx * size + 1]
+        r.z = self.P[idx * size + 2]
 
-    def get_p(self, ip, p):
+    def get_p(self, idx, p):
+        """p is 3d momentum coordinate."""
         size = 8 + self.I[7]
-        p.x = self.P[ip * size + 3]
-        p.y = self.P[ip * size + 4]
-        p.z = self.P[ip * size + 5]
+        p.x = self.P[idx * size + 3]
+        p.y = self.P[idx * size + 4]
+        p.z = self.P[idx * size + 5]
 
-    def get_w(self, ip, w):
+    def get_w(self, idx, w):
+        """w is particle weight."""
         size = 8 + self.I[7]
-        w = self.P[ip * size + 6]
+        w = self.P[idx * size + 6]
 
-    def get_id_d(self, ip, id_d):
+    def get_id_d(self, idx, id_d):  # id given as a 'double'
         size = 8 + self.I[7]
-        id_d = self.P[ip * size + 7]
+        id_d = self.P[idx * size + 7]
 
-    def get_a(self, ip, ia, a):
+    def get_a(self, idx, attribute_idx, a):
+        """a is particle attribute."""
         size = 8 + self.I[7]
-        a = self.P[ip * size + 7 + ia]
+        a = self.P[idx * size + 7 + attribute_idx]
 
-    def set_p(self, ip, p):
+    def set_p(self, idx, p):
         size = 8 + self.I[7]
-        self.P[ip * size + 3] = p.x
-        self.P[ip * size + 4] = p.y
-        self.P[ip * size + 5] = p.z
+        self.P[idx * size + 3] = p.x
+        self.P[idx * size + 4] = p.y
+        self.P[idx * size + 5] = p.z
 
-    def set_w(self, ip, w):
+    def set_w(self, idx, w):
         size = 8 + self.I[7]
-        self.P[ip * size + 6] = w
+        self.P[idx * size + 6] = w
 
-    def set_a(self, ip, ia, a):
+    def set_a(self, idx, attribute_idx, a):
         size = 8 + self.I[7]
-        self.P[ip * size + 7 + ia] = a
+        self.P[idx * size + 7 + attribute_idx] = a
 
-    def add_particle(self, r, p, w, typeIndex):  # additional attributes (if any) myst be set by NP_set_a()
+    def add_particle(self, r, p, w, type_index):  # additional attributes (if any) myst be set by particle_buffer_set_a()
         if self.I[11] < self.I[10]:
             self.I[11] += 1
             ip = self.I[11]
@@ -205,14 +209,14 @@ class CellInterface:
             self.NP[ip * size + 4] = p.y
             self.NP[ip * size + 5] = p.z
             self.NP[ip * size + 6] = w
-            self.NP[ip * size + 7] = typeIndex * _double_uint64_1
+            self.NP[ip * size + 7] = type_index * _double_uint64_1
             return True
         else:
             return False  # indicates that the buffer is overloaded (it will be extended on the next call of handler)
 
-    def NP_set_a(self, ip, ia, a):
+    def particle_buffer_set_a(self, idx, attribute_idx, a):
         size = 8 + self.I[7]
-        self.NP[ip * size + 7 + ia] = a
+        self.NP[idx * size + 7 + attribute_idx] = a
 
     def interpolate_field(self, r, E, B):
         if self.I[12] == 0:
