@@ -89,7 +89,7 @@ PYBIND11_MODULE(_pipic, object) {
         .def("advance", &pipic::pyAdvance, py::arg("time_step"), py::arg("number_of_iterations") = 1)
         .def("fourier_solver_settings", &pipic::pyFourierSolverSettings, py::arg("divergence_cleaning") = -1, py::arg("sin2_kfilter") = -1)
         .def("log_policy", &pipic::pyLogPolicy, py::arg("log_to_file") = true, py::arg("log_to_screen") = false)
-        .def("set_rng_gen_seed", &pipic::setRngGenSeed, py::arg("seed"))
+        .def("set_rng_seed", &pipic::setRngGenSeed, py::arg("seed"))
         .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
         .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0)
     ;
