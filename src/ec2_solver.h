@@ -36,7 +36,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         field = new fourierSolver(box, FFTW_PATIENT);
         Field = field;
         Ensemble = new ensemble(Field->box);
-        Ensemble->shuffle = true;
+        Ensemble->shuffle = false;
         invCellVolume = 1/(Field->box.step.x*Field->box.step.y*Field->box.step.z);
     }
     ~ec2_solver(){
