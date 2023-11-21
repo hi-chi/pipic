@@ -24,15 +24,14 @@ Contact: arkady.gonoskov@gu.se.
 struct ec2_solver: public pic_solver //energy-conserving solver
 {
     fourierSolver *field;
-    vector<size_t> overStepMove; // counter of overStepMigrations
+    vector<unsigned long long int> overStepMove; // counter of overStepMigrations
     // auxiliary variables for optimization:
     vector<double[8]> data; // thread-local
     double invCellVolume;
     vector<fieldSubMap64> subField;
 
-    ec2_solver(simulationBox box): 
-    subField(omp_get_max_threads()), overStepMove(omp_get_max_threads(), 0),
-    data(omp_get_max_threads())
+    ec2_solver(simulationBox box): overStepMove(omp_get_max_threads(), 0),
+    data(omp_get_max_threads()), subField(omp_get_max_threads())
     {
         field = new fourierSolver(box, FFTW_PATIENT);
         Field = field;
@@ -52,7 +51,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
     }
     void postLoop(int loopNumber){
         if(loopNumber == 1){
-            size_t totalOverStepMoves = 0;
+            unsigned long long int totalOverStepMoves = 0;
             for(int i = 0 ; i < omp_get_max_threads(); i++) totalOverStepMoves += overStepMove[i];
             if(totalOverStepMoves != 0){ 
                 string warning = "ec2_solver warning: restricting overstep move in " + to_string(totalOverStepMoves);
@@ -107,7 +106,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         double inv_gamma = 1/gamma;
 
         double3 vdt_4 = 0.25*timeStep*inv_gamma*lightVelocity*inv_mc*P.p;
-        moveCap(vdt_4, 0.4999999*field->box.step);
+        moveCap(vdt_4, 0.4999999*box.step);
         
         double c[8]; int cil[8];
         double3 E({0, 0, 0}), B({0, 0, 0});
@@ -124,7 +123,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         double3 p = inv_mc*P.p; // dimensionless momentum, like in the paper
         // E-p coupling
         double xi = 0;
-        int dim = field->box.dim;
+        int dim = box.dim;
         for(int i = 0; i < (1 << dim); i++) xi += sqr(c[i]);
         double sqrt_kappa = sqrt(_4piq2_mVg*P.w*inv_gamma*xi);
         float b = 0.5*sqrt_kappa*timeStep;
@@ -157,7 +156,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
 
         P.p = (sigma*mc)*p;
         double3 dr = (-Vg_4piq/P.w)*dE;
-        moveCap(dr, 0.4999999*field->box.step);
+        moveCap(dr, 0.4999999*box.step);
         P.r += dr;
 
         //Boris rotation:

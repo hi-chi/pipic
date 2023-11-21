@@ -46,7 +46,16 @@ struct cellHandler;
 
 struct cellInterface // main structure for developing extensions; provides access to particles and/or field values for all cells
 {
+    private:
+    // raw data to be accessed via interfaces (see below):
+    int *I; // integer parameters
+    double *D; // double parameters
+    double *F_data; // em-field at the coners of the cell
+    double *P_data; // data for storing particles at the cell of the type being processed
+    double *NP_data; // data for the buffer array of particles to be added  
+
     //access to basic parameters:
+    public:
     const int3 &i, &n; // three-index of the cell and three-size of the grid
     const int &dim, &aNum; // dimensionality and the number of additional attributes of particles
     const int &PType, &PSize; // particle type being processed and their number in the cell being processed
@@ -81,14 +90,7 @@ struct cellInterface // main structure for developing extensions; provides acces
     globalMin(*(double3*)(D)), globalMax(*(double3*)(D + 3)), 
     step(*(double3*)(D + 6)), invStep(*(double3*)(D + 9)),
     timeStep(D[12]), PCharge(D[13]), PMass(D[14])
-    {}
-    private:
-    // data (to be accessed via interfaces):
-    int *I; // integer parameters
-    double *D; // double parameters
-    double *F_data; // em-field at the coners of the cell
-    double *P_data; // data for storing particles at the cell of the type being processed
-    double *NP_data; // data for the buffer array of particles to be added    
+    {}  
     
     friend struct ensemble;
     friend struct field_solver;
@@ -97,11 +99,11 @@ struct cellInterface // main structure for developing extensions; provides acces
 
 struct simulationBox
 {
-    double3 min, max, size, invSize, step, invStep; // physical limits of the computational region, auxiliary vectors
-    int3 n; // number of cells alongs each dimension; must be powers of two; for 2D set n.z = 1, for 1D set n.z = n.y = 1 
-    unsigned int ng; // total number of cells
+    int3 n; // number of cells alongs each dimension; must be powers of two; for 2D set n.z = 1, for 1D set n.z = n.y = 1
+    intg ng; // total number of cells 
+    double3 min, max, size, invStep, invSize, step; // physical limits of the computational region, auxiliary vectors
     int dim; // problem dimensionality
-    simulationBox(int3 n, double3 min, double3 max): n(n), min(min), max(max), ng(((unsigned int)n.x)*n.y*n.z), 
+    simulationBox(int3 n, double3 min, double3 max): n(n), ng(((intg)n.x)*n.y*n.z), min(min), max(max), 
     size(max.x - min.x, max.y - min.y, max.z - min.z),
     invStep(n.x/(max.x - min.x), n.y/(max.y - min.y), n.z/(max.z - min.z)),
     invSize(1/(max.x - min.x), 1/(max.y - min.y), 1/(max.z - min.z)),
@@ -111,9 +113,9 @@ struct simulationBox
         if(n.z == 1) dim = 2; 
         if((n.y == 1)&&(n.z == 1)) dim = 1; 
     }
-    unsigned int ig(int3 i) // conversion from three-index to global index
+    intg ig(int3 i) // conversion from three-index to global index
     {
-        return i.x + (i.y + ((unsigned int)i.z)*n.y)*n.x; // must be consistent with fftw plans
+        return i.x + (i.y + ((intg)i.z)*n.y)*n.x; // must be consistent with fftw plans
     }
 };
 
@@ -138,6 +140,7 @@ struct field_solver
     //functions neded for cellInterface
     inline void setGridType(cellInterface &CI, int gridType){CI.I[12] = gridType;};
     inline double*& getCI_F_Data(cellInterface &CI){return CI.F_data;};
+    virtual ~field_solver(){}
 };
 
 struct pic_solver

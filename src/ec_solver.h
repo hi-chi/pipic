@@ -24,15 +24,14 @@ Contact: arkady.gonoskov@gu.se.
 struct ec_solver: public pic_solver //energy-conserving solver
 {
     fourierSolver *field;
-    vector<size_t> overStepMove; // counter of overStepMigrations
+    vector<unsigned long long int> overStepMove; // counter of overStepMigrations
     // auxiliary variables for optimization:
     vector<double[8]> data; // thread-local
     double invCellVolume;
     vector<fieldSubMap64> subField;
 
-    ec_solver(simulationBox box): 
-    subField(omp_get_max_threads()), overStepMove(omp_get_max_threads(), 0),
-    data(omp_get_max_threads())
+    ec_solver(simulationBox box): overStepMove(omp_get_max_threads(), 0),
+    data(omp_get_max_threads()), subField(omp_get_max_threads())
     {
         field = new fourierSolver(box, FFTW_PATIENT);
         Field = field;
@@ -49,7 +48,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
         for(int i = 0; i < omp_get_max_threads(); i++) overStepMove[i] = 0;
     }
     void postLoop() {
-        size_t totalOverStepMoves = 0;
+        unsigned long long int totalOverStepMoves = 0;
         for(int i = 0 ; i < omp_get_max_threads(); i++) totalOverStepMoves += overStepMove[i];
         if(totalOverStepMoves != 0) {
             string warning = "ec_solver warning: restricting overstep move in " + to_string(totalOverStepMoves);
@@ -102,7 +101,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
         double inv_gamma = 1/gamma;
 
         double3 vdt_2 = 0.5*timeStep*inv_gamma*lightVelocity*inv_mc*P.p;
-        moveCap(vdt_2, 0.4999999*field->box.step);
+        moveCap(vdt_2, 0.4999999*box.step);
         
         double c[8]; int cil[8];
         double3 E({0, 0, 0}), B({0, 0, 0});
@@ -117,7 +116,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
         double3 p = inv_mc*P.p; // dimensionless momentum, like in the paper
         // E-p coupling
         double xi = 0;
-        int dim = field->box.dim;
+        int dim = box.dim;
         for(int i = 0; i < (1 << dim); i++) xi += sqr(c[i]);
         double sqrt_kappa = sqrt(_4piq2_mVg*P.w*inv_gamma*xi);
         float b = sqrt_kappa*timeStep;
@@ -149,41 +148,41 @@ struct ec_solver: public pic_solver //energy-conserving solver
         P.p = (sigma*mc)*p;
         double3 dr = (-Vg_4piq/P.w)*dE;
         if(field->divergenceCleaning){
-            moveCap(dr, 0.999999*field->box.step);
+            moveCap(dr, 0.999999*box.step);
 
-            unsigned int cig[8];
+            intg cig[8];
             double3 r = P.r + dr;
-            placePeriodic(P.r.x, field->box.min.x, field->box.max.x);
-            if(dim > 1) placePeriodic(P.r.y, field->box.min.y, field->box.max.y);
-            if(dim > 2) placePeriodic(P.r.z, field->box.min.z, field->box.max.z);
+            placePeriodic(P.r.x, box.min.x, box.max.x);
+            if(dim > 1) placePeriodic(P.r.y, box.min.y, box.max.y);
+            if(dim > 2) placePeriodic(P.r.z, box.min.z, box.max.z);
             
-            int cix = floor((r.x - field->box.min.x)*field->box.invStep.x); c[1] = (r.x - field->box.min.x)*field->box.invStep.x - cix; c[0] = 1 - c[1];
-            int cix_ = cix + 1; if(cix_ == field->box.n.x) cix_ = 0;
+            int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
+            int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;
             int ciy_ = 0, ciz_ = 0;
             int ciy = 0, ciz = 0;
-            if(field->box.dim > 1){
-                ciy = floor((r.y - field->box.min.y)*field->box.invStep.y); double wy = (r.y - field->box.min.y)*field->box.invStep.y - ciy;
+            if(box.dim > 1){
+                ciy = floor((r.y - box.min.y)*box.invStep.y); double wy = (r.y - box.min.y)*box.invStep.y - ciy;
                 for(int i = 0; i < 2; i++) c[i+2] = c[i]*wy;
                 for(int i = 0; i < 2; i++) c[i] *= 1 - wy;
-                ciy_ = ciy + 1; if(ciy_ > field->box.n.y - 1) ciy_ -= field->box.n.y;
+                ciy_ = ciy + 1; if(ciy_ > box.n.y - 1) ciy_ -= box.n.y;
             }
             if(dim > 2){
-                int ciz = floor((r.z - field->box.min.z)*field->box.invStep.z); double wz = (r.z - field->box.min.z)*field->box.invStep.z - ciz;
+                int ciz = floor((r.z - box.min.z)*box.invStep.z); double wz = (r.z - box.min.z)*box.invStep.z - ciz;
                 for(int i = 0; i < 4; i++) c[i+4] = c[i]*wz;
                 for(int i = 0; i < 4; i++) c[i] *= 1 - wz;
-                ciz_ = ciz + 1; if(ciz_ > field->box.n.z - 1) ciz_ -= field->box.n.z;
+                ciz_ = ciz + 1; if(ciz_ > box.n.z - 1) ciz_ -= box.n.z;
             }
-            cig[0] = field->box.ig({cix , ciy, ciz});
-            cig[1] = field->box.ig({cix_, ciy, ciz});
+            cig[0] = box.ig({cix , ciy, ciz});
+            cig[1] = box.ig({cix_, ciy, ciz});
             if(dim > 1){
-                cig[2] = field->box.ig({cix , ciy_, ciz});
-                cig[3] = field->box.ig({cix_, ciy_, ciz});
+                cig[2] = box.ig({cix , ciy_, ciz});
+                cig[3] = box.ig({cix_, ciy_, ciz});
             }
             if(dim > 2){
-                cig[4] = field->box.ig({cix , ciy , ciz_});
-                cig[5] = field->box.ig({cix_, ciy , ciz_});
-                cig[6] = field->box.ig({cix , ciy_, ciz_});
-                cig[7] = field->box.ig({cix_, ciy_, ciz_});
+                cig[4] = box.ig({cix , ciy , ciz_});
+                cig[5] = box.ig({cix_, ciy , ciz_});
+                cig[6] = box.ig({cix , ciy_, ciz_});
+                cig[7] = box.ig({cix_, ciy_, ciz_});
             }
             for(int i = 0; i < (1 << dim); i++) field->Rho(cig[i]) += c[i]*P.w*charge*invCellVolume;
         }

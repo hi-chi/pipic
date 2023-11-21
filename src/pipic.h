@@ -35,7 +35,7 @@ struct pipic
     pic_solver *Solver;
     bool reportPerformance;
     pipic(string solverName, int nx, double XMin, double XMax, int ny = 1, double YMin = -0.5, double YMax = 0.5, int nz = 1, double ZMin = -0.5, double ZMax = 0.5): 
-    nx(nx), ny(ny), nz(nz), XMin(XMin), YMin(YMin), ZMin(ZMin),  XMax(XMax), YMax(YMax), ZMax(ZMax), 
+    nx(nx), ny(ny), nz(nz), XMin(XMin), XMax(XMax), YMin(YMin), YMax(YMax), ZMin(ZMin), ZMax(ZMax), 
     box(int3(nx, ny, nz), double3(XMin, YMin, ZMin), double3(XMax, YMax, ZMax)) 
     {
         Solver = nullptr;
@@ -63,7 +63,6 @@ struct pipic
         int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
 
         int typeIndex = Ensemble->getTypeIndex(typeName);
-        double *r; double *p; double *w; unsigned long long int *id;
         for(ensemble::nonOmpIterator iP = Ensemble->begin(typeIndex); iP < Ensemble->end(); iP++){
             particle *P = &*iP;
             handler_(&(P->r.x), &(P->p.x), &(P->w), &(P->id), dataDouble_, dataInt_);

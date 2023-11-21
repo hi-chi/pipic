@@ -2,6 +2,7 @@
 
 struct fourier_boris_solver: public pic_solver
 {
+    int3 n;
     fourierSolver *field;
     bool overStepMigration;
     double3 *dtJ; // array for storing the cumulative current multiplied by timeStep
@@ -9,7 +10,6 @@ struct fourier_boris_solver: public pic_solver
     double invCellVolume; 
     vector<fieldSubMap64> subField; // local field state, thread-local
     vector<double> inv_mc_, qdt_2_; // thread-local
-    int3 n;
     fourier_boris_solver(simulationBox box): n(box.n), 
     subField(omp_get_max_threads()), inv_mc_(omp_get_max_threads()), qdt_2_(omp_get_max_threads())
     {
@@ -18,7 +18,7 @@ struct fourier_boris_solver: public pic_solver
         Ensemble = new ensemble(Field->box);
         Ensemble->shuffle = false;
         dtJ = new double3[Field->box.ng];
-        memset(&dtJ[0], 0, Field->box.ng);
+        memset((void*)&dtJ[0], 0, sizeof(double3)*intg(n.x)*n.y*n.z); // set cuttent to zero everywhere
         invCellVolume = 1/(Field->box.step.x*Field->box.step.y*Field->box.step.z);
         field->enableDivergenceCleaning();
     }
@@ -38,7 +38,7 @@ struct fourier_boris_solver: public pic_solver
             field->Ey(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].y;
             field->Ez(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].z;
         }
-        memset(&dtJ[0], 0, sizeof(double3)*size_t(n.x)*n.y*n.z); // set cuttent to zero everywhere
+        memset((void*)&dtJ[0], 0, sizeof(double3)*intg(n.x)*n.y*n.z); // set cuttent to zero everywhere
         if(field->divergenceCleaning) field->setRhoToZero();
         overStepMigration = false;
     }
@@ -99,12 +99,12 @@ struct fourier_boris_solver: public pic_solver
 
         //CIC weighting, deposition of density
         if(field->divergenceCleaning){
-            unsigned int cig[8];
+            intg cig[8];
             double3 r = P.r;
             r += (-0.5)*dtv; // half-step backward shift
-            if(r.x < box.min.x) r.x += box.max.x - box.min.x; if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
-            if(r.y < box.min.y) r.y += box.max.y - box.min.y; if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
-            if(r.z < box.min.z) r.z += box.max.z - box.min.z; if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
+            if(r.x < box.min.x) r.x += box.max.x - box.min.x; else if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
+            if(r.y < box.min.y) r.y += box.max.y - box.min.y; else if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
+            if(r.z < box.min.z) r.z += box.max.z - box.min.z; else if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
             
             int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
             int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;
@@ -137,11 +137,11 @@ struct fourier_boris_solver: public pic_solver
             for(int i = 0; i < (1 << box.dim); i++) field->Rho(cig[i]) += c[i]*P.w*charge*invCellVolume;
         }
         { //CIC weighting, deposition of current
-            unsigned int cig[8];
+            intg cig[8];
             double3 r = P.r;
-            if(r.x < box.min.x) r.x += box.max.x - box.min.x; if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
-            if(r.y < box.min.y) r.y += box.max.y - box.min.y; if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
-            if(r.z < box.min.z) r.z += box.max.z - box.min.z; if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
+            if(r.x < box.min.x) r.x += box.max.x - box.min.x; else if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
+            if(r.y < box.min.y) r.y += box.max.y - box.min.y; else if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
+            if(r.z < box.min.z) r.z += box.max.z - box.min.z; else if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
             
             int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
             int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;

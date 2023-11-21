@@ -52,6 +52,9 @@ using namespace std;
 #define likely(x)       __builtin_expect((x), 1)
 #define unlikely(x)     __builtin_expect((x), 0)
 
+typedef int intg; // type used to enumerate grid cells
+//typedef unsigned long long int intg; // use if the grid is too large for int
+
 inline double sgn(double x){
     return (x > 0) - (x < 0);
 };

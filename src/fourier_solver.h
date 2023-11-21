@@ -50,7 +50,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         bZ = fftw_plan_many_dft(1, &box.n.z, 1, fdata[0], &box.n.z, box.n.x*box.n.y, 1, fdata[0], &box.n.z, box.n.x*box.n.y, 1, FFTW_BACKWARD, fftw_flags);
     }
     void fieldLoopBody(int3 i, void(*handler_)(int*, double*, double*, double*, double*, int*), double* dataDouble_, int* dataInt_){
-        size_t ig = box.ig({i.x, i.y, i.z});
+        intg ig = box.ig({i.x, i.y, i.z});
         double3 r3 = box.min;
         r3.x += i.x*box.step.x;
         r3.y += i.y*box.step.y;
@@ -105,7 +105,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
             for(int i = 0; i < 4; i++) c[i+4] = c[i]*wz;
             for(int i = 0; i < 4; i++) c[i] *= wz_;
         }
-        size_t cig[8];
+        intg cig[8];
         cig[0] = box.ig({ix    , iy, iz}); 
         cig[1] = box.ig({ix + 1, iy, iz});
         if(box.dim > 1){
@@ -145,7 +145,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
     }
     void setRhoToZero(){ // sets rho to zero, applicable only in case of divergence cleaning enabled
         if(rho == nullptr) {pipic_log.message("pipic::fourierSolver error: calling nullRho() without enabling divergence cleaning.", true); exit(0);}
-        else memset(&rho[0], 0, sizeof(complex<double>)*size_t(box.n.x)*box.n.y*box.n.z);
+        else memset(&rho[0], 0, sizeof(complex<double>)*intg(box.n.x)*box.n.y*box.n.z);
     }
     ~fourierSolver()
     {
@@ -161,13 +161,13 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
              delete []rhoBackground;
         }
     }
-    double& Ex(size_t ig) {return *((double*)fdata[0] + 0 + 2*ig);}
-    double& Bx(size_t ig) {return *((double*)fdata[0] + 1 + 2*ig);}
-    double& Ey(size_t ig) {return *((double*)fdata[1] + 0 + 2*ig);}
-    double& By(size_t ig) {return *((double*)fdata[1] + 1 + 2*ig);}
-    double& Ez(size_t ig) {return *((double*)fdata[2] + 0 + 2*ig);}
-    double& Bz(size_t ig) {return *((double*)fdata[2] + 1 + 2*ig);}
-    double& Rho(size_t ig) {return *((double*)rho + 0 + 2*ig);} // for divergence cleaning only
+    double& Ex(intg ig) {return *((double*)fdata[0] + 0 + 2*ig);}
+    double& Bx(intg ig) {return *((double*)fdata[0] + 1 + 2*ig);}
+    double& Ey(intg ig) {return *((double*)fdata[1] + 0 + 2*ig);}
+    double& By(intg ig) {return *((double*)fdata[1] + 1 + 2*ig);}
+    double& Ez(intg ig) {return *((double*)fdata[2] + 0 + 2*ig);}
+    double& Bz(intg ig) {return *((double*)fdata[2] + 1 + 2*ig);}
+    double& Rho(intg ig) {return *((double*)rho + 0 + 2*ig);} // for divergence cleaning only
     void advance(double timeStep)
     {
         #pragma omp parallel for collapse(3)
@@ -274,14 +274,14 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         setGridType(CI, 0); // 
         if(getCI_F_Data(CI) == nullptr) getCI_F_Data(CI) = new double[48];
         double* F_data = getCI_F_Data(CI);
-        unsigned int cig[8];
+        intg cig[8];
         cig[0] = box.ig(i);
         cig[1] = cig[0] + 1; if(unlikely(i.x == box.n.x - 1)) cig[1] -= box.n.x;
         if(box.dim > 1){
             cig[2] = cig[0] + box.n.x; if(unlikely(i.y == box.n.y - 1)) cig[2] -= box.n.y*box.n.x;
             cig[3] = cig[2] + 1; if(unlikely(i.x == box.n.x - 1)) cig[3] -= box.n.x;
             if(box.dim > 2){
-                cig[4] = cig[0] + box.n.x*box.n.y; if(unlikely(i.z == box.n.z - 1)) cig[4] -= box.n.z*box.n.y*size_t(box.n.x);
+                cig[4] = cig[0] + box.n.x*box.n.y; if(unlikely(i.z == box.n.z - 1)) cig[4] -= box.n.z*box.n.y*intg(box.n.x);
                 cig[5] = cig[4] + 1; if(unlikely(i.x == box.n.x - 1)) cig[5] -= box.n.x;
                 cig[6] = cig[4] + box.n.x; if(unlikely(i.y == box.n.y - 1)) cig[6] -= box.n.y*box.n.x;
                 cig[7] = cig[6] + 1; if(unlikely(i.x == box.n.x - 1)) cig[7] -= box.n.x;
@@ -309,7 +309,7 @@ struct fieldSubMap64 // structure for a local field buffer (for optimization pur
     int3 i3;
     int dim;
     double F_data[384]; // em-field at the coners of the cell and other real-value parameters
-    unsigned int cig[64];
+    intg cig[64];
     fieldSubMap64() {}   
     double3& E_(int i){
         return *((double3*)(&F_data[6*i]));
