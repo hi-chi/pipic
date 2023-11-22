@@ -62,7 +62,7 @@ void pipic_info()
     cout << "---------------------------------------------------------------------------------------------------------" << endl;
 }
 
-PYBIND11_MODULE(pipic, object) {
+PYBIND11_MODULE(_pipic, object) {
     object.def("info", &pipic_info, "Info about pi-PIC");
     object.attr("light_velocity") = lightVelocity;
     object.attr("electron_charge") = electronCharge;
