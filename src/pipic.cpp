@@ -61,8 +61,8 @@ void pipic_info()
     cout << "To notify about bugs and/or request functionality extensions contact arkady.gonoskov@gu.se." << endl;
     cout << "---------------------------------------------------------------------------------------------------------" << endl;
 }
- 
-PYBIND11_MODULE(_pipic, object) {
+
+PYBIND11_MODULE(pipic, object) {
     object.def("info", &pipic_info, "Info about pi-PIC");
     object.attr("light_velocity") = lightVelocity;
     object.attr("electron_charge") = electronCharge;

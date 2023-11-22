@@ -46,9 +46,9 @@ struct loopLayoutStride8x // structure for making a loop with stride 8 along x
     {}
     void makePlan(){
         if(unlikely(!randGen)) {cout << "pi-PIC error: rndGen call before assignment" << endl; exit(0);}
-        for(int i = 0; i < offset.size(); i++) offset[i] = i;
+        for(int i = 0; i < int(offset.size()); i++) offset[i] = i;
         shuffle(begin(offset), end(offset), *randGen);
-        for(int i = 0; i < offset.size(); i++) index[offset[i] + 1] = i;
+        for(int i = 0; i < int(offset.size()); i++) index[offset[i] + 1] = i;
         index[9] = index[1]; index[0] = index[8];
     }
     inline bool unprocessed(int sx){ // returns true if the cell shifted by 'sx' has not been processed
@@ -56,11 +56,11 @@ struct loopLayoutStride8x // structure for making a loop with stride 8 along x
     }
 };
 
-struct P_pointer{unsigned int ig; int it, ip;};
+struct P_pointer{intg ig; int it, ip;};
 
 struct threadData
 {
-    unsigned int numMigrated, numDeleted, numCreated; // counters
+    unsigned long long int numMigrated, numDeleted, numCreated; // counters
     vector<int> toRemove; // list of indices of particles to be removed from the list being processed;
     vector<bool> toRemoveLocal; // indicates wheather the particle can be removed immideately or should be relocated after the OMP loop 
     vector<P_pointer> postOmpMigrationList; // (ig, it, ip), list of particles that were called to be relocated to a cell that can be potentially operated by another thread at the time 
@@ -84,20 +84,20 @@ struct ensemble
     cellContainer ***cell; // cell[ig][it] is a pointer to cellContainer for type $it$ for $ig$-th cell (nullptr if empty)
     loopLayoutStride8x layout;
     vector<threadData> thread;
-    size_t totalNumberOfParticles;
+    unsigned long long int totalNumberOfParticles;
     bool fieldHandlerExists; // true if there is at least one field handler
     bool shuffle;
     handlerManager Manager;
     rndGen RndGen;
 
-    ensemble(simulationBox box, int stride = 4): box(box), fieldHandlerExists(false), 
-    thread(omp_get_max_threads()), shuffle(true), Manager(box.ng), RndGen(box.n.x)
+    ensemble(simulationBox box, int stride = 4): box(box), thread(omp_get_max_threads()),
+    fieldHandlerExists(false), shuffle(true), Manager(box.ng), RndGen(box.n.x)
     {
         cell = new cellContainer**[box.ng];
-        for(unsigned int ig = 0; ig < box.ng; ig++) cell[ig] = nullptr;
+        for(intg ig = 0; ig < box.ng; ig++) cell[ig] = nullptr;
         totalNumberOfParticles = 0;
         
-        for(int iTh = 0; iTh < thread.size(); iTh++){
+        for(int iTh = 0; iTh < int(thread.size()); iTh++){
             int *I = new int[14];
             I[3] = box.n.x; I[4] = box.n.y; I[5] = box.n.z;
             I[6] = box.dim; I[7] = sizeof(particle)/8 - 8;
@@ -114,35 +114,33 @@ struct ensemble
     }
     ~ensemble()
     {
-        for(unsigned int ig = 0; ig < box.ng; ig++) if(cell[ig] != nullptr)
+        for(intg ig = 0; ig < box.ng; ig++) if(cell[ig] != nullptr)
         {
-            for(int it = 0; it < type.size(); it++) if(cell[ig][it] != nullptr) delete cell[ig][it];
+            for(int it = 0; it < int(type.size()); it++) if(cell[ig][it] != nullptr) delete cell[ig][it];
             delete []cell[ig];
         }
         delete []cell;
-        for(int iTh = 0; iTh < thread.size(); iTh++){
+        for(int iTh = 0; iTh < int(thread.size()); iTh++){
             delete [](thread[iTh].CI->I);
             delete [](thread[iTh].CI->D);
             if(thread[iTh].CI->F_data != nullptr) delete [](thread[iTh].CI->F_data);
             delete thread[iTh].CI;
         }
     }
-    void checkInitCell(unsigned int ig, int typeIndex) // checks if the data of a ig-th cell had been allocated and allocates it if not
+    void checkInitCell(intg ig, int typeIndex) // checks if the data of a ig-th cell had been allocated and allocates it if not
     {
-        if(cell[ig] == nullptr) 
-        {
+        if(cell[ig] == nullptr){
             cell[ig] = new cellContainer*[type.size()];
-            for(int it = 0; it < type.size(); it++) cell[ig][it] = nullptr;
+            for(int it = 0; it < int(type.size()); it++) cell[ig][it] = nullptr;
         }
-        if(cell[ig][typeIndex] == nullptr)
-        {
+        if(cell[ig][typeIndex] == nullptr){
             cell[ig][typeIndex] = new cellContainer;
         }
     }
-    void checkPushBack(unsigned int ig, int typeIndex, particle &P){
+    void checkPushBack(intg ig, int typeIndex, particle &P){
         if(unlikely(cell[ig] == nullptr)){
             cell[ig] = new cellContainer*[type.size()];
-            for(int it = 0; it < type.size(); it++) cell[ig][it] = nullptr;
+            for(int it = 0; it < int(type.size()); it++) cell[ig][it] = nullptr;
         }
         if(unlikely(cell[ig][typeIndex] == nullptr)){
             cell[ig][typeIndex] = new cellContainer;
@@ -152,13 +150,14 @@ struct ensemble
     int placeParticles(string typeName, int totalNumber, double typeCharge, double typeMass, double temperature, int64_t density, int64_t dataDouble = 0, int64_t dataInt = 0) // returns typeIndex
     {
         int typeIndex = -1; // index of particle type; initial code "-1" is to be changed if typeName is found in typeName, otherwise new type is added below
-        for(int it = 0; it < type.size(); it++) 
-        if(typeName == type[it].name)
-        if((typeCharge == type[it].charge)&&(typeMass == type[it].mass))
-            typeIndex = it; // found among previously defined types
-        else {
-            pipic_log.message("ensemble.addParticles() error: same type name must have same charge and mass.", true); 
-            return -1;
+        for(int it = 0; it < int(type.size()); it++) 
+        if(typeName == type[it].name){
+            if((typeCharge == type[it].charge)&&(typeMass == type[it].mass))
+                typeIndex = it; // found among previously defined types
+            else {
+                pipic_log.message("ensemble.addParticles() error: same type name has been declared with different charge and/or mass.", true); 
+                return -1;
+            }
         }
         bool newType = (typeIndex == -1); // newType = true if typeName is not found among previously defined types
         if(newType){
@@ -171,7 +170,7 @@ struct ensemble
             if(cell[box.ig({ix, iy, iz})] != nullptr)
             {
                 cellContainer **newPointers = new cellContainer*[type.size()];
-                for(int it = 0; it < type.size() - 1; it++) newPointers[it] = cell[box.ig({ix, iy, iz})][it];
+                for(int it = 0; it < int(type.size()) - 1; it++) newPointers[it] = cell[box.ig({ix, iy, iz})][it];
                 newPointers[type.size() - 1] = nullptr;
                 cellContainer **tmp = cell[box.ig({ix, iy, iz})];
                 cell[box.ig({ix, iy, iz})] = newPointers;
@@ -200,7 +199,7 @@ struct ensemble
         }
     
         double totalRealParticles = 0; // total nuber of real particles
-        for(int i = 0; i < totalRealParticles_.size(); i++) totalRealParticles += totalRealParticles_[i];
+        for(int i = 0; i < int(totalRealParticles_.size()); i++) totalRealParticles += totalRealParticles_[i];
         double weight = totalRealParticles/totalNumber; // estimated weight to be used for all particles
 
         // estimating and reserving memory for particle allocation
@@ -208,7 +207,7 @@ struct ensemble
         for(int iy = 0; iy < box.n.y; iy++)
         for(int ix = 0; ix < box.n.x; ix++)
         {
-            size_t ig = box.ig({ix, iy, iz});
+            intg ig = box.ig({ix, iy, iz});
             int numberToReserve = int(1.5*Density[ig]*box.step.x*box.step.y*box.step.z/weight); // the center of cells are shifted by half step relative to node location, but here we use it as an estimate  
             if(numberToReserve > 0){
                 checkInitCell(ig, typeIndex);
@@ -221,7 +220,7 @@ struct ensemble
         for(int iy = 0; iy < box.n.y; iy++)
         for(int ix = 0; ix < box.n.x; ix++)
         {
-            size_t ig = box.ig({ix, iy, iz});
+            intg ig = box.ig({ix, iy, iz});
             double expectedNumber = Density[ig]*box.step.x*box.step.y*box.step.z/weight;
             int numberToGenerate = int(expectedNumber) + (rand_double() < (expectedNumber - int(expectedNumber)));
             if(numberToGenerate > 0)
@@ -256,10 +255,11 @@ struct ensemble
             activeThread.NP[j].id = generateID();
             if(checkLocation(activeThread.NP[j].r, activeThread.CI->cellMin(), activeThread.CI->cellMax())){
                 checkPushBack(ig, it, activeThread.NP[j]);
-                if(directOrder)
+                if(directOrder) {
                     if(it >= activeThread.CI->PType) cell[ig][it]->endShift++;
-                else
+                } else {
                     if(it <= activeThread.CI->PType) cell[ig][it]->endShift++;
+                }
             } else
                 pipic_log.message("pi-PIC error: ignoring an attempt of module<" + moduleName + "> to add a particle outside current cell.", true);
         }
@@ -271,9 +271,9 @@ struct ensemble
         activeThread.CI->NPSize = 0;
     }
     template<typename pic_solver, typename field_solver>
-    void apply_actOnCellHandlers(pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, unsigned int ig, bool directOrder){
+    void apply_actOnCellHandlers(pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
         fieldBeenSet = false;
-        for(int ih = 0; ih < Manager.Handler.size(); ih++)
+        for(int ih = 0; ih < int(Manager.Handler.size()); ih++)
         if(Manager.Handler[ih]->actOnCell){
             if(!fieldBeenSet) ((field_solver*)(Solver->Field))->cellSetField(*activeThread.CI, activeThread.CI->i);
             fieldBeenSet = true;
@@ -284,14 +284,14 @@ struct ensemble
     void removeZeroWeightParticles(cellContainer *cell){ // removes particles in P assigned to be removed (w = 0)
         for(int ip = cell->P.size() - cell->endShift - 1; ip >= 0; ip--)
         if(cell->P[ip].w == 0) {
-            if(ip < cell->P.size() - 1 - cell->endShift) memcpy(&(cell->P[ip]), &(cell->P[cell->P.size() - 1 - cell->endShift]), sizeof(particle));
+            if(ip < int(cell->P.size()) - 1 - cell->endShift) memcpy(&(cell->P[ip]), &(cell->P[cell->P.size() - 1 - cell->endShift]), sizeof(particle));
             if(cell->endShift > 0) memcpy(&(cell->P[cell->P.size() - 1 - cell->endShift]), &(cell->P[cell->P.size() - 1]), sizeof(particle));
             cell->P.pop_back();
         }
     }
     template<typename pic_solver, typename field_solver>
-    void apply_particleHandlers(int it, pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, unsigned int ig, bool directOrder){
-        for(int ih = 0; ih < Manager.Handler.size(); ih++)
+    void apply_particleHandlers(int it, pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
+        for(int ih = 0; ih < int(Manager.Handler.size()); ih++)
         if(Manager.Handler[ih]->actOn[it]){
             if(!fieldBeenSet) ((field_solver*)(Solver->Field))->cellSetField(*activeThread.CI, activeThread.CI->i);
             fieldBeenSet = true;
@@ -303,6 +303,13 @@ struct ensemble
             if(activeThread.CI->PSize == 0) break;
         }
     }
+    void processCharglessParticle(double mass, double timeStep, particle &P){
+        if(mass == 0){ // photon
+            double pNorm = P.p.norm();
+            if(likely(pNorm > 0)) P.r += (timeStep*lightVelocity/pNorm)*P.p;
+        } else
+            P.r += (timeStep*lightVelocity/sqrt(sqr(mass*lightVelocity) + P.p.norm()))*P.p;
+    }
     template<typename pic_solver, typename field_solver>
     void advance_singleLoop(pic_solver *Solver, double timeStep){
         chronometer chronometerCells; 
@@ -311,7 +318,7 @@ struct ensemble
         chronometerCells.stop();
 
         layout.makePlan();
-        for(int iTh = 0; iTh < thread.size(); iTh++){
+        for(int iTh = 0; iTh < int(thread.size()); iTh++){
             thread[iTh].reset();
             thread[iTh].CI->D[12] = timeStep;
         }
@@ -327,20 +334,20 @@ struct ensemble
             for(int iy = 0; iy < box.n.y; iy += 1) // could be good to shuffle here
             {
                 RndGen.assignToCurrentThread(ix);
-                unsigned int ig = box.ig({ix, iy, iz});
+                intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
                     //download type-independent data to cell interface:
                     activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
                     activeThread.CI->I[11] = 0;
-                    activeThread.CI->I[8] = -1; // the code that indicating "act on cell"
+                    activeThread.CI->I[8] = -1; // indicates "act on cell"
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
                     bool fieldBeenSet = false;
                     apply_actOnCellHandlers<pic_solver, field_solver>(Solver, activeThread, fieldBeenSet, ig, true);
                     if(cell[ig] != nullptr)
-                    for(int it = 0; it < type.size(); it++)
+                    for(int it = 0; it < int(type.size()); it++)
                     if(cell[ig][it] != nullptr){
                         if(cell[ig][it]->P.size() - cell[ig][it]->endShift > 0){
                             activeThread.CI->I[8] = it;
@@ -353,9 +360,10 @@ struct ensemble
                             apply_particleHandlers<pic_solver, field_solver>(it, Solver, activeThread, fieldBeenSet, ig, true);
                             activeThread.toRemove.clear();
                             activeThread.toRemoveLocal.clear();
-                            for(int ip = 0; ip < cell[ig][it]->P.size() - cell[ig][it]->endShift; ip++){ 
+                            for(int ip = 0; ip < int(cell[ig][it]->P.size()) - cell[ig][it]->endShift; ip++){ 
                                 if(likely(cell[ig][it]->P[ip].w != 0)){
-                                    Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep);
+                                    if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep);
+                                    else processCharglessParticle(type[it].mass, timeStep, cell[ig][it]->P[ip]);
                                     bool move, postOmpMove;
                                     checkMove(&(cell[ig][it]->P[ip]), move, postOmpMove);
                                     if(unlikely(move)){
@@ -383,7 +391,7 @@ struct ensemble
             RndGen.assignToCurrentThread(0);
         }
         int overCellRelocated = 0;
-        for(int iTh = 0; iTh < thread.size(); iTh++)
+        for(int iTh = 0; iTh < int(thread.size()); iTh++)
         {
             for(int il = thread[iTh].postOmpMigrationList.size() - 1; il >= 0; il--)
             {
@@ -391,7 +399,7 @@ struct ensemble
                 int it =  thread[iTh].postOmpMigrationList[il].it;
                 int ip =  thread[iTh].postOmpMigrationList[il].ip;
                 addParticle_general(cell[ig][it]->P[ip], it, true);
-                if(ip < cell[ig][it]->P.size() - 1) memcpy(&(cell[ig][it]->P[ip]), &(cell[ig][it]->P.back()), sizeof(particle));
+                if(ip < int(cell[ig][it]->P.size()) - 1) memcpy(&(cell[ig][it]->P[ip]), &(cell[ig][it]->P.back()), sizeof(particle));
                 cell[ig][it]->P.pop_back();
             }
             overCellRelocated += thread[iTh].postOmpMigrationList.size();
@@ -403,7 +411,7 @@ struct ensemble
         if(overCellRelocated > 0) pipic_log.message("pi-PIC warning: " + to_string(overCellRelocated) + " overcell migrations; consider reducing time step");
 
         Manager.latest_av_ppc = double(totalNumberOfParticles)/double(box.ng);
-        unsigned int migrationCounter = 0; for(int iTh = 0; iTh < thread.size(); iTh++)migrationCounter += thread[iTh].numMigrated;
+        unsigned long long int migrationCounter = 0; for(int iTh = 0; iTh < int(thread.size()); iTh++)migrationCounter += thread[iTh].numMigrated;
         Manager.latest_av_cmr = migrationCounter/double(totalNumberOfParticles);
         chronometerCells.start();
         Solver->postLoop();
@@ -418,9 +426,8 @@ struct ensemble
         chronometerCells.start();
         Solver->preLoop(0);
         chronometerCells.stop();
-
         layout.makePlan();
-        for(int iTh = 0; iTh < thread.size(); iTh++){
+        for(int iTh = 0; iTh < int(thread.size()); iTh++){
             thread[iTh].reset();
             thread[iTh].CI->D[12] = timeStep;
         }
@@ -428,21 +435,22 @@ struct ensemble
         Manager.preLoop(type);
         chronometer chronometerEnsemble; 
         chronometerEnsemble.start();
+        //first loop:
         for(layout.stage = 7; layout.stage >= 0; layout.stage--)
         {
             #pragma omp parallel for collapse(1)
             for(int ix = box.n.x - 8 + layout.offset[layout.stage]; ix >= 0; ix -= 8)
-            for(int iz = box.n.z - 1; iz >= 0; iz -= 1) // could be good to do shuffle here, but unprocessed() then needs a modification 
-            for(int iy = box.n.y - 1; iy >= 0; iy -= 1) // could be good to do shuffle here
+            for(int iz = box.n.z - 1; iz >= 0; iz -= 1)
+            for(int iy = box.n.y - 1; iy >= 0; iy -= 1)
             {
                 RndGen.assignToCurrentThread(ix);
-                unsigned int ig = box.ig({ix, iy, iz});
+                intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
                     //download type-independent data to cell interface:
                     activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
                     activeThread.CI->I[11] = 0;
-                    activeThread.CI->I[8] = -1; // the code that indicating "act on cell"
+                    activeThread.CI->I[8] = -1; // indicates "act on cell"
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
@@ -461,8 +469,10 @@ struct ensemble
                         if(shuffle) cell[ig][it]->shuffle();
                         apply_particleHandlers<pic_solver, field_solver>(it, Solver, activeThread, fieldBeenSet, ig, true);                      
                         for(int ip = cell[ig][it]->P.size() - cell[ig][it]->endShift - 1; ip >= 0; ip--)
-                            if(likely(cell[ig][it]->P[ip].w != 0))
-                                Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 0);
+                            if(likely(cell[ig][it]->P[ip].w != 0)){
+                                if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 0);
+                                else processCharglessParticle(type[it].mass, timeStep, cell[ig][it]->P[ip]); // advance for the whole step here, do nothing on the second loop 
+                            }
                         Solver->endSubLoop(0);
                     }
                 }
@@ -480,11 +490,11 @@ struct ensemble
         {
             #pragma omp parallel for collapse(1)
             for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
-            for(int iz = 0; iz < box.n.z; iz += 1) // could be good to do shuffle here, but unprocessed() then needs a modification 
-            for(int iy = 0; iy < box.n.y; iy += 1) // could be good to do shuffle here
+            for(int iz = 0; iz < box.n.z; iz += 1)
+            for(int iy = 0; iy < box.n.y; iy += 1)
             {
                 RndGen.assignToCurrentThread(ix);
-                unsigned int ig = box.ig({ix, iy, iz});
+                intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
                     //download type-independent data to cell interface:
@@ -492,7 +502,7 @@ struct ensemble
                     activeThread.CI->I[11] = 0;
 
                     if(cell[ig] != nullptr)
-                    for(int it = 0; it < type.size(); it++)
+                    for(int it = 0; it < int(type.size()); it++)
                     if(cell[ig][it] != nullptr){
                         if(cell[ig][it]->P.size() - cell[ig][it]->endShift > 0){
                             activeThread.CI->I[8] = it;
@@ -504,11 +514,10 @@ struct ensemble
                             activeThread.toRemove.clear();
                             activeThread.toRemoveLocal.clear();
                             Solver->startSubLoop(activeThread.CI->i, type[it].charge, type[it].mass, timeStep, 1);
-                            bool init = false;
-                            for(int ip = 0; ip < cell[ig][it]->P.size() - cell[ig][it]->endShift; ip++){ 
+                            for(int ip = 0; ip < int(cell[ig][it]->P.size()) - cell[ig][it]->endShift; ip++){ 
                                 if(likely(cell[ig][it]->P[ip].w != 0))
                                 {
-                                    Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 1);
+                                    if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 1); // chargeless particles are advanced for the whole step during the first loop
                                     bool move, postOmpMove;
                                     checkMove(&(cell[ig][it]->P[ip]), move, postOmpMove);
                                     if(unlikely(move)){
@@ -536,7 +545,7 @@ struct ensemble
             RndGen.assignToCurrentThread(0);
         }
         int overCellRelocated = 0;
-        for(int iTh = 0; iTh < thread.size(); iTh++)
+        for(int iTh = 0; iTh < int(thread.size()); iTh++)
         {
             for(int il = thread[iTh].postOmpMigrationList.size() - 1; il >= 0; il--)
             {
@@ -544,7 +553,7 @@ struct ensemble
                 int it =  thread[iTh].postOmpMigrationList[il].it;
                 int ip =  thread[iTh].postOmpMigrationList[il].ip;
                 addParticle_general(cell[ig][it]->P[ip], it, true);
-                if(ip < cell[ig][it]->P.size() - 1) memcpy(&(cell[ig][it]->P[ip]), &(cell[ig][it]->P.back()), sizeof(particle));
+                if(ip < int(cell[ig][it]->P.size()) - 1) memcpy(&(cell[ig][it]->P[ip]), &(cell[ig][it]->P.back()), sizeof(particle));
                 cell[ig][it]->P.pop_back();
             }
             overCellRelocated += thread[iTh].postOmpMigrationList.size();
@@ -557,7 +566,7 @@ struct ensemble
         if(overCellRelocated > 0) pipic_log.message("pi-PIC warning: " + to_string(overCellRelocated) + " overcell migrations; consider reducing time step.");
 
         Manager.latest_av_ppc = double(totalNumberOfParticles)/double(box.ng);
-        unsigned int migrationCounter = 0; for(int iTh = 0; iTh < thread.size(); iTh++)migrationCounter += thread[iTh].numMigrated;
+        unsigned long long int migrationCounter = 0; for(int iTh = 0; iTh < int(thread.size()); iTh++)migrationCounter += thread[iTh].numMigrated;
         Manager.latest_av_cmr = migrationCounter/double(totalNumberOfParticles);
         
         chronometerCells.start();
@@ -566,20 +575,20 @@ struct ensemble
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
     }
-    inline void compresList(vector<particle> &P, threadData &thread, unsigned int ig, int it)
+    inline void compresList(vector<particle> &P, threadData &thread, intg ig, int it)
     {
         int shift = 0;
         for(int k = thread.toRemove.size() - 1; k >= 0; k--){
             if(!thread.toRemoveLocal[k]){
-                if(thread.toRemove[k] < P.size() - 1 - shift) swap(P[thread.toRemove[k]], P[P.size() - 1 - shift]);
+                if(thread.toRemove[k] < int(P.size()) - 1 - shift) swap(P[thread.toRemove[k]], P[P.size() - 1 - shift]);
                 shift++;
             } else {
-                if(thread.toRemove[k] < P.size() - 1 - shift) memcpy(&P[thread.toRemove[k]], &P[P.size() - 1 - shift], sizeof(particle));
+                if(thread.toRemove[k] < int(P.size()) - 1 - shift) memcpy(&P[thread.toRemove[k]], &P[P.size() - 1 - shift], sizeof(particle));
                 if(shift > 0) memcpy(&P[P.size() - 1 - shift], &P[P.size() - 1], sizeof(particle));
                 P.pop_back();
             }
         }
-        for(int ip = P.size() - shift; ip < P.size(); ip++) thread.postOmpMigrationList.push_back({ig, it, ip});
+        for(int ip = int(P.size()) - shift; ip < int(P.size()); ip++) thread.postOmpMigrationList.push_back({ig, it, ip});
     }
     inline void cyclicShift(int &i, int s, int n, bool &limCross){ // optimized for likely cases of abs(s) < n 
         i += s;
@@ -609,7 +618,7 @@ struct ensemble
                 cyclicShift(newI.y, sy, box.n.y, limCorssed);
                 cyclicShift(newI.z, sz, box.n.z, limCorssed);
                 {
-                    unsigned int newIg = box.ig(newI);
+                    intg newIg = box.ig(newI);
                     checkPushBack(newIg, it, *P);
                     if((layout.unprocessed(sx))||((sx == 0)&&(newI.y + box.n.y*newI.z > iy + box.n.y*iz))) cell[newIg][it]->endShift++;
                     postOmpMove = false;
@@ -626,7 +635,7 @@ struct ensemble
         int ix = floor((P.r.x - box.min.x)*box.invStep.x);
         int iy = floor((P.r.y - box.min.y)*box.invStep.y);
         int iz = floor((P.r.z - box.min.z)*box.invStep.z);
-        unsigned int ig = box.ig({ix, iy, iz});
+        intg ig = box.ig({ix, iy, iz});
         checkPushBack(ig, it, P);
         if(!migrated) totalNumberOfParticles++;
     }
@@ -636,7 +645,7 @@ struct ensemble
         particle& operator*() const { return *Particle; }
         friend bool operator < (nonOmpIterator const& lhs, int const& rhs){
             if(lhs.Particle != nullptr)
-                if(lhs.ip == lhs.Ensemble->cell[lhs.ig][lhs.it]->P.size() - 1)
+                if(lhs.ip == int(lhs.Ensemble->cell[lhs.ig][lhs.it]->P.size()) - 1)
                     lhs.Ensemble->removeZeroWeightParticles(lhs.Ensemble->cell[lhs.ig][lhs.it]);
             return (lhs.Particle != nullptr);
         }
@@ -653,7 +662,7 @@ struct ensemble
                         if(ig < Ensemble->box.ng - 1) ig++;
                         else return false;
                     } else {
-                        if(ip + 1 < Ensemble->cell[ig][it]->P.size()){
+                        if(ip + 1 < int(Ensemble->cell[ig][it]->P.size())){
                             ip++;
                             Particle = &(Ensemble->cell[ig][it]->P[ip]);
                             return true;
@@ -668,7 +677,7 @@ struct ensemble
             }
             return false;
         }
-        size_t ig;
+        intg ig;
         int ip;
         int it;
         particle *Particle;
@@ -680,7 +689,7 @@ struct ensemble
     int getTypeIndex(string typeName)
     {
         int typeIndex = -1; // error code value
-        for(int it = 0; it < type.size(); it++) if(typeName == type[it].name) typeIndex = it;
+        for(int it = 0; it < int(type.size()); it++) if(typeName == type[it].name) typeIndex = it;
         if(typeIndex == -1){
             pipic_log.message("pipic error: unknown particle type name '" + typeName + "'.", true);
             exit(-1);

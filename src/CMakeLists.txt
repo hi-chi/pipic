@@ -3,8 +3,8 @@ set(CMAKE_CXX_STANDARD 11)
 project(pipic)
 add_subdirectory(pybind11)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O3")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O3 -Wall")
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
