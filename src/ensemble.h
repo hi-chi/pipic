@@ -340,7 +340,7 @@ struct ensemble
                     //download type-independent data to cell interface:
                     activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
                     activeThread.CI->I[11] = 0;
-                    activeThread.CI->I[8] = -1; // the code that indicating "act on cell"
+                    activeThread.CI->I[8] = -1; // indicates "act on cell"
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
@@ -435,12 +435,13 @@ struct ensemble
         Manager.preLoop(type);
         chronometer chronometerEnsemble; 
         chronometerEnsemble.start();
+        //first loop:
         for(layout.stage = 7; layout.stage >= 0; layout.stage--)
         {
             #pragma omp parallel for collapse(1)
             for(int ix = box.n.x - 8 + layout.offset[layout.stage]; ix >= 0; ix -= 8)
-            for(int iz = box.n.z - 1; iz >= 0; iz -= 1) // could be good to do shuffle here, but unprocessed() then needs a modification 
-            for(int iy = box.n.y - 1; iy >= 0; iy -= 1) // could be good to do shuffle here
+            for(int iz = box.n.z - 1; iz >= 0; iz -= 1)
+            for(int iy = box.n.y - 1; iy >= 0; iy -= 1)
             {
                 RndGen.assignToCurrentThread(ix);
                 intg ig = box.ig({ix, iy, iz});
@@ -449,7 +450,7 @@ struct ensemble
                     //download type-independent data to cell interface:
                     activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
                     activeThread.CI->I[11] = 0;
-                    activeThread.CI->I[8] = -1; // the code that indicating "act on cell"
+                    activeThread.CI->I[8] = -1; // indicates "act on cell"
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
@@ -489,8 +490,8 @@ struct ensemble
         {
             #pragma omp parallel for collapse(1)
             for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
-            for(int iz = 0; iz < box.n.z; iz += 1) // could be good to do shuffle here, but unprocessed() then needs a modification 
-            for(int iy = 0; iy < box.n.y; iy += 1) // could be good to do shuffle here
+            for(int iz = 0; iz < box.n.z; iz += 1)
+            for(int iy = 0; iy < box.n.y; iy += 1)
             {
                 RndGen.assignToCurrentThread(ix);
                 intg ig = box.ig({ix, iy, iz});
