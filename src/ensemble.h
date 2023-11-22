@@ -303,6 +303,13 @@ struct ensemble
             if(activeThread.CI->PSize == 0) break;
         }
     }
+    void processCharglessParticle(double mass, double timeStep, particle &P){
+        if(mass == 0){ // photon
+            double pNorm = P.p.norm();
+            if(likely(pNorm > 0)) P.r += (timeStep*lightVelocity/pNorm)*P.p;
+        } else
+            P.r += (timeStep*lightVelocity/sqrt(sqr(mass*lightVelocity) + P.p.norm()))*P.p;
+    }
     template<typename pic_solver, typename field_solver>
     void advance_singleLoop(pic_solver *Solver, double timeStep){
         chronometer chronometerCells; 
@@ -355,7 +362,8 @@ struct ensemble
                             activeThread.toRemoveLocal.clear();
                             for(int ip = 0; ip < int(cell[ig][it]->P.size()) - cell[ig][it]->endShift; ip++){ 
                                 if(likely(cell[ig][it]->P[ip].w != 0)){
-                                    Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep);
+                                    if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep);
+                                    else processCharglessParticle(type[it].mass, timeStep, cell[ig][it]->P[ip]);
                                     bool move, postOmpMove;
                                     checkMove(&(cell[ig][it]->P[ip]), move, postOmpMove);
                                     if(unlikely(move)){
@@ -460,8 +468,10 @@ struct ensemble
                         if(shuffle) cell[ig][it]->shuffle();
                         apply_particleHandlers<pic_solver, field_solver>(it, Solver, activeThread, fieldBeenSet, ig, true);                      
                         for(int ip = cell[ig][it]->P.size() - cell[ig][it]->endShift - 1; ip >= 0; ip--)
-                            if(likely(cell[ig][it]->P[ip].w != 0))
-                                Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 0);
+                            if(likely(cell[ig][it]->P[ip].w != 0)){
+                                if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 0);
+                                else processCharglessParticle(type[it].mass, timeStep, cell[ig][it]->P[ip]); // advance for the whole step here, do nothing on the second loop 
+                            }
                         Solver->endSubLoop(0);
                     }
                 }
@@ -506,7 +516,7 @@ struct ensemble
                             for(int ip = 0; ip < int(cell[ig][it]->P.size()) - cell[ig][it]->endShift; ip++){ 
                                 if(likely(cell[ig][it]->P[ip].w != 0))
                                 {
-                                    Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 1);
+                                    if(likely(type[it].charge != 0)) Solver->processParticle(cell[ig][it]->P[ip], type[it].charge, type[it].mass, timeStep, 1); // chargeless particles are advanced for the whole step during the first loop
                                     bool move, postOmpMove;
                                     checkMove(&(cell[ig][it]->P[ip]), move, postOmpMove);
                                     if(unlikely(move)){
