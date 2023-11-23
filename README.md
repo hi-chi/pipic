@@ -27,15 +27,32 @@ The basic layout of use includes five elements:
 
 Below we demonstrate the use of these elements in a simple [example](examples). A complete list of supported interfaces can be found [here](docs/interfaces.md). The development of extensions is detailed and exemplified [here](docs/making_extentions.md). 
 
-# Code compilation 
-For Linux / macOS / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about):
-- Install:
-    - Python 3
-    - [`gcc`](https://gcc.gnu.org/)
-    - [`fftw3`](http://www.fftw.org/) (`gcc` and `fftw3` must be both of 64-bit format)
-    - [`CMake`](https://cmake.org/) 3.1 or higher
-    - [`pybind11`](https://github.com/pybind/pybind11)
-    - [`numba`](https://numba.pydata.org/)
+# Code compilation
+
+$\pi$-PIC has been tested and confirmed to work Linux / macOS / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about). Installation requirements are
+
+- Python 3
+- [`gcc`](https://gcc.gnu.org/)
+- [`fftw3`](http://www.fftw.org/) (`gcc` and `fftw3` must be both of 64-bit format)
+- [`openmp`](https://www.openmp.org/)
+- [`pybind11`](https://github.com/pybind/pybind11) (handled automatically when installed through `pip`)
+- [`numba`](https://numba.pydata.org/) (not needed for installation, but for tools)
+
+## PyPI
+$\pi$-PIC is available through PyPI and is the recommended installation method:
+```
+pip install pipic
+```
+If using a non-standard compiler (for example using gcc installed through homebrew on macOS) this can be specified as:
+```
+CC=<c-compiler> CXX=<c++-compiler> pip install pipic
+```
+
+## CMake
+As an alternative, manual compilation is also available using `cmake`. This extends the above requirements to also include:
+- [`CMake`](https://cmake.org/) 3.1 or higher
+
+To compile:
 - Clone the repository
     ```
     git clone https://github.com/hi-chi/pipic.git
@@ -45,23 +62,23 @@ For Linux / macOS / Windows under [`WSL`](learn.microsoft.com/windows/wsl/about)
     cd pipic/src
     git clone https://github.com/pybind/pybind11
     ```
-- Generate so-file (to be placed in your project folder) by running sequentially:
+- Generate binary .so-file by running sequentially:
     ```
     cmake .
     make
     ```
 - To use compilers other than default, set the `CC` and `CXX` environment variables prior to running `cmake`, or pass the compilers as arguments to `cmake` using the `-DCMAKE_C_COMPILER=` and `-DCMAKE_CXX_COMPILER=` flags.
+
+To use $\pi$-PIC requires that both the `pipic/` subfolder (python package) and the `_pipic.*.so` binary (C/C++ package) are present in your project folder or otherwise made available, e.g. through your `$PATH`.
+
 # Example
 
-To use $\pi$-PIC one needs three files:
--	so-file of the $\pi$-PIC Python module ([download](https://github.com/hi-chi/pipic/releases/) or [compile](#code-compilation))   
--	[pipic_tools.py](src/pipic_tools.py): the file describing the $\pi$-PIC interfaces
-- your own Python script that describes your simulation setup (create or modify one of the [examples](examples))
+To use $\pi$-PIC, follow one of the installation paths above. Then, write your own Python script that describes your simulation setup (you can create or modify one of the [examples](examples)).
 
-Place all of these files in your project folder. Import the $\pi$-PIC module and needed Python packages thus:
+After placing all of the necessary files in your project folder you can import the $\pi$-PIC package as:
 ```
 import pipic
-from pipic_tools import *
+from pipic.tools import *
 import matplotlib.pyplot as plt
 import numpy as np
 ```
