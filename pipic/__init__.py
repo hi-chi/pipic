@@ -5,9 +5,11 @@ Main module of the pipic package.
 from _pipic import *
 import pipic.types as types
 import pipic.consts as consts
-import pipic.ctypes as ctypes
+from pipic.ctypes import addressof
 import pipic.interfaces as interfaces
 
+
+# The attributes below defines the project metadata and are fetched by setup.py
 __project__ = 'pipic'
 __description__ = 'A Python library for particle-in-cell plasma simulation.'
 __author__ = 'Arkady Gonoskov'
