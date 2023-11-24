@@ -80,20 +80,20 @@ To use $\pi$-PIC, follow one of the installation paths above. Then, write your o
 After placing all of the necessary files in your project folder you can import the $\pi$-PIC package as:
 ```
 import pipic
-from pipic.tools import *
+from pipic import consts, types
 import matplotlib.pyplot as plt
 import numpy as np
 from numba import cfunc, carray
 ```
 Next we define main parameters and create an empty container for particles (this also allocates the grid for electromagnetic field):
 ```
-temperature = 1e-6 * electron_mass * light_velocity**2
+temperature = 1e-6 * consts.electron_mass * consts.light_velocity**2
 density = 1e+18
-debye_length = np.sqrt(temperature / (4*np.pi * density * electron_charge**2))
-plasma_period = np.sqrt(np.pi * electron_mass / (density * electron_charge**2))
+debye_length = np.sqrt(temperature / (4*np.pi * density * consts.electron_charge**2))
+plasma_period = np.sqrt(np.pi * consts.electron_mass / (density * consts.electron_charge**2))
 l = 128*debye_length
 xmin, xmax = -l/2, l/2
-field_amplitude = 0.01*4*np.pi * (xmax-xmin) * electron_charge * density
+field_amplitude = 0.01*4*np.pi * (xmax-xmin) * consts.electron_charge * density
 nx = 128
 time_step = plasma_period/64
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)
@@ -104,19 +104,19 @@ Here we instruct the container to use first-order energy-conserving solver and a
 
 To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electron_charge` and mass `electron_mass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in $`[L/4, L/4`] at temperature `temperature` (two-thirds of the average kinetic energy). Assuming `xmax=-xmin=L/2` this corresponds to 100 particles per cell (ppc) on average.   
 ```
-@cfunc(add_particles_callback)
+@cfunc(types.add_particles_callback)
 def density_callback(r, data_double, data_int):
     return density * (abs(r[0]) < l/4)
 
 sim.add_particles(name='electron', number=500*nx,
-                  charge=-electron_charge, mass=electron_mass,
+                  charge=-consts.electron_charge, mass=consts.electron_mass,
                   temperature=temperature, density=density_callback.address)
 ``` 
 The algorithm of function can include mathematical functions and most of the programming elements within functionality of `numba` callbacks (see https://numba.readthedocs.io/en/stable/user/cfunc.html). Note that one can use global variables defined earlier, but their later change within Python routines will not take effect for the function. To communicate data between callback environment and Python environment one can pass address to allocated data blocks of double or integer type, `data_double` and `data_int`, respectively.
 
 To set the initial state of electromagnetic field one defines and pass to container the address to the function that computes the field for a given point of space. Indices `[0]`, `[1]` and `[2]` correspond to $x$, $y$ and $z$, respectively). In the following example, we assign $E_x$ field component in the form of one sinusoidal oscillation with amplitude `field_amplitude` and period `L/2` along $x$ coordinate, other components are set to zero by default:
 ```
-@cfunc(field_loop_callback)
+@cfunc(types.field_loop_callback)
 def setField_callback(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4*np.pi * r[0] / (xmax-xmin)) * (abs(r[0]) < l/4)
 
@@ -132,10 +132,10 @@ fig, axs = plt.subplots(2, constrained_layout=True)
 
 # -------------preparing output for electron distribution f(x, px)--------------
 xpx_dist = np.zeros((64, 128), dtype=np.double)
-pxLim = 5 * np.sqrt(temperature * electron_mass)
+pxLim = 5 * np.sqrt(temperature * consts.electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1] / (xmax-xmin)) * (xpx_dist.shape[0] / (2 * pxLim))
 
-@cfunc(particle_loop_callback)
+@cfunc(types.particle_loop_callback)
 def xpx_callback(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1] * (r[0] - xmin) / (xmax-xmin))
     iy = int(xpx_dist.shape[0] * 0.5 * (1 + p[0] / pxLim))
@@ -154,18 +154,18 @@ fig.colorbar(plot0, ax=axs[0], location='right')
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(name='electron', handler=xpx_callback.address,
-                      data_double=addressof(xpx_dist))
+                      data_double=pipic.addressof(xpx_dist))
     plot0.set_data(xpx_dist)
 ```
 The state of electromagnetic field can be retrieved by making a loop over all grid nodes using previously mentioned function `field_loop()`. However, to make a loop through a subset of locations one can use a different function `custom_field_loop()` that offers a possibility to define an arbitrary set of points for the field interpolation. To do so one needs to introduce two callback functions: the first function defines the location for a give element of subset `it[0]` and the second function defines how the electromagnetic field at this locations contribute to the output. The addresses of these functions are passed to the container together with the size of subset `number_of_iterations`, i.e. `it[0]` will be varied from `0` to `number_of_iterations - 1`. In the following example we apply the routine to fetch $E_x$ as a function of $x$ at 32 locations:
 ```
 Ex = np.zeros((32,), dtype=np.double)
 
-@cfunc(it2r_callback)
+@cfunc(types.it2r_callback)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax-xmin) / Ex.shape[0]
 
-@cfunc(field2data_callback)
+@cfunc(types.field2data_callback)
 def get_Ex(it, r, E, B, data_double, data_int):
     data_double[it[0]] = E[0]
 
@@ -177,7 +177,7 @@ plot_Ex_, = axs[1].plot(x_axis, Ex)
 
 def plot_Ex():
     sim.custom_field_loop(number_of_iterations=Ex.shape[0], it2r=Ex_it2r.address,
-                          field2data=get_Ex.address, data_double=addressof(Ex))
+                          field2data=get_Ex.address, data_double=pipic.addressof(Ex))
     plot_Ex_.set_ydata(Ex)
 ```
 We now can advance the state of the system in the container, making output whenever needed:
