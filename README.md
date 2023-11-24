@@ -85,7 +85,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numba import cfunc, carray
 ```
-Next we define main parameters and create an empty container for particles (this also allocates the grid for electromagnetic field):
+Note that this example also makes use of `matplotlib` for plotting. Next we define main parameters and create an empty container for particles (this also allocates the grid for electromagnetic field):
 ```
 temperature = 1e-6 * consts.electron_mass * consts.light_velocity**2
 density = 1e+18
