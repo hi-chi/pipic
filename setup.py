@@ -10,6 +10,8 @@ from pybind11.setup_helpers import Pybind11Extension
 from setuptools import find_packages, setup
 from setuptools.command.build_ext import build_ext
 
+# The first argument defines the name of the binary.
+# It is customary to name such modules with a leading underscore.
 pipic_cpp_module = Pybind11Extension(
     '_pipic',
     sorted(glob('src/*.cpp')),
@@ -75,7 +77,6 @@ class BuildExt(build_ext):
             opts.append("/DVERSION_INFO=\\'{}\\'"
                         .format(self.distribution.get_version()))
         opts.append('-O3')
-        #opts.append('-shared')
         opts.append('-fPIC')
         opts.append('-fopenmp')
         opts.append('-lfftw3')
@@ -101,6 +102,7 @@ with open('pipic/__init__.py', encoding='utf-8') as fd:
         raise Exception('Caught exception {}'.format(exc))
 
 
+# Fetching project metadata from the pipic/__init__.py attributes.
 version = re.search("__version__ = '(.*)'", lines).group(1)
 author = re.search("__author__ = '(.*)'", lines).group(1)
 author_email = re.search("__author_email__ = '(.*)'", lines).group(1)
@@ -134,8 +136,7 @@ if __name__ == '__main__':
         description=description,
         long_description=long_description,
         ext_modules=[pipic_cpp_module],
-        install_requires=['matplotlib',
-                          'numpy',
+        install_requires=['numpy',
                           'numba'],
         package_data = {"pipic": ["__init__.pyi"]},
         packages=find_packages(),
