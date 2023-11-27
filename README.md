@@ -1,5 +1,5 @@
 <p align="center">
-<img src="docs/pipic_logo.png" width="300">
+<img src="https://raw.githubusercontent.com/hi-chi/pipic/main/docs/pipic_logo.png" width="300">
 </p>
 
 $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collection of relativistic particle-in-cell solvers featuring
@@ -200,7 +200,7 @@ python3 basic_example.py
 The code will produce a sequence of images (takes a few seconds) that can be combined in a movie showing plasma oscillations:
 
 <p align="center">
-<img src="docs/basic_example.gif" width="300">
+<img src="https://raw.githubusercontent.com/hi-chi/pipic/main/docs/basic_example.gif" width="300">
 </p>
 
 This and other examples can be found in [examples](examples). For detailed description of all interfaces see [User interfaces](docs/interfaces.md).
