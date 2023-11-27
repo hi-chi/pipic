@@ -135,6 +135,7 @@ if __name__ == '__main__':
         maintainer=maintainer,
         description=description,
         long_description=long_description,
+        long_description_content_type='text/markdown',
         ext_modules=[pipic_cpp_module],
         install_requires=['numpy',
                           'numba'],
