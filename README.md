@@ -12,7 +12,7 @@ Because of reduced computational demands, the solvers can be found useful for qu
 ---
 
 # Overview
-$\pi$-PIC provides all tools necessary for designing simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. The project and its development is hosted on [GitHub](https://github.com/hi-chi/pipic). 
+$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. The project and its development is hosted on [GitHub](https://github.com/hi-chi/pipic). 
 
 To get started, it should for most cases be sufficient to install $\pi$-PIC via _pip_ (this requires: `gcc`, `openmp` and `fftw3`, see [installation instructions](https://github.com/hi-chi/pipic/blob/1.0.1_dev/INSTALLATION.md) for details):
 ```
