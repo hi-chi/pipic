@@ -145,6 +145,6 @@ if __name__ == '__main__':
         cmdclass={'build_ext': BuildExt},
         zip_safe=False,
         classifiers=classifiers,
-        license=license,
+        # license=license,
         url=url,
     )
