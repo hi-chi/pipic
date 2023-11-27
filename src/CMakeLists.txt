@@ -20,4 +20,4 @@ link_libraries     (PkgConfig::FFTW)
 
 set(pipic
    	pipic.cpp)
-pybind11_add_module(pipic ${pipic})
+pybind11_add_module(_pipic ${pipic})
