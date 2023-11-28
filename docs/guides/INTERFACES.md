@@ -67,10 +67,10 @@ Interfaces and functions of containers
 
 - `get_type_index(type_name)` returns the integer index of the type with name `type_name`
 
-- `add_handler(name, subject, handler, data_double = 0, data_int)` incorporates an extension, which can add and remove particles during state advancement (see [Making extensions](making_extensions.md))
+- `add_handler(name, subject, handler, data_double = 0, data_int)` incorporates an extension, which can add and remove particles during state advancement (see [Making extensions](EXTENSIONS.md))
     - `name` is the name of the extension
     - `subject` a string list of particle types to be affected, `cell` indicates that the handler is to be called for all cells (even if empty), `cell` can be used to affect all particles
-    - `handler` is the address of the function to act on particles (see [Making extensions](making_extensions.md))
+    - `handler` is the address of the function to act on particles (see [Making extensions](EXTENSIONS.md))
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
 
 Convensions, assumptions and properties

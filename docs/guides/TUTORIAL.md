@@ -128,4 +128,4 @@ The code will produce a sequence of images (takes a few seconds) that can be com
 <img src="https://raw.githubusercontent.com/hi-chi/pipic/main/docs/basic_example.gif" width="300">
 </p>
 
-This and other examples can be found in [examples](examples). For a detailed description of all interfaces see [User interfaces](docs/interfaces.md).
+This and other examples can be found in [examples](examples). For a detailed description of all interfaces see [User interfaces](INTERFACES.md).
