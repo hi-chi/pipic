@@ -3,6 +3,7 @@
 
 # Temporary files
 tmp*
+out/
 
 # Data files
 *.npy
