@@ -59,7 +59,7 @@ Interfaces and functions of containers
 
 - `fourier_solver_settings(divergence_cleaning=-1, sin2_kfilter=-1)` provides additional setting of Fourier-based field solver, value `-1` means keeping unchanged, `0` and `1` mean disable and enable, respectively
     - `divergence_cleaning` defines is divergence cleaning is applied (`True` by default for `solver=fourier_boris`)
-    - `sin2_kfilter` defines if high frequency field components are suppressed (see [fourier_solver.h](src/) lines 219-224)
+    - `sin2_kfilter` defines if high frequency field components are suppressed (see [fourier_solver.h](../../src/fourier_solver.h) lines 219-224)
     
 - `set_rng_seed(seed)` provides a way to change the seed used for pseudo-random number generation
 

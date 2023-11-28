@@ -1,6 +1,6 @@
 # Tutorial
 
-To use $\pi$-PIC, follow one of the installation paths described in the [installation instructions](INSTALLATION.md). Then, write your own Python script describing your simulation setup (you can start from one of the [examples](examples)).
+To use $\pi$-PIC, follow one of the installation paths described in the [installation instructions](INSTALLATION.md). Then, write your own Python script describing your simulation setup (you can start from one of the [examples](../../examples)).
 
 After sucessfull installation of $\pi$-PIC you can import the package as:
 ```
@@ -118,7 +118,7 @@ for i in range(32):
     fig.savefig(output_folder + '/im' + str(i) + '.png')
     print(i, '/', 32)
 ```
-To perform the simulation save this code as [basic_example.py](examples/basic_example.py) and run:
+To perform the simulation save this code as [basic_example.py](../../examples/basic_example.py) and run:
 ```
 python3 basic_example.py
 ```
@@ -128,4 +128,4 @@ The code will produce a sequence of images (takes a few seconds) that can be com
 <img src="https://raw.githubusercontent.com/hi-chi/pipic/main/docs/basic_example.gif" width="300">
 </p>
 
-This and other examples can be found in [examples](examples). For a detailed description of all interfaces see [User interfaces](INTERFACES.md).
+This and other examples can be found in [examples](../../examples). For a detailed description of all interfaces see [User interfaces](INTERFACES.md).
