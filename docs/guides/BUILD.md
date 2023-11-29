@@ -49,3 +49,16 @@ In order to actually distribute it, here via [TestPyPI](https://test.pypi.org/),
 ```
 twine upload --repository testpypi dist/*.tar.gz
 ```
+
+## Links
+For more information see the following PEPs:
+- [PEP440](https://peps.python.org/pep-0440/)
+- [PEP518](https://peps.python.org/pep-0518/)
+- [PEP621](https://peps.python.org/pep-0621/)
+
+For guides, see:
+- https://packaging.python.org/en/latest/tutorials/packaging-projects/
+- https://scikit-hep.org/developer
+
+On version capping, read:
+- https://iscinumpy.dev/post/bound-version-constraints/
