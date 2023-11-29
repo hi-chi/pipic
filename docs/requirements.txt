@@ -1,0 +1,2 @@
+sphinx # API docs
+sphinx_rtd_theme # ReadTheDocs theme
