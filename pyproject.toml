@@ -1,3 +1,31 @@
 [build-system]
 requires = ["setuptools>=42", "wheel", "pybind11"]
 build-backend = "setuptools.build_meta"
+
+
+[project]
+name = 'pipic'
+version = '1.0.1.dev1'
+description = 'A Python library for particle-in-cell plasma simulation.'
+
+authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' }]
+maintainers = [{ name = 'The pipic developers team' }]
+
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Physics'
+]
+
+requires-python = '>=3.8'
+dependencies = ['numpy', 'numba']
+readme = 'README.md'
+
