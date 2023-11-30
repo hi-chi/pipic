@@ -88,18 +88,6 @@ class BuildExt(build_ext):
 if sys.version_info < (3, 8, 0, 'final', 0):
     raise SystemExit('Python 3.8 or later is required!')
 
-with open('README.md', encoding='utf-8') as fd:
-    long_description = fd.read()
-
-with open('pipic/__init__.py', encoding='utf-8') as fd:
-    try:
-        lines = ''
-        for item in fd.readlines():
-            item = item
-            lines += item + '\n'
-    except Exception as exc:
-        raise Exception('Caught exception {}'.format(exc))
-
 
 if __name__ == '__main__':
     setup(
