@@ -29,3 +29,16 @@ requires-python = '>=3.8'
 dependencies = ['numpy', 'numba']
 readme = 'README.md'
 
+
+[project.optional-dependencies]
+examples = [
+    'matplotlib'
+]
+test = [
+    'pytest',
+]
+docs = [
+    'sphinx',
+    'sphinx_rtd_theme'
+]
+dev = ['pipic[test,examples]']
