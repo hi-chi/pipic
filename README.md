@@ -2,6 +2,11 @@
 <img src="https://raw.githubusercontent.com/hi-chi/pipic/1.0.1_dev/docs/logo/pipic_logo.png" width="300">
 </p>
 
+---
+
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collection of relativistic particle-in-cell solvers featuring
 - exact energy conservation;
 - absence of numerical dispersion.
@@ -34,6 +39,10 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 
 
 <!-- prettier-ignore-start -->
+[pypi-link]:                https://pypi.org/project/pipic/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/pipic
+[pypi-version]:             https://badge.fury.io/py/pipic.svg
+
 [GitHub]: https://github.com/hi-chi/pipic
 [installation]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INSTALLATION.md
 [tutorial]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/TUTORIAL.md
