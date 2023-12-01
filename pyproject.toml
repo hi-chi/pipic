@@ -49,3 +49,7 @@ dev = ['pipic[test,examples]']
 [tool.setuptools_scm]
 version_file = "pipic/_version.py"
 local_scheme = "dirty-tag"
+
+
+[project.urls]
+Homepage = "https://github.com/hi-chi/pipic"
