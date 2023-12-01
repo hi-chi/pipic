@@ -92,7 +92,6 @@ if sys.version_info < (3, 8, 0, 'final', 0):
 if __name__ == '__main__':
     setup(
         ext_modules=[pipic_cpp_module],
-        package_data={"pipic": ["__init__.pyi"]},
         packages=find_packages(),
         cmdclass={'build_ext': BuildExt}
     )
