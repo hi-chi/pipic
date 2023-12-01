@@ -48,4 +48,4 @@ dev = ['pipic[test,examples]']
 # Requires project.dynamic = ["version"]
 [tool.setuptools_scm]
 version_file = "pipic/_version.py"
-local_scheme = "no-local-version"
+local_scheme = "dirty-tag"
