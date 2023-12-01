@@ -41,7 +41,6 @@ namespace py = pybind11;
 typedef complex<double> Complex;
 
 PYBIND11_MODULE(_pipic, object) {
-    object.def("info", &pipic_info, "Info about pi-PIC");
     object.attr("light_velocity") = lightVelocity;
     object.attr("electron_charge") = electronCharge;
     object.attr("electron_mass") = electronMass;
