@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from glob import glob
-import re
 import sys
 
 import setuptools
@@ -89,62 +88,10 @@ class BuildExt(build_ext):
 if sys.version_info < (3, 8, 0, 'final', 0):
     raise SystemExit('Python 3.8 or later is required!')
 
-with open('README.md', encoding='utf-8') as fd:
-    long_description = fd.read()
-
-with open('pipic/__init__.py', encoding='utf-8') as fd:
-    try:
-        lines = ''
-        for item in fd.readlines():
-            item = item
-            lines += item + '\n'
-    except Exception as exc:
-        raise Exception('Caught exception {}'.format(exc))
-
-
-# Fetching project metadata from the pipic/__init__.py attributes.
-version = re.search("__version__ = '(.*)'", lines).group(1)
-author = re.search("__author__ = '(.*)'", lines).group(1)
-author_email = re.search("__author_email__ = '(.*)'", lines).group(1)
-maintainer = re.search("__maintainer__ = '(.*)'", lines).group(1)
-description = re.search("__description__ = '(.*)'", lines).group(1)
-url = re.search("__url__ = '(.*)'", lines).group(1)
-license = re.search("__license__ = '(.*)'", lines).group(1)
-
-classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'Operating System :: OS Independent',
-    'Programming Language :: Python :: 3 :: Only',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
-    'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: {}'.format(license),
-    'Topic :: Scientific/Engineering :: Physics']
-
 
 if __name__ == '__main__':
-
     setup(
-        name='pipic',
-        version=version,
-        author=author,
-        author_email=author_email,
-        maintainer=maintainer,
-        description=description,
-        long_description=long_description,
-        long_description_content_type='text/markdown',
         ext_modules=[pipic_cpp_module],
-        install_requires=['numpy',
-                          'numba'],
-        package_data = {"pipic": ["__init__.pyi"]},
         packages=find_packages(),
-        python_requires='>=3.8',
-        cmdclass={'build_ext': BuildExt},
-        zip_safe=False,
-        classifiers=classifiers,
-        # license=license,
-        url=url,
+        cmdclass={'build_ext': BuildExt}
     )

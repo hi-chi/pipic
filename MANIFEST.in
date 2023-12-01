@@ -1,2 +1,0 @@
-include *.h
-recursive-include src *.h *.py

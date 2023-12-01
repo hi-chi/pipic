@@ -2,6 +2,11 @@
 <img src="https://raw.githubusercontent.com/hi-chi/pipic/1.0.1_dev/docs/logo/pipic_logo.png" width="300">
 </p>
 
+---
+
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collection of relativistic particle-in-cell solvers featuring
 - exact energy conservation;
 - absence of numerical dispersion.
@@ -12,9 +17,9 @@ Because of reduced computational demands, the solvers can be found useful for qu
 ---
 
 # Overview
-$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. The project and its development is hosted on [GitHub](https://github.com/hi-chi/pipic). 
+$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. The project and its development are hosted on [GitHub][]. 
 
-To get started, it should for most cases be sufficient to install $\pi$-PIC via _pip_ (this requires: `gcc`, `openmp` and `fftw3`, see [installation instructions](https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INSTALLATION.md) for details):
+To get started, it should for most cases be sufficient to install $\pi$-PIC via _pip_ (this requires: `gcc`, `openmp` and `fftw3`, see [installation instructions][installation] for details):
 ```
 pip install pipic
 ```
@@ -26,8 +31,22 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial](https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/TUTORIAL.md). A complete list of supported interfaces can be found [here](https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INTERFACES.md). The development of extensions is detailed and exemplified [here](https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/EXTENSIONS.md). 
+We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extensions]. 
 
 
 # References
-A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [arXiv:2302.01893](https://arxiv.org/abs/2302.01893) (2023).
+A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [arXiv:2302.01893][] (2023).
+
+
+<!-- prettier-ignore-start -->
+[pypi-link]:                https://pypi.org/project/pipic/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/pipic
+[pypi-version]:             https://badge.fury.io/py/pipic.svg
+
+[GitHub]: https://github.com/hi-chi/pipic
+[installation]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INSTALLATION.md
+[tutorial]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/TUTORIAL.md
+[interfaces]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INTERFACES.md
+[extensions]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/EXTENSIONS.md
+[arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
+<!-- prettier-ignore-end -->

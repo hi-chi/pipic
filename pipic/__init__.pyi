@@ -3,15 +3,7 @@ import pipic.consts as consts
 import pipic.ctypes as ctypes
 import pipic.interfaces as interfaces
 
-__project__: str
-__description__: str
-__author__: str
-__author_email__: str
-__copyright__: str
-__license__: str
 __version__: str
-__maintainer__: str
-__status__: str
 
 electron_charge: float
 electron_mass: float

@@ -1,3 +1,55 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "pybind11"]
+requires = ["setuptools>=64", "setuptools-scm>=8", "wheel", "pybind11"]
 build-backend = "setuptools.build_meta"
+
+
+[project]
+name = 'pipic'
+description = 'A Python library for particle-in-cell plasma simulation.'
+
+authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' }]
+maintainers = [{ name = 'The pipic developers team' }]
+
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Intended Audience :: Science/Research',
+    'Topic :: Scientific/Engineering :: Physics'
+]
+
+requires-python = '>=3.8'
+dependencies = ['numpy', 'numba']
+readme = 'README.md'
+
+dynamic = ["version"]  # Version is determined using setuptools_scm
+
+[project.optional-dependencies]
+examples = [
+    'matplotlib'
+]
+test = [
+    'pytest',
+]
+docs = [
+    'sphinx',
+    'sphinx_rtd_theme'
+]
+dev = ['pipic[test,examples]']
+
+
+# Automatically determine project version using setuptools_scm.
+# Requires project.dynamic = ["version"]
+[tool.setuptools_scm]
+version_file = "pipic/_version.py"
+local_scheme = "dirty-tag"
+
+
+[project.urls]
+Homepage = "https://github.com/hi-chi/pipic"
