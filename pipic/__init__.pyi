@@ -3,6 +3,7 @@ import pipic.consts as consts
 import pipic.ctypes as ctypes
 import pipic.interfaces as interfaces
 
+__version__: str
 
 electron_charge: float
 electron_mass: float

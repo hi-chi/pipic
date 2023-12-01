@@ -2,6 +2,8 @@
 """
 Main module of the pipic package.
 """
+from ._version import __version__
+
 from _pipic import *
 import pipic.types as types
 import pipic.consts as consts

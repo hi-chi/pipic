@@ -23,6 +23,7 @@ eggs/
 .eggs/
 *.egg-info/
 *.egg
+_version.py
 
 # Sphinx documentation
 docs/_build/
