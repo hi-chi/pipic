@@ -40,28 +40,6 @@ namespace py = pybind11;
 
 typedef complex<double> Complex;
 
-void pipic_info()
-{
-    cout << "---------------------------------------------------------------------------------------------------------" << endl;
-    cout << "pi-PIC, Copyright 2023 Arkady Gonoskov" << endl;
-    cout << "---------------------------------------------------------------------------------------------------------" << endl;
-    cout << "pi-PIC is free software: you can redistribute it and/or modify it under the terms of the GNU General" << endl;
-    cout << "Public License as published by the Free Software Foundation, either version 3 of the License, or (at your" << endl;
-    cout << "option) any later version." << endl;
-    cout << endl;
-    cout << "pi-PIC is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even" << endl;
-    cout << "the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the" << endl;
-    cout << "GNU General Public License for more details." << endl;
-    cout << endl;
-    cout << "You should have received a copy of the GNU General Public License along with pi-PIC. If not, see"<< endl;
-    cout << "<https://www.gnu.org/licenses/>." << endl;
-    cout << "---------------------------------------------------------------------------------------------------------" << endl;
-    cout << "You are currently using version 1.0" << endl;
-    cout << "Website: https://github.com/hi-chi/pipic" << endl;
-    cout << "To notify about bugs and/or request functionality extensions contact arkady.gonoskov@gu.se." << endl;
-    cout << "---------------------------------------------------------------------------------------------------------" << endl;
-}
-
 PYBIND11_MODULE(_pipic, object) {
     object.def("info", &pipic_info, "Info about pi-PIC");
     object.attr("light_velocity") = lightVelocity;
