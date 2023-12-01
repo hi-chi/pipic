@@ -48,3 +48,4 @@ dev = ['pipic[test,examples]']
 # Requires project.dynamic = ["version"]
 [tool.setuptools_scm]
 version_file = "pipic/_version.py"
+version_scheme = "release-branch-semver"
