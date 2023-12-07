@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/hi-chi/pipic/1.0.1_dev/docs/logo/pipic_logo.png" width="300">
+<img src="https://raw.githubusercontent.com/hi-chi/pipic/main/docs/logo/pipic_logo.png" width="300">
 </p>
 
 ---
@@ -44,9 +44,9 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [pypi-version]:             https://badge.fury.io/py/pipic.svg
 
 [GitHub]: https://github.com/hi-chi/pipic
-[installation]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INSTALLATION.md
-[tutorial]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/TUTORIAL.md
-[interfaces]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/INTERFACES.md
-[extensions]: https://github.com/hi-chi/pipic/blob/1.0.1_dev/docs/guides/EXTENSIONS.md
+[installation]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INSTALLATION.md
+[tutorial]: https://github.com/hi-chi/pipic/blob/main/docs/guides/TUTORIAL.md
+[interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
+[extensions]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSIONS.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
 <!-- prettier-ignore-end -->
