@@ -14,7 +14,7 @@ stubgen -m _pipic
 
 ## Build
 ### Overview
-The build process primarily revolves around three files: [setup.py](../../setup.py), [pyproject.toml](../../pyproject.toml) and [MANIFEST.in](../../MANIFEST.in), where we use [`setuptools`](https://pypi.org/project/setuptools/) to compile and install the package. This can be done by writing:
+The build process primarily revolves around two files: [setup.py](../../setup.py) and [pyproject.toml](../../pyproject.toml) (previously also a [MANIFEST.in](../../MANIFEST.in)), where we use [`setuptools`](https://pypi.org/project/setuptools/) to compile and install the package. This can be done by writing:
 ```
 python setup.py install
 ```
@@ -25,16 +25,16 @@ pip install .
 This also installs the package in your local environment, but now generates no excess local folders. The installation is now split between the compiled binary on one hand and the python package on the other.
 
 A quick summary of the three files mentioned above:
-- [setup.py](../../setup.py) is the primary script used to actually build the project, using `setuptools`. It defines the build parameters, such as flags and installation dependencies, and grabs project metadata from [\_\_init\_\_.py](../../pipic/__init__.py).
+- [setup.py](../../setup.py) is the primary script used to actually build the project, using `setuptools`. It defines the build parameters, such as flags and installation dependencies. (Previously grabbed project metadata from [\_\_init\_\_.py](../../pipic/__init__.py)).
 
-- [pyproject.toml](../../pyproject.toml) is used to define the build dependencies. This is needed because _e.g._ pybind11 is required for building before `setup()` is run in [setup.py](../../setup.py).
+- [pyproject.toml](../../pyproject.toml) is used to define the build dependencies. This is needed because _e.g._ pybind11 is required for building before `setup()` is run in [setup.py](../../setup.py). Project metadata is defined statically in this file.
 
-- [MANIFEST.in](../../MANIFEST.in) is used to define which files and folders will be used in the build process. When building, these files are moved to a separate folder. Failure to specify them leads to errors, _e.g._ due to missing `.h` files.
+- [MANIFEST.in](../../MANIFEST.in) can be used to define which files and folders will be used in the build process. When building, these files are moved to a separate folder. Failure to specify them may lead to errors, _e.g._ due to missing `.h` files.
 
 ### Deployment
 To build the project for deployment requires the python package `build` (`pip install build`). To build, simply write:
 ```
-CC=gcc-13 CXX=g++-13 python -m build
+python -m build
 ```
 This creates two local folders, `dist/` and `pipic.egg-info/`, where the former contains the distribution file(s), often in terms of a binary wheel (`.wh`) and source archive (`.tar.gz`). Distribution can be done with either (or both) but source is generally recommended as guaranteeing compatibility of binaries is likely to require more work.
 
@@ -50,6 +50,9 @@ In order to actually distribute it, here via [TestPyPI](https://test.pypi.org/),
 twine upload --repository testpypi dist/*.tar.gz
 ```
 
+### Versioning
+Versioning is done automatically using [`setuptools-scm`](https://setuptools-scm.readthedocs.io/en/latest/config/#api-reference). When building the project, a version file `_version.py` containing the version number is created, based on the latest `git` tag. This file should not be tracked, but must be shipped with source upon deployment (this is already done automatically). All versioning should rely on this file. 
+
 ## Links
 For more information see the following PEPs:
 - [PEP440](https://peps.python.org/pep-0440/)
@@ -59,6 +62,8 @@ For more information see the following PEPs:
 For guides, see:
 - https://packaging.python.org/en/latest/tutorials/packaging-projects/
 - https://scikit-hep.org/developer
+- https://pypi.org/project/setuptools-scm/4.1.2/
+- https://learn.scientific-python.org/development/guides/packaging-compiled/
 
 On version capping, read:
 - https://iscinumpy.dev/post/bound-version-constraints/
