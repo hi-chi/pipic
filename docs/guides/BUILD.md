@@ -53,6 +53,12 @@ twine upload --repository testpypi dist/*.tar.gz
 ### Versioning
 Versioning is done automatically using [`setuptools-scm`](https://setuptools-scm.readthedocs.io/en/latest/config/#api-reference). When building the project, a version file `_version.py` containing the version number is created, based on the latest `git` tag. This file should not be tracked, but must be shipped with source upon deployment (this is already done automatically). All versioning should rely on this file. 
 
+To check the presumptive version, simply write
+```
+python setup.py --version
+```
+
+
 ## Links
 For more information see the following PEPs:
 - [PEP440](https://peps.python.org/pep-0440/)
