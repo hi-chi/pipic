@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description: Here we define necessary cfunc decorators, as well as interfaces for code extension.
 """
+
 import _pipic
 import numpy as np
 
