@@ -51,7 +51,7 @@ int64_t handler(double location, double thickness, int TypeTo){
 };
 
 namespace py = pybind11;
-PYBIND11_MODULE(x_converter_c, object) {
+PYBIND11_MODULE(_x_converter_c, object) {
     object.attr("name") = name;
     object.def("handler", &handler, py::arg("location"), py::arg("thickness"), py::arg("typeTo"));
 }

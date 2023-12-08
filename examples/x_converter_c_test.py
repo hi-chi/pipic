@@ -3,7 +3,6 @@ from pipic.tools import *
 from numba import cfunc, carray
 import matplotlib.pyplot as plt
 import math, numpy, os, time
-import x_converter_c
 
 #===========================SIMULATION INITIALIZATION===========================
 temperature = 1e-6*electron_mass*light_velocity**2
@@ -32,9 +31,9 @@ sim.add_particles(name='electron1', number=nx*500,
                  temperature=temperature, density=density_callback1.address)
 
 #------------------------------adding extension---------------------------------
-extension_handler = x_converter_c.handler(location=-L/4-L/32, thickness=L/16,
+extension_handler = pipic.extensions.x_converter_c.handler(location=-L/4-L/32, thickness=L/16,
                                 typeTo=sim.get_type_index('electron'))
-sim.add_handler(name=x_converter_c.name, subject='electron1',
+sim.add_handler(name=pipic.extensions.x_converter_c.name, subject='electron1',
                handler=extension_handler)
 #---------------------------setting initial field-------------------------------
 @cfunc(field_loop_callback)

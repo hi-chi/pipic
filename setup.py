@@ -16,13 +16,14 @@ pipic_cpp_module = Pybind11Extension(
     sorted(glob('src/*.cpp')),
     language='c++')
 
-# Build one module for each subfolder in extensions_directory
+# Build one module for each subfolder in extensions_directory.
+# The modules are named with a leading underscore.
 extensions_directory = 'src/extensions/'
 extension_modules = []
 for name in os.listdir(extensions_directory):
     if os.path.isdir(extensions_directory + name):
         cpp_module = Pybind11Extension(
-            name,
+            '_' + name,
             sorted(glob(extensions_directory + name + '/*.cpp')),
             language='c++',
             include_dirs=['src/'])

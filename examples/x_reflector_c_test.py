@@ -3,7 +3,6 @@ from pipic.tools import *
 from numba import cfunc, carray
 import matplotlib.pyplot as plt
 import math, numpy, os, time
-import x_reflector_c
 
 #===========================SIMULATION INITIALIZATION===========================
 temperature = 1e-6*electron_mass*light_velocity**2
@@ -18,8 +17,8 @@ time_step = plasma_period/64
 #---------------------setting solver and simulation region---------------------- 
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)                                           
 #-----------------------adding the handler of extension-------------------------
-sim.add_handler(name=x_reflector_c.name, subject='electron',
-               handler=x_reflector_c.handler(location=L/4+L/32, thickness=L/16))
+sim.add_handler(name=pipic.extensions.x_reflector_c.name, subject='electron',
+               handler=pipic.extensions.x_reflector_c.handler(location=L/4+L/32, thickness=L/16))
 #------------------------------adding electrons---------------------------------
 @cfunc(add_particles_callback)
 def density_callback(r, data_double, data_int):

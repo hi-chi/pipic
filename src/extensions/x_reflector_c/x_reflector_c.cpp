@@ -42,7 +42,7 @@ int64_t handler(double location, double thickness){
 };
 
 namespace py = pybind11;
-PYBIND11_MODULE(x_reflector_c, object) {
+PYBIND11_MODULE(_x_reflector_c, object) {
     object.attr("name") = name;
     object.def("handler", &handler, py::arg("location"), py::arg("thickness"));
 }
