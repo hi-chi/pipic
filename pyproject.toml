@@ -10,6 +10,9 @@ description = 'A Python library for particle-in-cell plasma simulation.'
 authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' }]
 maintainers = [{ name = 'The pipic developers team' }]
 
+readme = 'README.md'
+dynamic = ["version"]  # Version is determined using setuptools_scm
+
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
@@ -25,13 +28,13 @@ classifiers = [
 ]
 
 requires-python = '>=3.8'
-dependencies = ['numpy', 'numba']
-readme = 'README.md'
-
-dynamic = ["version"]  # Version is determined using setuptools_scm
+dependencies = [
+    'numpy>=1.19; python_version~=3.8',
+    'numba>=0.49; python_version~=3.8'
+]
 
 [project.optional-dependencies]
-examples = [
+mpl = [
     'matplotlib'
 ]
 test = [
