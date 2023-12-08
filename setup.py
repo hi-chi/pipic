@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from glob import glob
-import sys
+import sys, os
 
 import setuptools
 from pybind11.setup_helpers import Pybind11Extension
@@ -16,6 +16,17 @@ pipic_cpp_module = Pybind11Extension(
     sorted(glob('src/*.cpp')),
     language='c++')
 
+# Build one module for each subfolder in extensions_directory
+extensions_directory = 'src/extensions/'
+extension_modules = []
+for name in os.listdir(extensions_directory):
+    if os.path.isdir(extensions_directory + name):
+        cpp_module = Pybind11Extension(
+            name,
+            sorted(glob(extensions_directory + name + '/*.cpp')),
+            language='c++',
+            include_dirs=['src/'])
+        extension_modules.append(cpp_module)
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
@@ -91,7 +102,7 @@ if sys.version_info < (3, 8, 0, 'final', 0):
 
 if __name__ == '__main__':
     setup(
-        ext_modules=[pipic_cpp_module],
+        ext_modules=[pipic_cpp_module, *extension_modules],
         packages=find_packages(),
         cmdclass={'build_ext': BuildExt}
     )
