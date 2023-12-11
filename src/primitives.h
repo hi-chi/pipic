@@ -111,7 +111,7 @@ double3 operator * (const double3& v, double a)
 
 double3 operator / (const double3& v, double a)
 {
-    return double3(v.x / a, v.y / a, v.z / a);
+    return double3(v.x, v.y, v.z) * (1/a);
 };
 
 double3 operator + (const double3& a, const double3& b)
