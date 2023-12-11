@@ -57,26 +57,26 @@ struct cellInterface // main structure for developing extensions; provides acces
     //access to basic parameters:
     public:
     const int3 &i, &n; // three-index of the cell and three-size of the grid
-    const int &dim, &aNum; // dimensionality and the number of additional attributes of particles
-    const int &PType, &PSize; // particle type being processed and their number in the cell being processed
-    const int &NPcapacity; // capacity of the buffer for new particles
-    int &NPSize; // a variable to indicate the number of particles to be added (must stay <= NPcapacity)
+    const int &dim, &numberOfAttributes; // dimensionality and the number of additional attributes of particles
+    const int &particleTypeIndex, &particleSubsetSize; // particle type being processed and their number in the cell being processed
+    const int &particleBufferCapacity; // capacity of the buffer for new particles
+    int &particleBufferSize; // a variable to indicate the number of particles to be added (must stay <= particleBufferCapacity)
     const int &gridType; // indicates the type of the grid and defines the way of interpolation
     const int &threadNum; // indicates the number of active thread, use 1 to avoid clashes (0 sometimes is not called)
     const double3 &globalMin, &globalMax; // the limits of computational region and cell being processed
     const double3 &step, &invStep; // step size and its inverse;
     const double &timeStep; // time step;
-    const double &PCharge, &PMass; // charge and mass of particles being processed
+    const double &particleCharge, &particleMass; // charge and mass of particles being processed
     const double3 cellMin(){return {globalMin.x + i.x*step.x, globalMin.y + i.y*step.y, globalMin.z + i.z*step.z};}
     const double3 cellMax(){return {globalMin.x + (i.x+1)*step.x, globalMin.y + (i.y+1)*step.y, globalMin.z + (i.z+1)*step.z};}
    
     //access to particles being processed and new to be added (indices must be within limits):
-    particle* P(int i){return (particle*)(P_data + i*(8 + I[7]));} // pointer to i-th particle to be processed (use of attributes requires manual compartibility control)
-    //Warning: It is foriden to change particles' coordinates P(i)->r
-    //To remove a particle set its weight P(i).w to zero.
-    particle* NP(int i){return (particle*)(NP_data + i*(8 + I[7]));} // pointer to i-th particle in the buffer for new particles
+    particle* Particle(int i){return (particle*)(P_data + i*(8 + I[7]));} // pointer to i-th particle to be processed (use of attributes requires manual compartibility control)
+    //Warning: It is foriden to change particles' coordinates Particle(i)->r
+    //To remove a particle set its weight Particle(i).w to zero.
+    particle* newParticle(int i){return (particle*)(NP_data + i*(8 + I[7]));} // pointer to i-th particle in the buffer for new particles
     //The type is to be placed into id (by convention).
-    double& a(particle *P, int ia){ return *((double*)P + 8 + ia);} // access to ia-th attribute; ia must be < aNum
+    double& attribute(particle *P, int attributeIdx){ return *((double*)P + 8 + attributeIdx);} // access to attributeIdx-th attribute; attributeIdx must be < numberOfAttributes
 
     //access to field:
     void interpolateField(double3 r, double3 &E, double3 &B); // interpolates E and B field at point r 
@@ -85,11 +85,11 @@ struct cellInterface // main structure for developing extensions; provides acces
     cellInterface(int *I, double *D, double *F, double *P, double *NP):
     I(I), D(D), F_data(F), P_data(P), NP_data(NP),
     i(*((int3*)I)), n(*((int3*)I + 1)), 
-    dim(I[6]), aNum(I[7]), PType(I[8]), PSize(I[9]), NPcapacity(I[10]), NPSize(I[11]), 
+    dim(I[6]), numberOfAttributes(I[7]), particleTypeIndex(I[8]), particleSubsetSize(I[9]), particleBufferCapacity(I[10]), particleBufferSize(I[11]), 
     gridType(I[12]), threadNum(I[13]),
     globalMin(*(double3*)(D)), globalMax(*(double3*)(D + 3)), 
     step(*(double3*)(D + 6)), invStep(*(double3*)(D + 9)),
-    timeStep(D[12]), PCharge(D[13]), PMass(D[14])
+    timeStep(D[12]), particleCharge(D[13]), particleMass(D[14])
     {}  
     
     friend struct ensemble;

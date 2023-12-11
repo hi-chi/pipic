@@ -29,9 +29,9 @@ static double xMin, xMax;
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
-    for(int ip = 0; ip < CI.PSize; ip++)
-        if((CI.P(ip)->r.x > xMin)&&(CI.P(ip)->r.x < xMax)&&(CI.P(ip)->p.x > 0))
-            CI.P(ip)->p.x *= -1;
+    for(int ip = 0; ip < CI.particleSubsetSize; ip++)
+        if((CI.Particle(ip)->r.x > xMin)&&(CI.Particle(ip)->r.x < xMax)&&(CI.Particle(ip)->p.x > 0))
+            CI.Particle(ip)->p.x *= -1;
 };
 
 // extension initialization

@@ -101,7 +101,7 @@ struct ensemble
             int *I = new int[14];
             I[3] = box.n.x; I[4] = box.n.y; I[5] = box.n.z;
             I[6] = box.dim; I[7] = sizeof(particle)/8 - 8;
-            I[10] = thread[iTh].NP.size(); // capacity of the buffer (is extended automatically when PSize exceeds its half on the previous call)
+            I[10] = thread[iTh].NP.size(); // capacity of the buffer (is extended automatically when particleSubsetSize exceeds its half on the previous call)
             double *D = new double[16];
             D[0] = box.min.x; D[1] = box.min.y; D[2] = box.min.z;
             D[3] = box.max.x; D[4] = box.max.y; D[5] = box.max.z;
@@ -250,25 +250,25 @@ struct ensemble
     }
     void accommodateNPfromCI(unsigned int ig, string moduleName, bool directOrder){
         threadData &activeThread(thread[omp_get_thread_num()]); 
-        for(int j = 0; j < activeThread.CI->NPSize; j++){
+        for(int j = 0; j < activeThread.CI->particleBufferSize; j++){
             int it = activeThread.NP[j].id; // by convention the type of new particles is placed to id;
             activeThread.NP[j].id = generateID();
             if(checkLocation(activeThread.NP[j].r, activeThread.CI->cellMin(), activeThread.CI->cellMax())){
                 checkPushBack(ig, it, activeThread.NP[j]);
                 if(directOrder) {
-                    if(it >= activeThread.CI->PType) cell[ig][it]->endShift++;
+                    if(it >= activeThread.CI->particleTypeIndex) cell[ig][it]->endShift++;
                 } else {
-                    if(it <= activeThread.CI->PType) cell[ig][it]->endShift++;
+                    if(it <= activeThread.CI->particleTypeIndex) cell[ig][it]->endShift++;
                 }
             } else
                 pipic_log.message("pi-PIC error: ignoring an attempt of module<" + moduleName + "> to add a particle outside current cell.", true);
         }
-        if(unlikely(2*activeThread.CI->NPSize > activeThread.CI->NPcapacity)){
+        if(unlikely(2*activeThread.CI->particleBufferSize > activeThread.CI->particleBufferCapacity)){
             activeThread.NP.resize(2*activeThread.NP.size());
             activeThread.CI->I[10] = activeThread.NP.size();
             activeThread.CI->NP_data = (double*)(&(activeThread.NP[0]));
         }
-        activeThread.CI->NPSize = 0;
+        activeThread.CI->particleBufferSize = 0;
     }
     template<typename pic_solver, typename field_solver>
     void apply_actOnCellHandlers(pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
@@ -299,8 +299,8 @@ struct ensemble
             accommodateNPfromCI(ig, Manager.Handler[ih]->name, directOrder);
             removeZeroWeightParticles(cell[ig][it]);
             activeThread.CI->P_data = (double*)(&(cell[ig][it]->P[0]));
-            activeThread.CI->I[9] = cell[ig][it]->P.size() - cell[ig][it]->endShift; // set PSize;
-            if(activeThread.CI->PSize == 0) break;
+            activeThread.CI->I[9] = cell[ig][it]->P.size() - cell[ig][it]->endShift; // set particleSubsetSize;
+            if(activeThread.CI->particleSubsetSize == 0) break;
         }
     }
     void processCharglessParticle(double mass, double timeStep, particle &P){
@@ -599,7 +599,7 @@ struct ensemble
     }
     inline void checkMove(particle *P, bool &move, bool &postOmpMove){
         threadData &activeThread(thread[omp_get_thread_num()]);
-        int ix = activeThread.CI->i.x, iy = activeThread.CI->i.y, iz = activeThread.CI->i.z, it = activeThread.CI->PType;
+        int ix = activeThread.CI->i.x, iy = activeThread.CI->i.y, iz = activeThread.CI->i.z, it = activeThread.CI->particleTypeIndex;
 
         int sx = floor((P->r.x - box.min.x)*box.invStep.x) - ix;
         int sy = 0; if(box.n.y > 1) sy = floor((P->r.y - box.min.y)*box.invStep.y) - iy;

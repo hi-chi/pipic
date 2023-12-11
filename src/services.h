@@ -165,13 +165,13 @@ struct cellHandler
         handler_ = (void(*)(int*, double*, double*, double*, double*, double*, int*))handler;
     }
     void handle(cellInterface *CI){// must be thread-safe
-        if(CI->PType == -1) Chronometer_actOnCell[omp_get_thread_num()].start();
+        if(CI->particleTypeIndex == -1) Chronometer_actOnCell[omp_get_thread_num()].start();
         else Chronometer_particles[omp_get_thread_num()].start();
         handler_(CI->I, CI->D, CI->F_data, CI->P_data, CI->NP_data, dataDouble, dataInt);
-        if(CI->PType == -1) Chronometer_actOnCell[omp_get_thread_num()].stop();
+        if(CI->particleTypeIndex == -1) Chronometer_actOnCell[omp_get_thread_num()].stop();
         else {
             Chronometer_particles[omp_get_thread_num()].stop();
-            latest_numberProcessed[omp_get_thread_num()] += CI->PSize;
+            latest_numberProcessed[omp_get_thread_num()] += CI->particleSubsetSize;
         }
     }
     void preLoop(vector<string> typeName){        
