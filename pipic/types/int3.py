@@ -28,7 +28,7 @@ __all__ = ['Int3']
 
 @jitclass([('x', nb.types.int32), ('y', nb.types.int32), ('z', nb.types.int32),])
 class Int3:
-    def __init__(self, x = 0, y = 0, z = 0):
+    def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
         self.z = z

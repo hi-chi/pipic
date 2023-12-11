@@ -22,6 +22,7 @@ Contact: arkady.gonoskov@gu.se.
 import numpy as np
 from numba import types, int32
 from numba.experimental import jitclass
+from pipic.types import Double3
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
 __all__ = ['CellInterface']

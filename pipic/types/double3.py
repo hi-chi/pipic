@@ -19,6 +19,7 @@ Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 """
 
+import numpy as np
 import numba as nb
 from numba.experimental import jitclass
 
@@ -33,14 +34,14 @@ class Double3:
         self.y = y
         self.z = z
     def normalize(self):
-        r = sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        r = np.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
         if r > 0:
             inv_r = 1/r
             self.x *= inv_r
             self.y *= inv_r
             self.z *= inv_r
     def norm(self) -> float:
-        return sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        return np.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
     def norm2(self) -> float:
         return self.x*self.x + self.y*self.y + self.z*self.z
     def __add__(self, other):
