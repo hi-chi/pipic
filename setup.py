@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from glob import glob
-import sys, os
+import sys
+import os
 
 import setuptools
 from pybind11.setup_helpers import Pybind11Extension
@@ -12,19 +13,20 @@ from setuptools.command.build_ext import build_ext
 # The first argument defines the name of the binary.
 # It is customary to name such modules with a leading underscore.
 pipic_cpp_module = Pybind11Extension(
-    '_pipic',
+    'pipic._pipic',
     sorted(glob('src/*.cpp')),
     language='c++')
 
-# Build one module for each subfolder in extensions_directory.
-# The modules are named with a leading underscore.
-extensions_directory = 'src/extensions/'
+# Build one module for each subfolder in extensions_source_directory.
+# The modules are named with a leading underscore and placed in extensions_directory
+extensions_source_directory = 'src/extensions/'
+extensions_directory = 'pipic.extensions.'
 extension_modules = []
-for name in os.listdir(extensions_directory):
-    if os.path.isdir(extensions_directory + name):
+for name in os.listdir(extensions_source_directory):
+    if os.path.isdir(extensions_source_directory + name):
         cpp_module = Pybind11Extension(
-            '_' + name,
-            sorted(glob(extensions_directory + name + '/*.cpp')),
+            extensions_directory + '_' + name,
+            sorted(glob(extensions_source_directory + name + '/*.cpp')),
             language='c++',
             include_dirs=['src/'])
         extension_modules.append(cpp_module)
