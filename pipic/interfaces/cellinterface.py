@@ -164,7 +164,7 @@ class CellInterface:
         return self.D[13]
 
     @property
-    def particle_mass(self):  # charge of particles being processed
+    def particle_mass(self):  # mass of particles being processed
         return self.D[14]
 
     @property
