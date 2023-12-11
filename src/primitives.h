@@ -41,12 +41,15 @@ Contact: arkady.gonoskov@gu.se.
 #include <thread>
 
 // All the physical constants and variables are in CGS units.
-const double lightVelocity = 29979245800.0;
-const double electronCharge = -4.80320427e-10;
-const double electronMass = 9.10938215e-28;
-const double protonMass = 1.672622964e-24;
-const double pi = 3.14159265358979323846;
+namespace constants {
+    const double lightVelocity = 29979245800.0;
+    const double electronCharge = -4.80320427e-10;
+    const double electronMass = 9.10938215e-28;
+    const double protonMass = 1.672622964e-24;
+    const double pi = 3.14159265358979323846;
+}
 
+using namespace constants;
 using namespace std;
 
 #define likely(x)       __builtin_expect((x), 1)
