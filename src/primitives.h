@@ -104,6 +104,16 @@ double3 operator * (double a, const double3& v)
     return double3(v.x * a, v.y * a, v.z * a);
 };
 
+double3 operator * (const double3& v, double a)
+{
+    return double3(v.x * a, v.y * a, v.z * a);
+};
+
+double3 operator / (const double3& v, double a)
+{
+    return double3(v.x / a, v.y / a, v.z / a);
+};
+
 double3 operator + (const double3& a, const double3& b)
 {
     return double3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -122,6 +132,11 @@ double3 cross(const double3& a, const double3& b)
 double dot(const double3& a, const double3& b)
 {
     return a.x*b.x + a.y*b.y + a.z*b.z;
+};
+
+double sqr(const double3& a)
+{
+    return a.x*a.x + a.y*a.y + a.z*a.z;
 };
 
 template <class Type>
