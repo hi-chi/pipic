@@ -197,31 +197,9 @@ void HandleParticles(cellInterface &CI) {
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
-
     if (CI.particleSubsetSize > 0) {
         HandleParticles(CI);
     }
-
-    // for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
-    //     double c = lightVelocity;
-    //     double m = CI.particleMass;
-    //     double q = CI.particleCharge;
-    //     double dt = CI.timeStep;
-    //     double3 E, B;
-
-    //     particle *P = CI.Particle(ip);
-    //     CI.interpolateField(P->r, E, B);
-
-    //     double gamma = sqrt(1 + sqr(P->p)/sqr(m*c));
-    //     double3 v = P->p / (gamma*m);
-    //     double c_inv = 1/c;
-
-    //     double3 dp = dt * (2.0 / 3.0) * sqr(sqr(q) / (m * sqr(c))) * 
-    //         (cross(E, B) + c_inv * (cross(B, cross(B, v)) + dot(v, E) * E) -
-    //             c_inv * sqr(gamma) * (sqr(E + c_inv * cross(v, B)) - sqr(dot(E, v) * c_inv)) * v);
-
-    //     P->p += dp;
-    // }
 };
 
 // extension initialization
