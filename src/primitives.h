@@ -47,6 +47,7 @@ namespace constants {
     const double electronMass = 9.10938215e-28;
     const double protonMass = 1.672622964e-24;
     const double pi = 3.14159265358979323846;
+    const double hbar = 1.0545716818e-27;
 }
 
 using namespace constants;

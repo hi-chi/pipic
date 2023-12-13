@@ -27,19 +27,18 @@ const string name = "qed";
 static int photonTypeId, electronTypeId, positronTypeId; // particle types
 
 void onePhotonStep(particle &P, const double3 &E, const double3 &B, double &time, double timeStep, int type, vector<particle> &AvalancheParticles, vector<double> &timeAvalancheParticles, vector<int> &typeAvalancheParticles) {
+    double SchwingerField = sqr(constants::electronMass * constants::lightVelocity) * constants::lightVelocity
+                            / (-constants::electronCharge * constants::hbar);
     double c = constants::lightVelocity;
-    double m = constants::electronMass; // Change to real particle mass
-    double q = constants::electronCharge; // Change to real particle charge
-    double c_inv = 1/c;
-    double SchwingerField = 1.0; // Change to real Schwinger field. sqr(constants::electronMass * c) * c / (-constants::electronCharge * constants::planck);
+    double mc = constants::electronMass * constants::lightVelocity; // Change to real particle mass
+
     while (time < timeStep) {
-        double gamma = sqrt(1 + sqr(P.p)/sqr(m * c));
-        double3 v = P.p / (gamma*m);
+        double p = P.p.norm();
+        double gamma = p/mc; // gamma = E/mc2 = |p|/mc
 
-        double H_eff = sqr(E + c_inv * cross(v, B)) - sqr(dot(E, v) * c_inv);
-        if (H_eff < 0) H_eff = 0;
-        H_eff = sqrt(H_eff);
+        double3 k_ = P.p/p; // normalized wave vector
 
+        double H_eff = sqrt(sqr(E + cross(k_, B)) - sqr(dot(E, k_)));
         double chi = gamma * H_eff / SchwingerField;
         double rate = 0.0, dt = 2*timeStep;
 
@@ -86,16 +85,16 @@ void onePhotonStep(particle &P, const double3 &E, const double3 &B, double &time
 }
 
 void oneParticleStep(particle &P, const double3 &E, const double3 &B, double &time, double timeStep, int type, vector<particle> &AvalancheParticles, vector<double> &timeAvalancheParticles, vector<int> &typeAvalancheParticles) {
+    double SchwingerField = sqr(constants::electronMass * constants::lightVelocity) * constants::lightVelocity
+                            / (-constants::electronCharge * constants::hbar);
     double c = constants::lightVelocity;
-    double m = constants::electronMass; // Change to real particle mass
-    double q = constants::electronCharge; // Change to real particle charge
-    double c_inv = 1/c;
-    double SchwingerField = 1.0; // Change to real Schwinger field. sqr(constants::electronMass * c) * c / (-constants::electronCharge * constants::planck);
-    while (time < timeStep) {
-        double gamma = sqrt(1 + sqr(P.p)/sqr(m * c));
-        double3 v = P.p / (gamma*m);
+    double mc = constants::electronMass * constants::lightVelocity; // Change to real particle mass
 
-        double H_eff = sqr(E + c_inv * cross(v, B)) - sqr(dot(E, v) * c_inv);
+    while (time < timeStep) {
+        double gamma = sqrt(1 + sqr(P.p)/sqr(mc));
+        double3 beta = P.p / (gamma*mc);
+
+        double H_eff = sqr(E + cross(beta, B)) - sqr(dot(E, beta));
         if (H_eff < 0) H_eff = 0;
         H_eff = sqrt(H_eff);
 
@@ -142,63 +141,73 @@ void RunAvalanche(const double3 E, const double3 B, double timeStep, vector<part
 
     while (countParticles != AvalancheParticles.size() || false) {
         for (int k = countParticles; k!=AvalancheParticles.size(); k++) {
-            int type = typeAvalancheParticles[k];
+            int typeId = typeAvalancheParticles[k];
             // Process a single particle a full timeStep
-            if (type == electronTypeId || type == positronTypeId) {
-                oneParticleStep(AvalancheParticles[k], E, B, timeAvalancheParticles[k], timeStep, type, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
+            if (typeId == electronTypeId || typeId == positronTypeId) {
+                oneParticleStep(AvalancheParticles[k], E, B, timeAvalancheParticles[k], timeStep, typeId, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
                 countParticles++;
-            } else if (type == photonTypeId) {
-                onePhotonStep(AvalancheParticles[k], E, B, timeAvalancheParticles[k], timeStep, type, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
+            } else if (typeId == photonTypeId) {
+                onePhotonStep(AvalancheParticles[k], E, B, timeAvalancheParticles[k], timeStep, typeId, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
                 countParticles++;
             }
         }
     }
 }
 
-void HandleParticles(cellInterface &CI) {
-    // Vectors for storing particles during processing
-    vector<particle> AvalancheParticles;
-    vector<double> timeAvalancheParticles;
-    vector<int> typeAvalancheParticles;
-
-    // Vector for storing particles after processing
-    vector<particle> AfterAvalancheParticles;
-    
-    for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
-
-        // Grab a single particle from CellInterface 
-        particle *P = CI.Particle(ip);
-
-        // Compute the field at particle position (E, B are passed by reference)
-        double3 E, B;
-        CI.interpolateField(P->r, E, B);
-
-        // Clear particle containers
-        AvalancheParticles.clear();
-        timeAvalancheParticles.clear();
-        typeAvalancheParticles.clear();
-
-        // Place the particle in the container
-        AvalancheParticles.push_back(*P);
-        timeAvalancheParticles.push_back(0.0);
-        typeAvalancheParticles.push_back(CI.particleTypeIndex);
-
-        // Run a full timeStep for the particle (including for its daughter particles)
-        RunAvalanche(E, B, CI.timeStep, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
-
-        // Place all resulting particles in the "after"-container
-        for (int k = 0; k != AvalancheParticles.size(); k++) {
-        //     AfterAvalancheParticles.push_back(AvalancheParticles[k]);
-        }
-
-    }
-}
-
 // function that is called to process particles in a given cell
-void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
-    cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
+void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt) {
+    // interface for manipulating with the content of a cell
+    cellInterface CI(I, D, F, P, NP);
+
     if (CI.particleSubsetSize > 0) {
-        HandleParticles(CI);
+        // Vectors for storing particles during processing
+        vector<particle> AvalancheParticles;
+        vector<double> timeAvalancheParticles;
+        vector<int> typeAvalancheParticles;
+
+        // Vector for storing particles after processing
+        vector<particle> AfterAvalancheParticles;
+
+        for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
+            // Grab a single particle from CellInterface
+            particle *P = CI.Particle(ip);
+
+            // Compute the field at particle position (E, B are passed by reference)
+            double3 E, B;
+            CI.interpolateField(P->r, E, B);
+
+            // Clear particle containers
+            AvalancheParticles.clear();
+            timeAvalancheParticles.clear();
+            typeAvalancheParticles.clear();
+
+            // Place the particle in the container
+            AvalancheParticles.push_back(*P);
+            timeAvalancheParticles.push_back(0.0);
+            typeAvalancheParticles.push_back(CI.particleTypeIndex);
+
+            // Run a full timeStep for the particle (including for its daughter particles)
+            RunAvalanche(E, B, CI.timeStep, AvalancheParticles, timeAvalancheParticles, typeAvalancheParticles);
+
+            // Update particle momentum and weight (in case of removal)
+            P->p = AvalancheParticles[0].p;
+            P->w = AvalancheParticles[0].w;
+
+            // Place all created particles in the buffer
+            for (int k = 1; k < AvalancheParticles.size(); k++) {
+                // Make sure that particle isn't marked for deletion
+                if (AvalancheParticles[k].w > 0.0) {
+                    // Check if the buffer permits adding a particle
+                    if(CI.particleBufferSize < CI.particleBufferCapacity){
+                        // Copy particle to the new-particle buffer
+                        *CI.newParticle(CI.particleBufferSize) = AvalancheParticles[k];
+                        // Set new-particle type id
+                        CI.newParticle(CI.particleBufferSize)->id = typeAvalancheParticles[k];
+                        CI.particleBufferSize++;
+                    }
+                }
+            }
+        }
     }
 };
 
