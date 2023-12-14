@@ -42,12 +42,13 @@ Contact: arkady.gonoskov@gu.se.
 
 // All the physical constants and variables are in CGS units.
 namespace constants {
-    const double lightVelocity = 29979245800.0;
-    const double electronCharge = -4.80320427e-10;
-    const double electronMass = 9.10938215e-28;
-    const double protonMass = 1.672622964e-24;
-    const double pi = 3.14159265358979323846;
-    const double hbar = 1.0545716818e-27;
+    constexpr double lightVelocity = 29979245800.0;
+    constexpr double electronCharge = -4.80320427e-10;
+    constexpr double electronMass = 9.10938215e-28;
+    constexpr double protonMass = 1.672622964e-24;
+    constexpr double pi = 3.14159265358979323846;
+    constexpr double hbar = 1.0545716818e-27;
+    constexpr double schwingerField = (electronMass*lightVelocity) * (electronMass*lightVelocity) * lightVelocity / (-electronCharge * hbar);
 }
 
 using namespace constants;

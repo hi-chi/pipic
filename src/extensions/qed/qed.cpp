@@ -120,9 +120,6 @@ void RunAvalanche(const double3 E, const double3 B, double timeStep, vector<part
 
 
 void oneParticleStep(particle &P, const double3 &E, const double3 &B, double &time, double timeStep, int type, vector<particle> &AvalancheParticles, vector<double> &timeAvalancheParticles, vector<int> &typeAvalancheParticles) {
-    double SchwingerField = sqr(constants::electronMass * constants::lightVelocity) * constants::lightVelocity
-                            / (-constants::electronCharge * constants::hbar);
-    // double c = constants::lightVelocity;
     double mc = constants::electronMass * constants::lightVelocity; // Change to real particle mass
 
     while (time < timeStep) {
@@ -133,7 +130,7 @@ void oneParticleStep(particle &P, const double3 &E, const double3 &B, double &ti
         if (H_eff < 0) H_eff = 0;
         H_eff = sqrt(H_eff);
 
-        double chi = gamma * H_eff / SchwingerField;
+        double chi = gamma * H_eff / constants::schwingerField;
         double rate = 0.0, dt = 2*timeStep;
 
         // Compute rate and subtimestep (dt)
@@ -171,9 +168,6 @@ void oneParticleStep(particle &P, const double3 &E, const double3 &B, double &ti
 
 
 void onePhotonStep(particle &P, const double3 &E, const double3 &B, double &time, double timeStep, int type, vector<particle> &AvalancheParticles, vector<double> &timeAvalancheParticles, vector<int> &typeAvalancheParticles) {
-    double SchwingerField = sqr(constants::electronMass * constants::lightVelocity) * constants::lightVelocity
-                            / (-constants::electronCharge * constants::hbar);
-    // double c = constants::lightVelocity;
     double mc = constants::electronMass * constants::lightVelocity; // Change to real particle mass
 
     while (time < timeStep) {
@@ -183,7 +177,7 @@ void onePhotonStep(particle &P, const double3 &E, const double3 &B, double &time
         double3 k_ = P.p/p; // normalized wave vector
 
         double H_eff = sqrt(sqr(E + cross(k_, B)) - sqr(dot(E, k_)));
-        double chi = gamma * H_eff / SchwingerField;
+        double chi = gamma * H_eff / constants::schwingerField;
         double rate = 0.0, dt = 2*timeStep;
 
         // Compute rate and subtimestep (dt)
