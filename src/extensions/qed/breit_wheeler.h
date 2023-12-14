@@ -2,11 +2,11 @@
 #include <cmath>
 
 #include "primitives.h"
-using FP = double;
 
-using namespace constants;
 namespace pfc
 {
+    using FP = double;
+
     class Breit_wheeler
     {
     private:

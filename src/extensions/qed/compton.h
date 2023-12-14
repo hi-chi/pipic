@@ -1,11 +1,11 @@
 #pragma once
 
 #include "primitives.h"
-using FP = double;
 
-using namespace constants;
 namespace pfc
 {
+    using FP = double;
+
     class Compton
     {
     private:
