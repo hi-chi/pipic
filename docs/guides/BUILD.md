@@ -1,5 +1,5 @@
 # Build guide
-The following document provides a guide for building $pi$-PIC in order to make it available through [PyPI](https://pypi.org/).
+The following document provides a guide for building $\pi$-PIC in order to make it available through [PyPI](https://pypi.org/).
 
 ### Project structure
 When building the project, the C-module is compiled into a binary `_pipic*.so` (linkable object). This module can be imported in a python script by writing e.g. `import _pipic`. The source code for the C-module is located under [src/](../../src) and the python-package is found separately under [pipic/](../../pipic), wherein the `_pipic` module is imported (this remains hidden for the end-user). Because python generally treat files, packages and variables with a leading underscore as "private", extra care is needed when importing such modules, and this also presents some complications with certain build-scripts.
