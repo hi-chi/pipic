@@ -22,21 +22,27 @@ which generates several folders and installs the package in your environment in 
 ```
 pip install .
 ```
-This also installs the package in your local environment, but now generates no excess local folders. The installation is now split between the compiled binary on one hand and the python package on the other.
+This also installs the package in your local environment (for example `somewhere/site-packages/`), but now generates no excess local folders. The installation is now split between the compiled binary on one hand and the python package on the other.
 
 A quick summary of the three files mentioned above:
 - [setup.py](../../setup.py) is the primary script used to actually build the project, using `setuptools`. It defines the build parameters, such as flags and installation dependencies. (Previously grabbed project metadata from [\_\_init\_\_.py](../../pipic/__init__.py)).
 
 - [pyproject.toml](../../pyproject.toml) is used to define the build dependencies. This is needed because _e.g._ pybind11 is required for building before `setup()` is run in [setup.py](../../setup.py). Project metadata is defined statically in this file.
 
-- [MANIFEST.in](../../MANIFEST.in) can be used to define which files and folders will be used in the build process. When building, these files are moved to a separate folder. Failure to specify them may lead to errors, _e.g._ due to missing `.h` files.
+- [MANIFEST.in](../../MANIFEST.in) can be used to define which files and folders will be used in the build process. When building, these files are moved to a separate folder. Failure to specify them may lead to errors, _e.g._ due to missing `.h` files. This file can also be used to exclude files from the source distribution (`sdist`), such as excluding the `examples/`, `docs/` or `tests/` folders. To do so, one can for example add the following to the [MANIFEST.in](../../MANIFEST.in):
+```
+prune docs
+prune examples
+prune tests
+exclude MANIFEST.in .*ignore
+```
 
 ### Deployment
 To build the project for deployment requires the python package `build` (`pip install build`). To build, simply write:
 ```
 python -m build
 ```
-This creates two local folders, `dist/` and `pipic.egg-info/`, where the former contains the distribution file(s), often in terms of a binary wheel (`.wh`) and source archive (`.tar.gz`). Distribution can be done with either (or both) but source is generally recommended as guaranteeing compatibility of binaries is likely to require more work.
+This creates two local folders, `dist/` and `pipic.egg-info/`, where the former contains the distribution file(s), often in terms of a binary wheel (`.wh`) and source distribution (`.tar.gz`). Distribution can be done with either (or both) but source is generally recommended as guaranteeing compatibility of binaries is likely to require more work.
 
 Finally, distribution of the package is done using `twine` (`pip install twine`). To test the distribution you can write:
 ```
@@ -50,8 +56,16 @@ In order to actually distribute it, here via [TestPyPI](https://test.pypi.org/),
 twine upload --repository testpypi dist/*.tar.gz
 ```
 
+In order to distribute it via [PyPI](https://pypi.org/), you instead write
+> [!WARNING]
+> Only run the following command if you actually want to distribute the current build.
+> You may have several `.tar.gz` in your `dist/` folder. Make sure to only distribute the one you want.
+```
+twine upload dist/*.tar.gz
+```
+
 ### Versioning
-Versioning is done automatically using [`setuptools-scm`](https://setuptools-scm.readthedocs.io/en/latest/config/#api-reference). When building the project, a version file `_version.py` containing the version number is created, based on the latest `git` tag. This file should not be tracked, but must be shipped with source upon deployment (this is already done automatically). All versioning should rely on this file. 
+Versioning is done automatically using [`setuptools-scm`](https://setuptools-scm.readthedocs.io/en/latest/config/#api-reference). When building the project, a version file `_version.py` containing the version number is created, based on the latest `git` tag. This file should not be tracked by git, but must be shipped with source distribution (this is already done automatically). All versioning should rely on this file.
 
 To check the presumptive version, simply write
 ```
@@ -70,6 +84,7 @@ For guides, see:
 - https://scikit-hep.org/developer
 - https://pypi.org/project/setuptools-scm/4.1.2/
 - https://learn.scientific-python.org/development/guides/packaging-compiled/
+- https://setuptools.pypa.io/en/latest/userguide/miscellaneous.html
 
 On version capping, read:
 - https://iscinumpy.dev/post/bound-version-constraints/
