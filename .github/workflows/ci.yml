@@ -24,6 +24,8 @@ jobs:
         run: python -m pip install --upgrade pip
       - name: Install fftw3
         run: sudo apt-get install -y fftw3
-      - name: Install pipic
-        run: pip install .
+      - name: Check fftw3
+        run: ls -la /usr/local/lib
+#      - name: Install pipic
+#        run: pip install .
 
