@@ -57,7 +57,7 @@ twine upload --repository testpypi dist/*.tar.gz
 ```
 
 In order to distribute it via [PyPI](https://pypi.org/), you instead write
-> [!WARNING]
+> [!CAUTION]
 > Only run the following command if you actually want to distribute the current build.
 > You may have several `.tar.gz` in your `dist/` folder. Make sure to only distribute the one you want.
 ```
