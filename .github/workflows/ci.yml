@@ -18,14 +18,11 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          apt: fftw3
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install pip
         run: python -m pip install --upgrade pip
-      - name: Install fftw3
-        run: sudo apt-get install -y fftw3
-      - name: Check fftw3
-        run: ls -la /usr/local/lib
 #      - name: Install pipic
 #        run: pip install .
 
