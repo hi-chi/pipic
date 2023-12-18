@@ -28,6 +28,7 @@ jobs:
       # Install fftw3
       - name: Install fftw3
         run: sudo apt-get install -y libfftw3-dev
-      - name: Install pipic
-        run: pip install .
+      # Build pipic
+      - name: Build pipic
+        run: python -m build
 
