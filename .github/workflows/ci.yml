@@ -26,11 +26,14 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       # Upgrade pip
       - name: Install pip
-        run: python -m pip install --upgrade pip build
+        run: python -m pip install --upgrade pip build twine
       # Install fftw3
       - name: Install fftw3
         run: sudo apt-get install -y libfftw3-dev
       # Build pipic
       - name: Build pipic
         run: python -m build
+      # Check the build files
+      - name: Check build files
+        run: twine check dist/*
 
