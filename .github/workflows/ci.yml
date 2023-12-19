@@ -22,10 +22,10 @@ jobs:
           INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
           CC: gcc
           CXX: g++
-#        - os: macos-latest
-#          INSTALL_DEPS: brew install fftw
-#          CC: clang
-#          CXX: clang++
+        - os: macos-latest
+          INSTALL_DEPS: brew install fftw libomp
+          CC: clang
+          CXX: clang++
 
     steps:
       - name: Checkout project
