@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest] # macos-latest doesn't work due to clang -fopenmp issues
         include:
         - os: ubuntu-latest
@@ -28,13 +28,14 @@ jobs:
 #          CXX: clang++
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout project
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip' # Cache pip dependencies
+          cache: 'pip'  # Cache pip dependencies
 
 #      - name: Install pip
 #        run: python -m pip install --upgrade pip
@@ -60,7 +61,7 @@ jobs:
       - name: Checkout the project
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # This is needed in order to fetch version tags from git
 
       - name: Build and check sdist + wheel
         uses: hynek/build-and-inspect-python-package@v1
