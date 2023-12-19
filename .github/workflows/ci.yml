@@ -36,11 +36,15 @@ jobs:
 #      # Install fftw3
 #      - name: Install fftw3
 #        run: sudo apt update && sudo apt-get install -y libfftw3-dev
-      # Install fftw3
-      - uses: ConorMacBride/install-package@v1
-        with:
-          brew: fftw
-          apt: libfftw3-dev
+      # Install FFTW
+      - name: Setup FFTW (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libfftw3-dev
+
+      - name: Setup FFTW (macOS)
+        if: runner.os == 'macOS'
+        run: brew install boost
+        
 #      # Build pipic
 #      - name: Build pipic
 #        run: python -m build
