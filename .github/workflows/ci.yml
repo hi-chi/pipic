@@ -6,11 +6,13 @@ on:
       - test-ci
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  checks:
+    runs-on: ${{ matrix.runs-on }}
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
+        runs-on: [ubuntu-latest, macos-latest]
 
     steps:
       # Checkout the project
@@ -27,16 +29,27 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       # Upgrade pip
       - name: Install pip
-        run: python -m pip install --upgrade pip build twine
+        run: python -m pip install --upgrade pip
+#      # Upgrade pip
+#      - name: Install pip
+#        run: python -m pip install --upgrade pip build twine
+#      # Install fftw3
+#      - name: Install fftw3
+#        run: sudo apt update && sudo apt-get install -y libfftw3-dev
       # Install fftw3
-      - name: Install fftw3
-        run: sudo apt-get install -y libfftw3-dev
+      - uses: ConorMacBride/install-package@v1
+        with:
+          brew: fftw3
+          apt: libfftw3-dev
+#      # Build pipic
+#      - name: Build pipic
+#        run: python -m build
+#      # Check the build files
+#      - name: Check build files
+#        run: twine check dist/*
       # Build pipic
       - name: Build pipic
-        run: python -m build
-      # Check the build files
-      - name: Check build files
-        run: twine check dist/*
+        run: pip install -e .
 
   dist:
     name: Build and inspect distribution build
