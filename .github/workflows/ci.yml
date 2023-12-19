@@ -39,7 +39,7 @@ jobs:
       # Install fftw3
       - uses: ConorMacBride/install-package@v1
         with:
-          brew: fftw3
+          brew: fftw
           apt: libfftw3-dev
 #      # Build pipic
 #      - name: Build pipic
