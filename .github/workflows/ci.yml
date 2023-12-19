@@ -28,7 +28,6 @@ jobs:
 #          CXX: clang++
 
     steps:
-      - name: Checkout the project
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
