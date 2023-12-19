@@ -58,7 +58,7 @@ jobs:
         run: sudo apt-get install -y libfftw3-dev
 
       - name: Checkout the project
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
