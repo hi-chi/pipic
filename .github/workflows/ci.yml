@@ -43,7 +43,7 @@ jobs:
 
       - name: Setup FFTW (macOS)
         if: runner.os == 'macOS'
-        run: brew install boost
+        run: brew install fftw
         
 #      # Build pipic
 #      - name: Build pipic
