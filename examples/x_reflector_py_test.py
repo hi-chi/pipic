@@ -106,4 +106,4 @@ for i in range(i_max):
     fig.savefig(outputFolder + '/im' + str(i) + '.png')
     print(i, '/', i_max) 
 print('Total time of simulation and output is', time.time() - time_start, 's.')
-print('For the time taken by components of pi-PIC itself see pipic_performance.txt.')
+print('For the time taken by components of pi-PIC see pipic_performance.txt.')
