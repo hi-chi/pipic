@@ -7,7 +7,7 @@ class TestPipic(unittest.TestCase):
         self.assertEqual(1+1, 2)
 
     def test_import_pipic(self):
-        import pipic
+        import __pipic
 
 
 if __name__ == '__main__':
