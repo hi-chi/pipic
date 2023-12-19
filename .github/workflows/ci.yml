@@ -6,7 +6,10 @@ on:
   push:
     branches:
       - main
-      - test-ci
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   FORCE_COLOR: 3
