@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11"]  # 3.12 doesn't yet work due to numba
         os: [ubuntu-latest] # macos-latest doesn't work due to clang -fopenmp issues
         include:
         - os: ubuntu-latest
@@ -36,6 +36,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'  # Cache pip dependencies
+      - run: pip install -r requirements.txt
 
 #      - name: Install pip
 #        run: python -m pip install --upgrade pip
