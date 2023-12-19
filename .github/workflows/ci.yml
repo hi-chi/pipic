@@ -38,3 +38,13 @@ jobs:
       - name: Check build files
         run: twine check dist/*
 
+  dist:
+    name: Build and inspect distribution build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hynek/build-and-inspect-python-package@v1
