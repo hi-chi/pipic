@@ -1,6 +1,6 @@
 # Making extensions
 
-$\pi$-PIC offers a possibility to develop extensions in Python, C/C++, Fortran and other programming languages. Apart from modifying the field state via `fieldLoop()`, the extensions can modify, add and remove particles depending on the local field state. For example, this can be used to account for ionization, radiation reaction, QED particle and photon generation, etc.
+$\pi$-PIC offers a possibility to develop extensions in Python, C/C++, Fortran and other programming languages that can be used to produce a callable function for Python. Extensions can be developed, compiled and used independently, as well as contributed to the toolbox delivered with $\pi$-PIC (see [Python extensions](https://github.com/hi-chi/pipic/blob/main/pipic/extensions) and [C++ extensions](https://github.com/hi-chi/pipic/blob/main/src/extensions)). Apart from modifying the field state via `fieldLoop()`, the extensions can modify, add and remove particles based on the local field state. For example, this can be used to account for ionization, radiation reaction, QED particle and photon generation, etc.
 
 Python extensions
 --
