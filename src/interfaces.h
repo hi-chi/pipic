@@ -63,6 +63,7 @@ struct cellInterface // main structure for developing extensions; provides acces
     int &particleBufferSize; // a variable to indicate the number of particles to be added (must stay <= particleBufferCapacity)
     const int &gridType; // indicates the type of the grid and defines the way of interpolation
     const int &threadNum; // indicates the number of active thread, use 1 to avoid clashes (0 sometimes is not called)
+    const int &rngSeed; // random integer (from -2147483648 to 2147483647, generated for each cell/iteration) to be used as a seed for keeping deterministism
     const double3 &globalMin, &globalMax; // the limits of computational region and cell being processed
     const double3 &step, &invStep; // step size and its inverse;
     const double &timeStep; // time step;
@@ -86,7 +87,7 @@ struct cellInterface // main structure for developing extensions; provides acces
     I(I), D(D), F_data(F), P_data(P), NP_data(NP),
     i(*((int3*)I)), n(*((int3*)I + 1)), 
     dim(I[6]), numberOfAttributes(I[7]), particleTypeIndex(I[8]), particleSubsetSize(I[9]), particleBufferCapacity(I[10]), particleBufferSize(I[11]), 
-    gridType(I[12]), threadNum(I[13]),
+    gridType(I[12]), threadNum(I[13]), rngSeed(I[14]),
     globalMin(*(double3*)(D)), globalMax(*(double3*)(D + 3)), 
     step(*(double3*)(D + 6)), invStep(*(double3*)(D + 9)),
     timeStep(D[12]), particleCharge(D[13]), particleMass(D[14])

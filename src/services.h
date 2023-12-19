@@ -77,21 +77,24 @@ static thread_local mt19937* randGen = nullptr;
 struct rndGen
 {
     mt19937** localGen;
-    int rndGenSeed;
+    int rngSeed;
     int nx;
+    void allocateLocalGenerators(){
+        mt19937 rng(rngSeed);
+        std::uniform_int_distribution<> uniform(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+        for(int i = 0; i < nx; i++) localGen[i] = new mt19937(uniform(rng));
+    }
     rndGen(int nx): nx(nx){
-        rndGenSeed = 0; // can be set to clock() if reproducability is not needed.
-        pipic_log.message("rndGenSeed = " + to_string(rndGenSeed));
+        rngSeed = 0; // can be set to clock() if reproducability is not needed.
+        pipic_log.message("rng_seed = " + to_string(rngSeed));
         localGen = new mt19937*[nx];
-        for(int i = 0; i < nx; i++)localGen[i] = new mt19937(rndGenSeed + i);
+        allocateLocalGenerators();
     }
     void setRngSeed(int newSeed){
-        rndGenSeed = newSeed;
-        pipic_log.message("Setting rndGenSeed = " + to_string(rndGenSeed));
-        for(int i = 0; i < nx; i++){
-            delete localGen[i];
-            localGen[i] = new mt19937(rndGenSeed + i);
-        }
+        rngSeed = newSeed;
+        pipic_log.message("Setting rng_seed = " + to_string(rngSeed));
+        for(int i = 0; i < nx; i++) delete localGen[i];
+        allocateLocalGenerators();
     }
     ~rndGen(){
         for(int i = 0; i < nx; i++) delete localGen[i];
@@ -102,15 +105,15 @@ struct rndGen
     }
 };
 
-double rand_double(){
+double rand_double(double min, double max){ // generates random double with uniform distribution in [min, max)
     if(unlikely(!randGen)) {cout << "pi-PIC error: rndGen call before assignment" << endl; exit(0);}
-    std::uniform_real_distribution<double> distribution(0, 1); // random value from [0,1)
+    std::uniform_real_distribution<double> distribution(min, max);
     return distribution(*randGen);
 };
 
-int rand_int(int max){
+int rand_int(int min, int max){ // generates random integer with uniform distribution from min to max (including both min and max)
     if(unlikely(!randGen)) {cout << "pi-PIC error: rndGen call before assignment" << endl; exit(0);}
-    std::uniform_int_distribution<> distribution(0, max);
+    std::uniform_int_distribution<> distribution(min, max);
     return distribution(*randGen);
 };
 

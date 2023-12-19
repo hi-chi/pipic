@@ -98,7 +98,7 @@ struct ensemble
         totalNumberOfParticles = 0;
         
         for(int iTh = 0; iTh < int(thread.size()); iTh++){
-            int *I = new int[14];
+            int *I = new int[15];
             I[3] = box.n.x; I[4] = box.n.y; I[5] = box.n.z;
             I[6] = box.dim; I[7] = sizeof(particle)/8 - 8;
             I[10] = thread[iTh].NP.size(); // capacity of the buffer (is extended automatically when particleSubsetSize exceeds its half on the previous call)
@@ -222,13 +222,13 @@ struct ensemble
         {
             intg ig = box.ig({ix, iy, iz});
             double expectedNumber = Density[ig]*box.step.x*box.step.y*box.step.z/weight;
-            int numberToGenerate = int(expectedNumber) + (rand_double() < (expectedNumber - int(expectedNumber)));
+            int numberToGenerate = int(expectedNumber) + (rand_double(0, 1) < (expectedNumber - int(expectedNumber)));
             if(numberToGenerate > 0)
             for(int ip = 0; ip < numberToGenerate; ip++){
                 particle P;
-                P.r.x = box.min.x + (ix + rand_double())*box.step.x;
-                P.r.y = box.min.y + (iy + rand_double())*box.step.y;
-                P.r.z = box.min.z + (iz + rand_double())*box.step.z;
+                P.r.x = box.min.x + (ix + rand_double(0, 1))*box.step.x;
+                P.r.y = box.min.y + (iy + rand_double(0, 1))*box.step.y;
+                P.r.z = box.min.z + (iz + rand_double(0, 1))*box.step.z;
                 P.p = generateMomentum(typeMass, temperature);
                 P.w = weight;
                 P.id = generateID();
@@ -344,6 +344,7 @@ struct ensemble
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
+                    activeThread.CI->I[14] = rand_int(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                     bool fieldBeenSet = false;
                     apply_actOnCellHandlers<pic_solver, field_solver>(Solver, activeThread, fieldBeenSet, ig, true);
                     if(cell[ig] != nullptr)
@@ -454,6 +455,7 @@ struct ensemble
                     activeThread.CI->I[9] = 0;
                     activeThread.CI->I[10] = activeThread.NP.size();
                     activeThread.CI->I[13] = omp_get_thread_num();
+                    activeThread.CI->I[14] = rand_int(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                     bool fieldBeenSet = false;
                     apply_actOnCellHandlers<pic_solver, field_solver>(Solver, activeThread, fieldBeenSet, ig, true);
                     if(cell[ig] != nullptr)
