@@ -31,8 +31,8 @@ jobs:
           CXX: g++
         - os: macos-latest
           INSTALL_DEPS: brew install fftw libomp
-          CC: clang
-          CXX: clang++
+          CC: gcc
+          CXX: g++
 
     steps:
       - name: Checkout project
