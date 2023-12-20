@@ -29,26 +29,26 @@ jobs:
           - os: ubuntu-latest
             compiler: clang
         include:
-        - os: ubuntu-latest
-          INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
-          LDFLAGS: ""
-          CPPFLAGS: ""
-          CC: gcc
-          CXX: g++
-        - os: macos-latest
-          compiler: gcc
-          INSTALL_DEPS: brew install fftw
-          LDFLAGS: -L/usr/local/opt/fftw/lib
-          CPPFLAGS: -I/usr/local/opt/fftw/include
-          CC: gcc-13
-          CXX: g++-13
-        - os: macos-latest
-          compiler: clang
-          INSTALL_DEPS: brew install fftw
-          LDFLAGS: -L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib
-          CPPFLAGS: -I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include
-          CC: clang
-          CXX: clang++
+          - os: ubuntu-latest
+            INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
+            LDFLAGS: ""
+            CPPFLAGS: ""
+            CC: gcc
+            CXX: g++
+          - os: macos-latest
+            compiler: gcc
+            INSTALL_DEPS: brew install fftw
+            LDFLAGS: "-L/usr/local/opt/fftw/lib"
+            CPPFLAGS: "-I/usr/local/opt/fftw/include"
+            CC: gcc-13
+            CXX: g++-13
+          - os: macos-latest
+            compiler: clang
+            INSTALL_DEPS: brew install fftw
+            LDFLAGS: "-L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib"
+            CPPFLAGS: "-I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include"
+            CC: clang
+            CXX: clang++
 
     steps:
       - name: Checkout project
