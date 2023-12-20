@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - clang-ci
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -57,7 +58,9 @@ jobs:
         run: python -m pip install --upgrade pip
 
       - name: Install dependencies
-        run: ${{ matrix.INSTALL_DEPS }}
+        run: |
+          ${{ matrix.INSTALL_DEPS }}
+          brew --prefix libomp
 
       - name: Build package
         run: |
