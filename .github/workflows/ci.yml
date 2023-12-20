@@ -39,6 +39,7 @@ jobs:
           CC: gcc-13
           CXX: g++-13
         - os: macos-latest
+          python-version: 3.11
           compiler: clang
           INSTALL_DEPS: brew install fftw
           LDFLAGS: -L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib
