@@ -110,6 +110,6 @@ if sys.version_info < (3, 8, 0, 'final', 0):
 if __name__ == '__main__':
     setup(
         ext_modules=[pipic_cpp_module, *extension_modules],
-        packages=find_packages(),
+        packages=find_packages(exclude=('tests',)),
         cmdclass={'build_ext': BuildExt}
     )
