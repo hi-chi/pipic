@@ -36,6 +36,12 @@ jobs:
           CPPFLAGS: "-I/usr/local/opt/fftw/include"
           CC: gcc-13
           CXX: g++-13
+        - os: macos-latest
+          INSTALL_DEPS: brew install fftw
+          LDFLAGS: "-L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib"
+          CPPFLAGS: "-I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include"
+          CC: clang
+          CXX: clang++
 
     steps:
       - name: Checkout project
