@@ -26,7 +26,8 @@ struct ec2_solver: public pic_solver //energy-conserving solver
     fourierSolver *field;
     vector<unsigned long long int> overStepMove; // counter of overStepMigrations
     // auxiliary variables for optimization:
-    vector<double[8]> data; // thread-local
+    struct threadData{double val[8];};
+    vector<threadData> data; // thread-local
     double invCellVolume;
     vector<fieldSubMap64> subField;
 
@@ -70,14 +71,14 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         subField[omp_get_thread_num()].downloadField(i3, *field);
         double Vg = field->box.step.x*field->box.step.y*field->box.step.z;
         int thread = omp_get_thread_num();
-        data[thread][0] = 1/(mass*lightVelocity); //inv_mc
-        data[thread][1] = 0.25*charge*timeStep*data[thread][0]; // qdt_4mc
-        data[thread][2] = 4*pi*sqr(charge)/(mass*Vg); // _4piq2_mVg
-        data[thread][3] = charge*data[thread][0]; // q_mc
-        data[thread][4] = mass*lightVelocity/charge; // mc_q
-        data[thread][5] = Vg/(8*pi*mass*sqr(lightVelocity)); //Vg_8pimc2
-        data[thread][6] = mass*lightVelocity; //mc
-        data[thread][7] = Vg/(4*pi*charge); //Vg_4piq
+        data[thread].val[0] = 1/(mass*lightVelocity); //inv_mc
+        data[thread].val[1] = 0.25*charge*timeStep*data[thread].val[0]; // qdt_4mc
+        data[thread].val[2] = 4*pi*sqr(charge)/(mass*Vg); // _4piq2_mVg
+        data[thread].val[3] = charge*data[thread].val[0]; // q_mc
+        data[thread].val[4] = mass*lightVelocity/charge; // mc_q
+        data[thread].val[5] = Vg/(8*pi*mass*sqr(lightVelocity)); //Vg_8pimc2
+        data[thread].val[6] = mass*lightVelocity; //mc
+        data[thread].val[7] = Vg/(4*pi*charge); //Vg_4piq
     }
     void endSubLoop(int loopNumber){
         subField[omp_get_thread_num()].uploadField(*field);
@@ -92,14 +93,14 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         simulationBox &box(field->box);
         int thread = omp_get_thread_num();
         
-        double &inv_mc(data[thread][0]);
-        double &qdt_4mc(data[thread][1]);
-        double &_4piq2_mVg(data[thread][2]);
-        double &q_mc(data[thread][3]);
-        double &mc_q(data[thread][4]);
-        double &Vg_8pimc2(data[thread][5]);
-        double &mc(data[thread][6]);
-        double &Vg_4piq(data[thread][7]);
+        double &inv_mc(data[thread].val[0]);
+        double &qdt_4mc(data[thread].val[1]);
+        double &_4piq2_mVg(data[thread].val[2]);
+        double &q_mc(data[thread].val[3]);
+        double &mc_q(data[thread].val[4]);
+        double &Vg_8pimc2(data[thread].val[5]);
+        double &mc(data[thread].val[6]);
+        double &Vg_4piq(data[thread].val[7]);
         
         double p2_ = P.p.norm2()*sqr(inv_mc);
         double gamma = sqrt(1 + p2_);
