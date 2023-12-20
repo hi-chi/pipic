@@ -73,7 +73,7 @@ jobs:
         uses: hynek/build-and-inspect-python-package@v1
 
   pass:
-    name: Continous Integration
+    name: Passes all
     if: always()
     needs: [checks, dist]
     runs-on: ubuntu-latest
