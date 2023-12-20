@@ -31,8 +31,8 @@ jobs:
           CXX: g++
         - os: macos-latest
           INSTALL_DEPS: brew install fftw libomp
-          CC: gcc
-          CXX: g++
+          CC: gcc-13
+          CXX: g++-13
 
     steps:
       - name: Checkout project
@@ -54,7 +54,7 @@ jobs:
         run: |
           ${{ matrix.CC }} --version
           ${{ matrix.CXX }} --version
-          ls -la /usr/local/bin/
+#          ls -la /usr/local/bin/
 
       - name: Build package
         run: pip install -e .[test]
