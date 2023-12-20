@@ -79,28 +79,28 @@ struct rndGen
     mt19937** localGen;
     int rngSeed;
     int nx;
-    void allocateLocalGenerators(){
+    void setSeeds(){
         mt19937 rng(rngSeed);
         std::uniform_int_distribution<> uniform(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-        for(int i = 0; i < nx; i++) localGen[i] = new mt19937(uniform(rng));
+        for(int i = 0; i < nx; i++) localGen[i]->seed(uniform(rng));
     }
     rndGen(int nx): nx(nx){
         rngSeed = 0; // can be set to clock() if reproducability is not needed.
         pipic_log.message("rng_seed = " + to_string(rngSeed));
         localGen = new mt19937*[nx];
-        allocateLocalGenerators();
+        for(int i = 0; i < nx; i++) localGen[i] = new mt19937;
+        setSeeds();
     }
     void setRngSeed(int newSeed){
         rngSeed = newSeed;
         pipic_log.message("Setting rng_seed = " + to_string(rngSeed));
-        for(int i = 0; i < nx; i++) delete localGen[i];
-        allocateLocalGenerators();
+        setSeeds();
     }
     ~rndGen(){
         for(int i = 0; i < nx; i++) delete localGen[i];
         delete []localGen;
     }
-    void assignToCurrentThread(int ix){
+    void setTreadLocalRng(int ix){
         randGen = localGen[ix];
     }
 };

@@ -110,7 +110,7 @@ struct ensemble
             double* NP = (double*)(&(thread[iTh].NP[0])); // pointer to the buffer
             thread[iTh].CI = new cellInterface(I, D, nullptr, nullptr, NP);
         }
-        RndGen.assignToCurrentThread(0);
+        RndGen.setTreadLocalRng(0);
     }
     ~ensemble()
     {
@@ -333,7 +333,7 @@ struct ensemble
             for(int iz = 0; iz < box.n.z; iz += 1) // could be good to shuffle here, but unprocessed() then needs a modification 
             for(int iy = 0; iy < box.n.y; iy += 1) // could be good to shuffle here
             {
-                RndGen.assignToCurrentThread(ix);
+                RndGen.setTreadLocalRng(ix);
                 intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
@@ -389,7 +389,7 @@ struct ensemble
                     }
                 }
             }
-            RndGen.assignToCurrentThread(0);
+            RndGen.setTreadLocalRng(0);
         }
         int overCellRelocated = 0;
         for(int iTh = 0; iTh < int(thread.size()); iTh++)
@@ -444,7 +444,7 @@ struct ensemble
             for(int iz = box.n.z - 1; iz >= 0; iz -= 1)
             for(int iy = box.n.y - 1; iy >= 0; iy -= 1)
             {
-                RndGen.assignToCurrentThread(ix);
+                RndGen.setTreadLocalRng(ix);
                 intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
@@ -479,7 +479,7 @@ struct ensemble
                     }
                 }
             }
-            RndGen.assignToCurrentThread(0);
+            RndGen.setTreadLocalRng(0);
         }
         chronometerEnsemble.stop();
         chronometerCells.start();
@@ -495,7 +495,7 @@ struct ensemble
             for(int iz = 0; iz < box.n.z; iz += 1)
             for(int iy = 0; iy < box.n.y; iy += 1)
             {
-                RndGen.assignToCurrentThread(ix);
+                RndGen.setTreadLocalRng(ix);
                 intg ig = box.ig({ix, iy, iz});
                 if((cell[ig] != nullptr)||(fieldHandlerExists)){
                     threadData &activeThread(thread[omp_get_thread_num()]);
@@ -544,7 +544,7 @@ struct ensemble
                     }
                 }
             }
-            RndGen.assignToCurrentThread(0);
+            RndGen.setTreadLocalRng(0);
         }
         int overCellRelocated = 0;
         for(int iTh = 0; iTh < int(thread.size()); iTh++)
