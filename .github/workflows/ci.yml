@@ -49,7 +49,11 @@ jobs:
           cache: 'pip'  # Cache pip dependencies
 
       - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
         run: |
+          ${{ matrix.INSTALL_DEPS }}|
           export LDFLAGS=${{ matrix.LDFLAGS }}
           export CPPFLAGS=${{ matrix.CPPFLAGS }}
           echo $LDFLAGS
@@ -57,10 +61,6 @@ jobs:
           ls -la $(brew --prefix fftw)
           ls -la $(brew --prefix fftw)/lib
           ls -la $(brew --prefix fftw)/include
-          python -m pip install --upgrade pip
-
-      - name: Install dependencies
-        run: ${{ matrix.INSTALL_DEPS }}
 
       - name: Show compilers
         run: |
