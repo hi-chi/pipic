@@ -24,6 +24,7 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]  # 3.12 doesn't yet work due to numba
         os: [ubuntu-latest, macos-latest]
+        compiler: [gcc]
         include:
         - os: ubuntu-latest
           INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
@@ -38,6 +39,7 @@ jobs:
           CC: gcc-13
           CXX: g++-13
         - os: macos-latest
+          compiler: clang
           INSTALL_DEPS: brew install fftw
           LDFLAGS: -L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib
           CPPFLAGS: -I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include
