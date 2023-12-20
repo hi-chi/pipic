@@ -22,16 +22,20 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11"]  # 3.12 doesn't yet work due to numba
-        os: [ubuntu-latest] # macos-latest doesn't work due to clang -fopenmp issues
+        os: [ubuntu-latest, macos-latest]
         include:
         - os: ubuntu-latest
           INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
+          LDFLAGS: ""
+          CPPFLAGS: ""
           CC: gcc
           CXX: g++
-#        - os: macos-latest
-#          INSTALL_DEPS: brew install fftw libomp
-#          CC: clang
-#          CXX: clang++
+        - os: macos-latest
+          INSTALL_DEPS: brew install fftw
+          LDFLAGS: "-L/usr/local/opt/fftw/lib"
+          CPPFLAGS: "-I/usr/local/opt/fftw/include"
+          CC: gcc-13
+          CXX: g++-13
 
     steps:
       - name: Checkout project
@@ -50,7 +54,10 @@ jobs:
         run: ${{ matrix.INSTALL_DEPS }}
 
       - name: Build package
-        run: pip install -e .[test]
+        run: |
+          export LDFLAGS=${{ matrix.LDFLAGS }}
+          export CPPFLAGS=${{ matrix.CPPFLAGS }}
+          CC=${{ matrix.CC }} CXX=${{ matrix.CXX }} pip install -e .[test]
 
       - name: Test package
         run: python -m unittest
@@ -73,7 +80,6 @@ jobs:
         uses: hynek/build-and-inspect-python-package@v1
 
   pass:
-    name: Passes all
     if: always()
     needs: [checks, dist]
     runs-on: ubuntu-latest
