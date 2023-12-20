@@ -53,7 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{ matrix.INSTALL_DEPS }}|
+          ${{ matrix.INSTALL_DEPS }}
           export LDFLAGS=${{ matrix.LDFLAGS }}
           export CPPFLAGS=${{ matrix.CPPFLAGS }}
           echo $LDFLAGS
