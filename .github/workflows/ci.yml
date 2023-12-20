@@ -56,7 +56,7 @@ jobs:
         run: python -m unittest
 
   dist:
-    name: Build and inspect distribution build
+    name: Build and inspect distribution
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -73,6 +73,7 @@ jobs:
         uses: hynek/build-and-inspect-python-package@v1
 
   pass:
+    name: Continous Integration
     if: always()
     needs: [checks, dist]
     runs-on: ubuntu-latest
