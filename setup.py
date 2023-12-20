@@ -78,7 +78,8 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if sys.platform == 'darwin':
-            pass
+            if has_flag(self.compiler, '-stdlib=libc++'):
+                opts.append('-stdlib=libc++')
         if ct == 'unix':
             opts.append("-DVERSION_INFO='{}'"
                         .format(self.distribution.get_version()))
