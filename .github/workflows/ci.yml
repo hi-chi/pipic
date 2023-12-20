@@ -54,9 +54,9 @@ jobs:
           export CPPFLAGS=${{ matrix.CPPFLAGS }}
           echo $LDFLAGS
           echo $CPPFLAGS
-          find / -name fftw3.h
-          ls -la $(brew --prefix)/lib
-          ls -la $(brew --prefix)/include
+          ls -la $(brew --prefix fftw)
+          ls -la $(brew --prefix fftw)/lib
+          ls -la $(brew --prefix fftw)/include
           python -m pip install --upgrade pip
 
       - name: Install dependencies
