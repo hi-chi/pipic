@@ -78,8 +78,8 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if sys.platform == 'darwin':
-            if has_flag(self.compiler, '-stdlib=libc++'):
-                opts.append('-stdlib=libc++')
+            if has_flag(self.compiler, '-stdlib=libstdc++'):
+                opts.append('-stdlib=libstdc++')
         if ct == 'unix':
             opts.append("-DVERSION_INFO='{}'"
                         .format(self.distribution.get_version()))
@@ -96,9 +96,11 @@ class BuildExt(build_ext):
         if has_flag(self.compiler, '-fopenmp'):
             opts.append('-fopenmp')
         else:  # has_flag(self.compiler, '-Xclang -fopenmp'):
+            opts.append('-stdlib=libc++')
             opts.append('-Xclang')
             opts.append('-fopenmp')
             opts.append('-lomp')
+
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = opts
