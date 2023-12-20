@@ -23,19 +23,31 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]  # 3.12 doesn't yet work due to numba
         os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        exclude:
+          - os: ubuntu-latest
+            compiler: clang
         include:
-        - os: ubuntu-latest
-          INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
-          LDFLAGS: ""
-          CPPFLAGS: ""
-          CC: gcc
-          CXX: g++
-        - os: macos-latest
-          INSTALL_DEPS: brew install fftw
-          LDFLAGS: "-L/usr/local/opt/fftw/lib"
-          CPPFLAGS: "-I/usr/local/opt/fftw/include"
-          CC: gcc-13
-          CXX: g++-13
+          - os: ubuntu-latest
+            INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
+            LDFLAGS: ""
+            CPPFLAGS: ""
+            CC: gcc
+            CXX: g++
+          - os: macos-latest
+            compiler: gcc
+            INSTALL_DEPS: brew install fftw
+            LDFLAGS: "-L/usr/local/opt/fftw/lib"
+            CPPFLAGS: "-I/usr/local/opt/fftw/include"
+            CC: gcc-13
+            CXX: g++-13
+          - os: macos-latest
+            compiler: clang
+            INSTALL_DEPS: brew install fftw
+            LDFLAGS: "-L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib"
+            CPPFLAGS: "-I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include"
+            CC: clang
+            CXX: clang++
 
     steps:
       - name: Checkout project
@@ -55,8 +67,8 @@ jobs:
 
       - name: Build package
         run: |
-          export LDFLAGS=${{ matrix.LDFLAGS }}
-          export CPPFLAGS=${{ matrix.CPPFLAGS }}
+          export LDFLAGS="${{ matrix.LDFLAGS }}"
+          export CPPFLAGS="${{ matrix.CPPFLAGS }}"
           CC=${{ matrix.CC }} CXX=${{ matrix.CXX }} pip install -e .[test]
 
       - name: Test package

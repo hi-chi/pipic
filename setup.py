@@ -44,7 +44,7 @@ def has_flag(compiler, flagname):
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
-            print('Fails!\n')
+            print('Compiler flag test failed!\n')
             return False
     return True
 
@@ -78,25 +78,28 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if sys.platform == 'darwin':
-            if has_flag(self.compiler, '-stdlib=libc++'):
-                pass  # opts.append('-stdlib=libc++')
-            # if has_flag(self.compiler, '-Xclang -fopenmp'):
-            #     opts.append('-Xclang -fopenmp')
-            # if has_flag(self.compiler, '-lomp'):
-            #     opts.append('-lomp')
+            if has_flag(self.compiler, '-Xclang=-fopenmp'):
+                # If using clang compiler on macOS
+                opts.append('-stdlib=libc++')
+                opts.append('-lomp')
+                opts.append('-Xclang')  # Must come before the next -fopenmp (see ct=='unix' below)
+            else:
+                opts.append('-stdlib=libstdc++')
         if ct == 'unix':
+            opts.append('-fopenmp')
             opts.append("-DVERSION_INFO='{}'"
                         .format(self.distribution.get_version()))
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
+            opts.append('-fopenmp')
             opts.append("/DVERSION_INFO=\\'{}\\'"
                         .format(self.distribution.get_version()))
         opts.append('-O3')
         opts.append('-fPIC')
-        opts.append('-fopenmp')
         opts.append('-lfftw3')
+
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = opts
@@ -110,6 +113,6 @@ if sys.version_info < (3, 8, 0, 'final', 0):
 if __name__ == '__main__':
     setup(
         ext_modules=[pipic_cpp_module, *extension_modules],
-        packages=find_packages(),
+        packages=find_packages(exclude=('tests',)),
         cmdclass={'build_ext': BuildExt}
     )
