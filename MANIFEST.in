@@ -1,0 +1,4 @@
+prune docs
+prune tests
+prune examples
+exclude MANIFEST.in .*ignore *.so

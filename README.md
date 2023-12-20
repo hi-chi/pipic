@@ -3,7 +3,7 @@
 </p>
 
 ---
-
+[![Actions Status][actions-badge]][actions-link]
 [![PyPI version][pypi-version]][pypi-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
@@ -39,6 +39,8 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 
 
 <!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/hi-chi/pipic/workflows/CI/badge.svg
+[actions-link]:             https://github.com/hi-chi/pipic/actions
 [pypi-link]:                https://pypi.org/project/pipic/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/pipic
 [pypi-version]:             https://badge.fury.io/py/pipic.svg
