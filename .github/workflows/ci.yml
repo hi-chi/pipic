@@ -64,8 +64,8 @@ jobs:
 
       - name: Build package
         run: |
-          export LDFLAGS=${{ matrix.LDFLAGS }}
-          export CPPFLAGS=${{ matrix.CPPFLAGS }}
+          export LDFLAGS="${{ matrix.LDFLAGS }}"
+          export CPPFLAGS="${{ matrix.CPPFLAGS }}"
           CC=${{ matrix.CC }} CXX=${{ matrix.CXX }} pip install -e .[test]
 
       - name: Test package
