@@ -44,7 +44,7 @@ def has_flag(compiler, flagname):
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
-            print('Fails!\n')
+            print('Compiler flag test failed!\n')
             return False
     return True
 
@@ -78,12 +78,7 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if sys.platform == 'darwin':
-            if has_flag(self.compiler, '-stdlib=libc++'):
-                pass  # opts.append('-stdlib=libc++')
-            # if has_flag(self.compiler, '-Xclang -fopenmp'):
-            #     opts.append('-Xclang -fopenmp')
-            # if has_flag(self.compiler, '-lomp'):
-            #     opts.append('-lomp')
+            pass
         if ct == 'unix':
             opts.append("-DVERSION_INFO='{}'"
                         .format(self.distribution.get_version()))
@@ -91,12 +86,18 @@ class BuildExt(build_ext):
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
+            opts.append('-fopenmp')
             opts.append("/DVERSION_INFO=\\'{}\\'"
                         .format(self.distribution.get_version()))
         opts.append('-O3')
         opts.append('-fPIC')
-        opts.append('-fopenmp')
         opts.append('-lfftw3')
+        if has_flag(self.compiler, '-fopenmp'):
+            opts.append('-fopenmp')
+        else:  # has_flag(self.compiler, '-Xclang -fopenmp'):
+            opts.append('-Xclang')
+            opts.append('-fopenmp')
+            opts.append('-lomp')
         for ext in self.extensions:
             ext.extra_compile_args = opts
             ext.extra_link_args = opts
