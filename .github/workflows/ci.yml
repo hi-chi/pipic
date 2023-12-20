@@ -54,6 +54,7 @@ jobs:
         run: |
           ${{ matrix.CC }} --version
           ${{ matrix.CXX }} --version
+          ls -la /usr/local/bin/
 
       - name: Build package
         run: pip install -e .[test]
