@@ -4,44 +4,20 @@ $\pi$-PIC offers a possibility to develop extensions in Python, C/C++, Fortran a
 
 Python extensions
 --
-1.	Copy the following $\pi$-PIC files to a local folder:
-    - so-file of $\pi$-PIC
-    - `pipic_tools.py`
-2.	Create an `<extension>.py` file and develop the code of extension following the layout of examples in `pipic/extensions` (for more controls see methods of struct cellInterface in `pipic_tools.py`).
-3.	To use the extension, place `<extension>.py`, so-file of $\pi$-PIC and `pipic_tools.py` in a folder with Python file of your simulation. Add and configure your extension (replace `<*>` with respective entries):
+Creating an extension within Python is based on developing a handler in the form of a [Numba C callback](https://numba.readthedocs.io/en/stable/user/cfunc.html) that is called for each cell and offers a possibility to add new particles and/or modify states of all particles in the cell sequentially for all requested types. When called the handler receives data pointers to be passed to a `CellInterface` structure that offers basic information and options for modifying existing and/or adding new particles within the processed cell (see complete list of interfaces in [`cellinterface.py`](https://github.com/hi-chi/pipic/blob/main/pipic/interfaces/cellinterface.py)). The state of the field can be modified whenever needed using `field_loop()`, see [User interfaces](https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md). Despite some limitations on what can be used within Numba C callbacks they can provide sufficiently high performance and flexibility for many cases of interest.
+
+The procedure for developing an extension within Python can look as follows:
+1.	Create an `<extension>.py` file and develop the code of extension following the layout of an [example](https://github.com/hi-chi/pipic/blob/main/pipic/extensions/x_reflector_py.py)
+2.	To use the extension, place `<extension>.py` in a folder with Python file of your simulation.
+3.	In the file of your simulation add and configure your extension (replace `<*>` with respective entries):
     ```
     - import <extension> 
-    - <simulation>. addCellHandler(name=<extension>.name, subject=’<particleType>’, \
+    - <simulation>. add_cell_handler(name=<extension>.name, subject=’<particleType>’, \
     handler=<extension>.handler(<handler parameters>)
     ```
+    `<particleType>` is a list of particle types to be processed by the extension; `all_types` can be used to process all types, `cells` to call the handler for each cell independently of particles there (can be used to add new particles).
 
-As an example see below an extension that can be used to reflect particles from an $x$-limited region.
-```
-import pipic
-from pipic_tools import *
-name = 'x_reflector_py'
-DataDouble = numpy.zeros((2, ), dtype=numpy.double) 
-@cfunc(type_handler)
-def Handler(CI_I, CI_D, CI_F, CI_P, CI_NP, dataDouble, dataInt):
-    C = cellInterface(CI_I, CI_D, CI_F, CI_P, CI_NP) # unpacking data   
-    r = double3(0, 0, 0) # memory allocation (can be expensive in numba)
-    p = double3(0, 0, 0) 
-    for ip in range(C.PSize): # making a loop over particles in the cell being processed
-        C.get_r(ip, r)
-        if  r.x > dataDouble[0] - 0.5*dataDouble[1]\
-        and r.x < dataDouble[0] + 0.5*dataDouble[1]:
-            C.get_p(ip, p)
-            if p.x > 0:
-                p.x *= -1
-                C.set_p(ip, p)
-def handler(location, thickness):
-    global DataDouble
-    DataDouble[0] = location
-    DataDouble[1] = thickness
-    return Handler.address
-def dataDouble():
-    return addressOf(DataDouble) 
-```
+As an example see an extension [`x_reflector_py.py`](https://github.com/hi-chi/pipic/blob/main/pipic/extensions/x_reflector_py.py) that can be used to reflect particles from an $x$-limited region and its use in [`x_reflector_py_test.py`](https://github.com/hi-chi/pipic/blob/main/examples/x_reflector_py_test.py).
 
 C/C++ extensions
 --
