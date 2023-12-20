@@ -57,7 +57,7 @@ jobs:
 #          ls -la /usr/local/bin/
 
       - name: Build package
-        run: pip install -e .[test]
+        run: CC=${{ matrix.CC }} CXX=${{ matrix.CXX }} pip install -e .[test]
 
       - name: Test package
         run: python -m unittest
