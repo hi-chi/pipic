@@ -1,7 +1,9 @@
+# Build and test the package on linux (gcc) and macOS (gcc, clang).
 name: CI
 
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request:
   push:
     branches:
