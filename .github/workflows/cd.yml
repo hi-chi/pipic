@@ -1,4 +1,4 @@
-# Build the package and publish it to PyPI after tests pass.
+# Build the package and publish it to PyPI after CI tests pass.
 name: CD
 
 on:
@@ -10,8 +10,12 @@ env:
   FORCE_COLOR: 3
 
 jobs:
+  tests:
+    uses: ./.github/workflows/ci.yml
+
   dist:
     runs-on: ubuntu-latest
+    needs: [tests]
     steps:
       - name: Install dependencies
         run: sudo apt-get install -y libfftw3-dev
