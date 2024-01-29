@@ -370,7 +370,7 @@ struct fieldSubMap64 // structure for a local field buffer (for optimization pur
                     {
                         int ix = i.x + sx; if(unlikely(ix < 0)) ix += box.n.x; else if(unlikely(ix >= box.n.x)) ix -= box.n.x;
                         int ind = sx+1 + 4*((sy+1) + 4*(sz+1));
-                        cig[ind] = box.ig({ix, iy, 0});
+                        cig[ind] = box.ig({ix, iy, iz});
                         E(sx, sy, sz).x = field.Ex(cig[ind]);
                         B(sx, sy, sz).x = field.Bx(cig[ind]);
                         E(sx, sy, sz).y = field.Ey(cig[ind]);
