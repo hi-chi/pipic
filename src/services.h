@@ -184,6 +184,7 @@ struct cellHandler
         char* pch;
         char* source = new char[subject.size() + 1];
         for(int i = 0; i < int(subject.size()); i++) source[i] = subject[i];
+        source[subject.size()] = '\0';
         pch = strtok(source, " ,.-");
         while (pch != NULL){
             bool detected = false;
