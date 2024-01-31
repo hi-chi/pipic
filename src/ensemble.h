@@ -255,6 +255,7 @@ struct ensemble
             activeThread.NP[j].id = generateID();
             if(checkLocation(activeThread.NP[j].r, activeThread.CI->cellMin(), activeThread.CI->cellMax())){
                 checkPushBack(ig, it, activeThread.NP[j]);
+                activeThread.numCreated++;
                 if(directOrder) {
                     if(it >= activeThread.CI->particleTypeIndex) cell[ig][it]->endShift++;
                 } else {
@@ -287,6 +288,7 @@ struct ensemble
             if(ip < int(cell->P.size()) - 1 - cell->endShift) memcpy(&(cell->P[ip]), &(cell->P[cell->P.size() - 1 - cell->endShift]), sizeof(particle));
             if(cell->endShift > 0) memcpy(&(cell->P[cell->P.size() - 1 - cell->endShift]), &(cell->P[cell->P.size() - 1]), sizeof(particle));
             cell->P.pop_back();
+            thread[omp_get_thread_num()].numDeleted++;
         }
     }
     template<typename pic_solver, typename field_solver>
@@ -379,6 +381,7 @@ struct ensemble
                                     }
                                 } else {
                                     activeThread.toRemove.push_back(ip);
+                                    activeThread.toRemoveLocal.push_back(true);
                                     activeThread.numDeleted++;
                                 }
                             }
@@ -534,6 +537,7 @@ struct ensemble
                                     }
                                 } else {
                                     activeThread.toRemove.push_back(ip);
+                                    activeThread.toRemoveLocal.push_back(true);
                                     activeThread.numDeleted++;
                                 }
                             }
