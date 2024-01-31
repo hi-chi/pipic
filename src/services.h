@@ -271,20 +271,20 @@ struct handlerManager
         file.open ("pipic_performance.txt", ios::trunc);
         file << "Time for ensemble/field update per particle/cell and the total time taken." << endl;
         file << endl;
-        file << left << setw(16) << "Action" << setw(16) << "Average, ns" << setw(16) <<  "Best, ns" << setw(16) << "Total, s" << endl;
-        file << string(16*4, '-') << endl;
+        file << left << setw(32) << "Action" << setw(16) << "Average, ns" << setw(16) <<  "Best, ns" << setw(16) << "Total, s" << endl;
+        file << string(16*5, '-') << endl;
         if(totalParticleUpdates > 0)
-            file << setw(16) << "Ensemble" << setw(16) << (1e+9)*totalEnsembleTime/totalParticleUpdates << setw(16) << best_particleUpdateTime_ns << setw(16) << totalEnsembleTime << endl;
-        file << setw(16) << "Field" << setw(16) << (1e+9)*totalFieldTime/totalCellUpdates << setw(16) << best_cellUpdateTime_ns << setw(16) << totalFieldTime << endl;
+            file << setw(32) << "Ensemble" << setw(16) << (1e+9)*totalEnsembleTime/totalParticleUpdates << setw(16) << best_particleUpdateTime_ns << setw(16) << totalEnsembleTime << endl;
+        file << setw(32) << "Field" << setw(16) << (1e+9)*totalFieldTime/totalCellUpdates << setw(16) << best_cellUpdateTime_ns << setw(16) << totalFieldTime << endl;
         file << endl;
         for(int ih = 0; ih < int(Handler.size()); ih++){
             if(Handler[ih]->total_numberProcessed > 0) {
-                file << setw(16) << Handler[ih]->name;
+                file << setw(32) << Handler[ih]->name;
                 file << setw(16) << (1e+9)*Handler[ih]->total_partilesTime_s/Handler[ih]->total_numberProcessed;
                 file << setw(16) << Handler[ih]->best_partilesTime_ns << setw(16) << Handler[ih]->total_partilesTime_s << endl;
             }
             if(Handler[ih]->actOnCell){
-                file << setw(16) << Handler[ih]->name + "(cell)";
+                file << setw(32) << Handler[ih]->name + "(cell)";
                 file << setw(16) << (1e+9)*Handler[ih]->total_cellTime_s/totalCellUpdates;
                 file << setw(16) << Handler[ih]->best_cellTime_ns << setw(16) << Handler[ih]->total_cellTime_s << endl;
             }
