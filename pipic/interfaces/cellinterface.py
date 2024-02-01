@@ -222,7 +222,7 @@ class CellInterface:
     def add_particle(self, r, p, w, type_index):  # additional attributes (if any) myst be set by particle_buffer_set_a()
         if self.I[11] < self.I[10]:
             self.I[11] += 1
-            ip = self.I[11]
+            ip = self.I[11] - 1
             size = 8 + self.I[7]
             self.NP[ip * size + 0] = r.x
             self.NP[ip * size + 1] = r.y
