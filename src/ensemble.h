@@ -325,7 +325,7 @@ struct ensemble
             thread[iTh].CI->D[12] = timeStep;
         }
         Manager.latestParticleUpdates = totalNumberOfParticles;
-        Manager.preLoop(type);
+        Manager.preLoop(type, fieldHandlerExists);
         chronometer chronometerEnsemble; 
         chronometerEnsemble.start();
         for(layout.stage = 0; layout.stage < 8; layout.stage++)
@@ -436,7 +436,7 @@ struct ensemble
             thread[iTh].CI->D[12] = timeStep;
         }
         Manager.latestParticleUpdates = totalNumberOfParticles;
-        Manager.preLoop(type);
+        Manager.preLoop(type, fieldHandlerExists);
         chronometer chronometerEnsemble; 
         chronometerEnsemble.start();
         //first loop:
@@ -500,7 +500,7 @@ struct ensemble
             {
                 RndGen.setTreadLocalRng(ix);
                 intg ig = box.ig({ix, iy, iz});
-                if((cell[ig] != nullptr)||(fieldHandlerExists)){
+                if(cell[ig] != nullptr){
                     threadData &activeThread(thread[omp_get_thread_num()]);
                     //download type-independent data to cell interface:
                     activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
