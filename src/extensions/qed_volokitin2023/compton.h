@@ -4,6 +4,9 @@
 
 namespace pfc
 {
+    const double plancksConstant = 6.62607015e-27;
+    const double hbar = plancksConstant/(2*pi);
+    const double schwingerField = (electronMass*lightVelocity) * (electronMass*lightVelocity) * lightVelocity / (-electronCharge * hbar);
     using FP = double;
 
     class Compton
@@ -20,7 +23,7 @@ namespace pfc
             g_emis = (double*)int_g_emis;
 
             preFactor = sqr(constants::electronCharge) * constants::electronMass
-                * constants::lightVelocity / sqr(constants::hbar);
+                * constants::lightVelocity / sqr(hbar);
 
             preFactor *= sqrt((FP)3) / ((FP)2.0 * constants::pi);
         }

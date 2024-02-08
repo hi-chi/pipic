@@ -44,7 +44,7 @@ namespace pfc
             g_pair = (double*)int_g_pair;
 
             preFactor = sqr(constants::electronCharge) * constants::electronMass
-                * constants::lightVelocity / sqr(constants::hbar);
+                * constants::lightVelocity / sqr(hbar);
 
             preFactor *= sqrt((FP)3) / ((FP)2.0 * constants::pi);
         }

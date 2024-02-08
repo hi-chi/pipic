@@ -47,8 +47,6 @@ namespace constants {
     constexpr double electronMass = 9.10938215e-28;
     constexpr double protonMass = 1.672622964e-24;
     constexpr double pi = 3.14159265358979323846;
-    constexpr double hbar = 1.0545716818e-27;
-    constexpr double schwingerField = (electronMass*lightVelocity) * (electronMass*lightVelocity) * lightVelocity / (-electronCharge * hbar);
 }
 
 using namespace constants;
