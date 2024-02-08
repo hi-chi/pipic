@@ -108,6 +108,10 @@ class CellInterface:
         return self.I[13]  # number of current thread
 
     @property
+    def rng_seed(self):
+        return self.I[14]  # random integer (from -2147483648 to 2147483647, generated for each cell/iteration) to be used as a seed for keeping deterministism
+
+    @property
     def global_xmin(self):  # x-minimum of the entire simulation region
         return self.D[0]
 
