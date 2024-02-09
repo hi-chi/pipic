@@ -298,10 +298,11 @@ struct handlerManager
     void addCellHandler(string name, string subject, int64_t handler, double* dataDouble, int* dataInt){
         Handler.push_back(new cellHandler(name, subject, handler, dataDouble, dataInt));
     }
-    void preLoop(vector<particleType> types){
+    void preLoop(vector<particleType> types, bool &fieldHandlerExists){
         vector<string> particleNames;
         for(int it = 0; it < int(types.size()); it++) particleNames.push_back(types[it].name);
         for(int ih = 0; ih < int(Handler.size()); ih++) Handler[ih]->preLoop(particleNames);
+        for(int ih = 0; ih < int(Handler.size()); ih++) if(Handler[ih]->actOnCell) fieldHandlerExists = true;
     }
 };
 
