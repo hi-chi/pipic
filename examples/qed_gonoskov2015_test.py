@@ -19,7 +19,7 @@ t_sim = 8*t_rad
 time_step = t_sim/32.0
 
 density = 1e+18
-nx = 16
+nx = 64
 xmin, xmax = -nx*consts.light_velocity*time_step, nx*consts.light_velocity*time_step
 
 # ---------------------setting solver and simulation region----------------------
@@ -30,7 +30,7 @@ sim = pipic.init(solver='fourier_boris', nx=nx, xmin=xmin, xmax=xmax)
 def density_callback(r, data_double, data_int):
     return density
 
-sim.add_particles(name='electron', number=10*nx,
+sim.add_particles(name='electron', number=1*nx,
                   charge=consts.electron_charge, mass=consts.electron_mass,
                   temperature=0, density=density_callback.address)
 
