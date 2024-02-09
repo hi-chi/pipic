@@ -53,9 +53,10 @@ Interfaces and functions of containers
         - `data_double` and `data_int` are pointers to data of double and int type (read/write)
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
 
-- `advance(time_step, number_of_iterations = 1)` advances the state of field and particles
+- `advance(time_step, number_of_iterations = 1, use_omp = True)` advances the state of field and particles
     - `time_step` is time step
     - `number_of_iterations` is the number of iterations to perform
+    - `use_omp` defines whether to perform parallel processing using threads (via openMP); `use_omp = False` should only be used for testing purposes
 
 - `fourier_solver_settings(divergence_cleaning=-1, sin2_kfilter=-1)` provides additional setting of Fourier-based field solver, value `-1` means keeping unchanged, `0` and `1` mean disable and enable, respectively
     - `divergence_cleaning` defines is divergence cleaning is applied (`True` by default for `solver=fourier_boris`)

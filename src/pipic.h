@@ -74,8 +74,9 @@ struct pipic
     void pyCustomFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){
         Field->customFieldLoop(numberOfIterations, it2coord, field2data, dataDouble, dataInt);
     }
-    void pyAdvance(double timeStep, int numberOfIterations = 1){
+    void pyAdvance(double timeStep, int numberOfIterations = 1, bool useOmp = true){
         for(int iIt = 0; iIt < numberOfIterations; iIt++) {
+            Ensemble->advanceWithOmp = useOmp;
             Solver->advance(timeStep);
             Ensemble->Manager.iterationEnd(box.ng);
             pipic_log.saveBuffer();

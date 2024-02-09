@@ -89,6 +89,7 @@ struct ensemble
     bool shuffle;
     handlerManager Manager;
     rndGen RndGen;
+    bool advanceWithOmp;
 
     ensemble(simulationBox box, int stride = 4): box(box), thread(omp_get_max_threads()),
     fieldHandlerExists(false), shuffle(true), Manager(box.ng), RndGen(box.n.x)
@@ -320,7 +321,7 @@ struct ensemble
         chronometerEnsemble.start();
         for(layout.stage = 0; layout.stage < 8; layout.stage++)
         {
-            #pragma omp parallel for collapse(1)
+            #pragma omp parallel for collapse(1) if(advanceWithOmp)
             for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
             for(int iz = 0; iz < box.n.z; iz += 1) // could be good to shuffle here, but unprocessed() then needs a modification 
             for(int iy = 0; iy < box.n.y; iy += 1) // could be good to shuffle here
@@ -432,7 +433,7 @@ struct ensemble
         //first loop:
         for(layout.stage = 7; layout.stage >= 0; layout.stage--)
         {
-            #pragma omp parallel for collapse(1)
+            #pragma omp parallel for collapse(1) if(advanceWithOmp)
             for(int ix = box.n.x - 8 + layout.offset[layout.stage]; ix >= 0; ix -= 8)
             for(int iz = box.n.z - 1; iz >= 0; iz -= 1)
             for(int iy = box.n.y - 1; iy >= 0; iy -= 1)
@@ -483,7 +484,7 @@ struct ensemble
         //second loop:
         for(layout.stage = 0; layout.stage < 8; layout.stage++)
         {
-            #pragma omp parallel for collapse(1)
+            #pragma omp parallel for collapse(1) if(advanceWithOmp)
             for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
             for(int iz = 0; iz < box.n.z; iz += 1)
             for(int iy = 0; iy < box.n.y; iy += 1)
