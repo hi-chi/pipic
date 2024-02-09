@@ -142,6 +142,8 @@ void handlePhoton(threadHandler &cthread, int ip, const double3 &E, const double
             // Move particle to end of timeStep. No particle push being carried out in this part of code
             time = timeStep;
         } else {
+            time += dt; // Move photon by a subtimestep (dt).
+            
             // determine new particle energy
             double delta = cthread.pairGenerator(chi);
 
