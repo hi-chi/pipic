@@ -282,15 +282,6 @@ struct ensemble
             accommodateNPfromCI(ig, Manager.Handler[ih]->name, directOrder);
         }
     }
-    void removeZeroWeightParticles(cellContainer *cell){ // removes particles in P assigned to be removed (w = 0)
-        for(int ip = cell->P.size() - cell->endShift - 1; ip >= 0; ip--)
-        if(cell->P[ip].w == 0) {
-            if(ip < int(cell->P.size()) - 1 - cell->endShift) memcpy(&(cell->P[ip]), &(cell->P[cell->P.size() - 1 - cell->endShift]), sizeof(particle));
-            if(cell->endShift > 0) memcpy(&(cell->P[cell->P.size() - 1 - cell->endShift]), &(cell->P[cell->P.size() - 1]), sizeof(particle));
-            cell->P.pop_back();
-            thread[omp_get_thread_num()].numDeleted++;
-        }
-    }
     template<typename pic_solver, typename field_solver>
     void apply_particleHandlers(int it, pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
         for(int ih = 0; ih < int(Manager.Handler.size()); ih++)
@@ -299,7 +290,6 @@ struct ensemble
             fieldBeenSet = true;
             Manager.Handler[ih]->handle(activeThread.CI);
             accommodateNPfromCI(ig, Manager.Handler[ih]->name, directOrder);
-            removeZeroWeightParticles(cell[ig][it]);
             activeThread.CI->P_data = (double*)(&(cell[ig][it]->P[0]));
             activeThread.CI->I[9] = cell[ig][it]->P.size() - cell[ig][it]->endShift; // set particleSubsetSize;
             if(activeThread.CI->particleSubsetSize == 0) break;
@@ -649,10 +639,18 @@ struct ensemble
     {
         nonOmpIterator(int it, ensemble *Ensemble) : ig(0), ip(-1), it(it), Ensemble(Ensemble) { (*this)++; }
         particle& operator*() const { return *Particle; }
-        friend bool operator < (nonOmpIterator const& lhs, int const& rhs){
+        void removeZeroWeightParticles(vector<particle> &P){ // removes particles in P assigned to be removed (w = 0)
+            for(int ip = P.size() - 1; ip >= 0; ip--)
+            if(P[ip].w == 0) {
+                if(ip < int(P.size()) - 1) memcpy(&(P[ip]), &(P[P.size() - 1]), sizeof(particle));
+                P.pop_back();
+                Ensemble->totalNumberOfParticles--;
+            }
+        }
+        friend bool operator < (nonOmpIterator& lhs, int const& rhs){
             if(lhs.Particle != nullptr)
                 if(lhs.ip == int(lhs.Ensemble->cell[lhs.ig][lhs.it]->P.size()) - 1)
-                    lhs.Ensemble->removeZeroWeightParticles(lhs.Ensemble->cell[lhs.ig][lhs.it]);
+                    lhs.removeZeroWeightParticles(lhs.Ensemble->cell[lhs.ig][lhs.it]->P);
             return (lhs.Particle != nullptr);
         }
         bool operator++(int)
@@ -673,7 +671,7 @@ struct ensemble
                             Particle = &(Ensemble->cell[ig][it]->P[ip]);
                             return true;
                         } else {
-                            Ensemble->removeZeroWeightParticles(Ensemble->cell[ig][it]);
+                            removeZeroWeightParticles(Ensemble->cell[ig][it]->P);
                             ip = -1;
                             if(ig < Ensemble->box.ng - 1) ig++;
                             else return false;
