@@ -20,7 +20,7 @@ N_steps = 32
 time_step = t_sim/N_steps
 
 density = 1e+18
-nx = 16
+nx = 64
 xmin, xmax = -nx*consts.light_velocity*time_step, nx*consts.light_velocity*time_step
 
 # ---------------------setting solver and simulation region----------------------
