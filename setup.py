@@ -28,7 +28,7 @@ for name in os.listdir(extensions_source_directory):
             extensions_directory + '_' + name,
             sorted(glob(extensions_source_directory + name + '/*.cpp')),
             language='c++',
-            include_dirs=['src/'])
+            include_dirs=['src/', extensions_source_directory + name + '/'])
         extension_modules.append(cpp_module)
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
