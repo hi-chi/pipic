@@ -103,7 +103,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`make`  
 16. For testing and debugging purposes it can be useful to disable the use threads by setting `use_omp = False` among parameters of `advance()`. When commiting changes to git do not add copied/generated files.  
 
-## When finished with the developments and tests, update and upload the branch:  
+### When finished with the developments and tests, update and upload the branch:  
 
 17. Add a licence statement to `<name>.cpp` and to all needed .h files.  
     In `<name>.cpp` add and an underscore in front of the name in the following line:  
