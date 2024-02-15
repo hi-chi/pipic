@@ -81,7 +81,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`pybind11_add_module(<name>${<name>})`  
 	(optional) remove four lines that concern FFTW  
 9. Copy files for testing, e.g.:  
-	`cp ../x_converter_c/x_converter_c.cpp .`
+	`cp ../x_converter_c/x_converter_c.cpp .`  
 	`cp ../../../examples/x_converter_c_test.py .`  
 11. Rename the cpp file to match the name of the extension: `<name>.cpp`  
 12. Amend as follows a few lines in `<name>.cpp` for testing:  
