@@ -81,27 +81,27 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`pybind11_add_module(<name>${<name>})`  
 	(optional) remove four lines that concern FFTW  
 9. Copy files for testing, e.g.:  
-	`cp ../x_converter_c/x_converter_c.cpp`  
-    `cp ../../../examples/x_converter_c_test.py .`  
-10. Rename the cpp file to match the name of the extension: `<name>.cpp`  
-11. Amend as follows a few lines in `<name>.cpp` for testing:  
+	`cp ../x_converter_c/x_converter_c.cpp .`
+	`cp ../../../examples/x_converter_c_test.py .`  
+11. Rename the cpp file to match the name of the extension: `<name>.cpp`  
+12. Amend as follows a few lines in `<name>.cpp` for testing:  
 	`const string name = "<name>";`  
 	`cout << “hi from <name>” << endl;` add this line to the body of `handler()`  
 	`PYBIND11_MODULE(<name>, object) {`  
-12. Rename and amend the `<name>.py`:  
+13. Rename and amend the `<name>.py`:  
 	`import <name>`   
 	`extension_handler = <name>.handler(location=-L/4-L/32, thickness=L/16,`  
 	`typeTo=sim.get_type_index('electron'))`  
 	`sim.add_handler(name=<name>.name, subject='electron1',`   
 	`handler=extension_handler)`  
-13. Generate so-file:  
+14. Generate so-file:  
     `cmake .`  
     `make`  
-14. Test by running:  
+15. Test by running:  
 	`python3 <name>.py`  
-15. Develop the extension; to recompile use:  
+16. Develop the extension; to recompile use:  
 	`make`  
-16. For testing and debugging purposes it can be useful to disable the use threads by setting `use_omp = False` among parameters of `advance()`. When commiting changes to git do not add copied/generated files.  
+17. For testing and debugging purposes it can be useful to disable the use threads by setting `use_omp = False` among parameters of `advance()`. When commiting changes to git do not add copied/generated files.  
 
 ### When finished with the developments and tests, update and upload the branch:  
 
