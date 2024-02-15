@@ -72,7 +72,7 @@ struct threadHandler{
         int m = spec[is].numOfConstraints(C.dim);
         int n = m + 1; // apply algorithm to first m + 1 particles
         for(int in = 0; in < n; in++){
-            for(int jn = 0; jn < n; jn++) v[in][jn] = 0; // try 0 later
+            for(int jn = 0; jn < n; jn++) v[in][jn] = 0;
             v[in][in] = 1; 
         }
         int vnum = n;
@@ -89,7 +89,7 @@ struct threadHandler{
                     if(s == 0) return; // cancel downsampling for this case
                     s = sqrt(s);
                     for(int in = 0; in < n; in++) v[ivn][in] /= s;
-                } else return; // cancel downsampling for this case
+                }
             }
             vnum--;
         }        
@@ -368,8 +368,9 @@ int64_t handler(int64_t ensembleData, int typeIndex, bool preserveEnergy = true,
 void addAssignment(int typeIndex, bool preserveEnergy = true, 
                     bool preserveMomentum = true, bool preserveCICWeight = true, 
                     int cap = 15, double targetRatio = 1.0){
-    if(targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl;}
-    spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, targetRatio});
+    double _targetRatio = targetRatio; 
+    if(_targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl; _targetRatio = 1.0;}
+    spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, _targetRatio});
 };
 
 namespace py = pybind11;
