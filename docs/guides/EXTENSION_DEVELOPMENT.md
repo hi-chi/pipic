@@ -72,9 +72,9 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 6. Clone pybind:  
 	`git clone https://github.com/pybind/pybind11`  
 7. Bring files to local development:  
-	`cp ../../primitives.h`  
-	`cp ../../interfaces.h`  
-	`cp ../../CMakeLists.h`  
+	`cp ../../primitives.h .`  
+	`cp ../../interfaces.h .`  
+	`cp ../../CMakeLists.h .`  
 8. Amend CMakeLists.h:  
 	`set(<name>`  
 	`<name>.cpp)`  
