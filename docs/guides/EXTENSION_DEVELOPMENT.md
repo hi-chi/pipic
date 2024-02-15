@@ -113,14 +113,14 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 19. Register the extension in `pipic/extensions/__init__.py`  
 20. Test everything by reinstalling from scratch:  
 	`pip uninstall pipic`  
-	`puthon3 -m pip install .`  
+	`python3 -m pip install .`  
 	`python3 examples/<name>_test.py`  
-21. Add the following files to the branch (do not add copied/generated files):  
+22. Add the following files to the branch (do not add copied/generated files):  
     `git add src/extensions/<name>/<name>.cpp` and other needed .h files  
 	`git add pipic/extensions/__init__.py`  
     `git add examples/<name>_test.py`  
-22. Add a note about the user interfaces, assumptions and everything needed to the [documentation](../EXTENSIONS.md).  
-23. Upload the branch, make a pull request  
+23. Add a note about the user interfaces, assumptions and everything needed to the [documentation](../EXTENSIONS.md).  
+24. Upload the branch, make a pull request  
 
 
 As an example see an extension [`x_converter_c.cpp`](https://github.com/hi-chi/pipic/blob/main/src/extensions/x_converter_c/x_converter_c.cpp) that can be used to convert type of particles in an $x$-limited region. The use of this extension is exemplified in [`x_reflector_py_test.py`](https://github.com/hi-chi/pipic/blob/main/examples/x_converter_c_test.py) (note that this extension is added to $\pi$-PIC as an example).
