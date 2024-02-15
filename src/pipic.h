@@ -105,6 +105,9 @@ struct pipic
         int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
         Ensemble->Manager.addCellHandler(name, subject, handler, dataDouble_, dataInt_);
     }
+    int64_t ensembleData(){ 
+        return int64_t(Ensemble->cell);
+    }
 };
 
 #endif
