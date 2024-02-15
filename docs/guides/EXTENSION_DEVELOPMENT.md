@@ -79,7 +79,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`set(<name>`  
 	`<name>.cpp)`  
 	`pybind11_add_module(<name>${<name>})`  
-	(optional) remove four lines that concern FFTW  
+	(optional) remove four lines that concern FFTW, and `#include <fftw3.h>` from `primitives.h` 
 9. Copy files for testing, e.g.:  
 	`cp ../x_converter_c/x_converter_c.cpp .`  
 	`cp ../../../examples/x_converter_c_test.py .`  
