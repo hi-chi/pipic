@@ -48,7 +48,7 @@ As an example see an extension [`x_reflector_py.py`](https://github.com/hi-chi/p
 
 C/C++ extensions
 --
-Creating an extension in C/C++ provides full flexibility and performance, while also permitting the creation of small extensions compiled locally. The layout of development is similar to the one for Python developments. In case of contributing to the toolbox of $\pi$-PIC, the following layout is recommended (if your extension concerns the modification of $\pi$-PIC core/interface, consider using the procedure described in the [next section](Core-development)): 
+Creating an extension in C/C++ provides full flexibility and performance, while also permitting the creation of small extensions compiled locally. The layout of development is similar to the one for Python developments. In case of contributing to the toolbox of $\pi$-PIC, the following layout is recommended (if your extension concerns the modification of $\pi$-PIC core/interface, consider using the procedure described in the [next section](#core-development)): 
 
 
 1. Create a local folder for your extension, name it as the extension:  
