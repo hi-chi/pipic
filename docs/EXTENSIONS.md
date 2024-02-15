@@ -2,13 +2,13 @@
 
 Here we list extensions with short descriptions, references and contacts of developers, which is followed by the list of parameters (if applicable the default values are specified in parenthesis). For an extension named `<name>` an extended description and the usage example can be found in `/src/extensions/<name>/<name>.cpp` and `/examples/<name>_test.py`.
 
-- **qed_volokitin2023** is an optimized QED event generator that performs minimal possible number of rate computations per QED event [[V. Volokitin et al. JCS **74**, 102170 (2023)](https://doi.org/10.1016/j.jocs.2023.102170)]<br/>
+- **qed_volokitin2023** is an optimized QED event generator that performs minimal possible number of rate computations per QED event [[V.&nbsp;Volokitin et al. JCS **74**, 102170 (2023)](https://doi.org/10.1016/j.jocs.2023.102170)]<br/>
 *implemented by Joel Magnusson* (joel.magnusson@physics.gu.se)
     - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be decleared for the simulation constainder using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
 
 </br>
 
-- **qed_gonoskov2015** is a simple implementation of QED event generator based on rejection sampling and subcycling [[A. Gonoskov et al. PRE **92**, 023305 (2015)](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.92.023305); [arXiv:1412.6426](https://arxiv.org/abs/1412.6426)]; (note that `qed_volokitin2023` is an equivivalent but faster version)<br/>
+- **qed_gonoskov2015** is a simple implementation of QED event generator based on rejection sampling and subcycling [[A.&nbsp;Gonoskov et al. PRE **92**, 023305 (2015)](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.92.023305); [arXiv:1412.6426](https://arxiv.org/abs/1412.6426)]; (note that `qed_volokitin2023` is an equivivalent but faster version)<br/>
 *implemented by Arkady Gonoskov* (arkady.gonoskov@physics.gu.se)
     - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be decleared for the simulation constainder using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
     - `probability_threshold`($10^{-3}$) is an optimization threshold: if the estimated probability of an event is below the threshold, we randomly either halt the computation or accordingly boosted the probability
@@ -16,7 +16,7 @@ Here we list extensions with short descriptions, references and contacts of deve
 
 </br>
 
-- **downsampler_gonoskov2022** is an implementation of agnostic conservative downsampling based on the method described in [[A. Gonoskov, CPC **271**,108200(2022)](https://doi.org/10.1016/j.cpc.2021.108200); [arXiv:1607.03755](https://arxiv.org/abs/1607.03755)]. The extension retrieves each subset of particles that all give CIC contributions to each set of 2/4/8 nearby nodes, depending on dimensionality. The implementation is configured to always preserve the total weight of particles in each subset. In addition, the energy, momentum and CIC contributions are preserved (can be switched off). The extension can act on several types of particles; this is to be configured with `add_assignment()` using the same parameters as for the initialization (except `ensemble_data` is not needed). </br>
+- **downsampler_gonoskov2022** is an implementation of agnostic conservative downsampling based on the method described in [[A.&nbsp;Gonoskov, CPC **271**,108200(2022)](https://doi.org/10.1016/j.cpc.2021.108200); [arXiv:1607.03755](https://arxiv.org/abs/1607.03755)]. The extension retrieves each subset of particles that all give CIC contributions to each set of 2/4/8 nearby nodes, depending on dimensionality. The implementation is configured to always preserve the total weight of particles in each subset. In addition, the energy, momentum and CIC contributions are preserved (can be switched off). The extension can act on several types of particles; this is to be configured with `add_assignment()` using the same parameters as for the initialization (except `ensemble_data` is not needed). </br>
 *implemented by Arkady Gonoskov* (arkady.gonoskov@physics.gu.se)
     - `ensemble_data` is the address of the ensemble data to be retrieved from the simulation container by calling `ensemble_data()`
     - `type_index` is the type index of particles to be affected by the downsampling
