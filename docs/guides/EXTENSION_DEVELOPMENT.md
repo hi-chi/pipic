@@ -119,7 +119,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
     `git add src/extensions/<name>/<name>.cpp` and other needed .h files  
 	`git add pipic/extensions/__init__.py`  
     `git add examples/<name>_test.py`  
-22. Add a note about the user interfaces, assumptions and everything needed to the [documentation]()  
+22. Add a note about the user interfaces, assumptions and everything needed to the [documentation](docs/EXTENSIONS.md)  
 23. Upload the branch, make a pull request  
 
 
