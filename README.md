@@ -31,7 +31,7 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extensions_doc].  
+We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].  
 
 
 # Reference
@@ -50,6 +50,6 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [tutorial]: https://github.com/hi-chi/pipic/blob/main/docs/guides/TUTORIAL.md
 [interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
 [extensions]: https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md
-[extensions_doc]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSIONS_DOC.md
+[extension_development]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSION_DEVELOPMENT.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
 <!-- prettier-ignore-end -->
