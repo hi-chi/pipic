@@ -69,5 +69,6 @@ PYBIND11_MODULE(_pipic, object) {
         .def("set_rng_seed", &pipic::setRngGenSeed, py::arg("seed"))
         .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
         .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0)
+        .def("ensemble_data", &pipic::ensembleData)
     ;
 }

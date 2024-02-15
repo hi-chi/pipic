@@ -12,12 +12,12 @@ $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collectio
 - absence of numerical dispersion.
 
 The solvers provide a way to either suppress or eliminate numerical artefacts (instabilities, heating, numerical Cherenkov radiation, etc.) permitting larger space and time steps, as well as lower number of particles per cell.
-Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [References](#References).
+Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [Reference](#Reference).
 
 ---
 
 # Overview
-$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions. The project and its development are hosted on [GitHub][]. 
+$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions (see [extensions][extensions] for a list of extensions included in $\pi$-PIC installation). The project and its development are hosted on [GitHub][]. 
 
 To get started, it should for most cases be sufficient to install $\pi$-PIC via _pip_ (this requires: `gcc`, `openmp` and `fftw3`; for details and information on compilation via CMake see [installation instructions][installation]):
 ```
@@ -31,10 +31,10 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extensions]. 
+We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].  
 
 
-# References
+# Reference
 A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [J. Comput. Phys., 502, 112820](https://doi.org/10.1016/j.jcp.2024.112820); [arXiv:2302.01893][] (2024).
 
 
@@ -49,6 +49,7 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [installation]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INSTALLATION.md
 [tutorial]: https://github.com/hi-chi/pipic/blob/main/docs/guides/TUTORIAL.md
 [interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
-[extensions]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSIONS.md
+[extensions]: https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md
+[extension_development]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSION_DEVELOPMENT.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
 <!-- prettier-ignore-end -->
