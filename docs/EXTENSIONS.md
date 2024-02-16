@@ -4,15 +4,15 @@ Here we list extensions with short descriptions, references and contacts of deve
 
 - **qed_volokitin2023** is an optimized QED event generator that performs minimal possible number of rate computations per QED event [[V.&nbsp;Volokitin et al. JCS **74**, 102170 (2023)](https://doi.org/10.1016/j.jocs.2023.102170)]<br/>
 *implemented by Joel Magnusson* (joel.magnusson@physics.gu.se)
-    - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be decleared for the simulation constainder using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
+    - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be declared for the simulation container using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
 
 </br>
 
 - **qed_gonoskov2015** is a simple implementation of QED event generator based on rejection sampling and subcycling [[A.&nbsp;Gonoskov et al. PRE **92**, 023305 (2015)](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.92.023305); [arXiv:1412.6426](https://arxiv.org/abs/1412.6426)]; (note that `qed_volokitin2023` is an equivivalent but faster version)<br/>
 *implemented by Arkady Gonoskov* (arkady.gonoskov@physics.gu.se)
-    - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be decleared for the simulation constainder using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
-    - `probability_threshold`($10^{-3}$) is an optimization threshold: if the estimated probability of an event is below the threshold, we randomly either halt the computation or accordingly boosted the probability
-    - `probability_subcycle`(0.1) is the target probability of an event ocurance within a substep (used to compute the substep)
+    - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be declared for the simulation container using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
+    - `probability_threshold`($10^{-3}$) is an optimization threshold: if the estimated probability of an event is below the threshold, we randomly either halt the computation or accordingly boost the probability
+    - `probability_subcycle`(0.1) is the target probability of an event occurrence within a substep (used to compute the substep)
 
 </br>
 
