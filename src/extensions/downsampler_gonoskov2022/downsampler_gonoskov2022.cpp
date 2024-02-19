@@ -94,36 +94,36 @@ struct threadHandler{
             vnum--;
         }        
         double ap = 0, an = 0; //positive and negrative values of a that are closest to 0;
-	int iap = 0, ian = 0; // the corresponding indices;
-	bool fn = false, fp = false; // found negative, found positive
-	for(int in = 0; in < n; in++){
-		if(v[0][in] != 0){
-			double a = -PP[in]->P->w / v[0][in];
-			if(a > 0){
-				if(!fp){
-					fp = true;
-					ap = a;
-					iap = in;
+		int iap = 0, ian = 0; // the corresponding indices;
+		bool fn = false, fp = false; // found negative, found positive
+		for(int in = 0; in < n; in++){
+			if(v[0][in] != 0){
+				double a = -PP[in]->P->w / v[0][in];
+				if(a > 0){
+					if(!fp){
+						fp = true;
+						ap = a;
+						iap = in;
+					}
+					if(a < ap){
+						ap = a;
+						iap = in;
+					}
 				}
-				if(a < ap){
-					ap = a;
-					iap = in;
-				}
-			}
-			if(a < 0){
-				if(!fn){
-					fn = true;
-					an = a;
-					ian = in;
-				}
-				if(a > an){
-					an = a;
-					ian = in;
+				if(a < 0){
+					if(!fn){
+						fn = true;
+						an = a;
+						ian = in;
+					}
+					if(a > an){
+						an = a;
+						ian = in;
+					}
 				}
 			}
 		}
-	}
-	if((!fp)||(!fn)) return;
+		if((!fp)||(!fn)) return;
         int iRem;
         if(random() < ap/(ap - an)){
             for(int in = 0; in < n; in++)
