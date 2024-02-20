@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------------------------------------
-This file is part of pi-PIC.
-pi-PIC, Copyright 2023 Joel Magnusson
+This file is an implementation of an extension landau_lifshitz, which is compartible with pi-PIC.
+landau_lifshitz, Copyright 2023 Joel Magnusson
 ---------------------------------------------------------------------------------------------------------
-pi-PIC is free software: you can redistribute it and/or modify it under the terms of the GNU General
+landau_lifshitz is free software: you can redistribute it and/or modify it under the terms of the GNU General
 Public License as published by the Free Software Foundation, either version 3 of the License, or (at your
 option) any later version.
 
-pi-PIC is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+landau_lifshitz is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
 the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License along with pi-
 <https://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------------------------------
 Website: https://github.com/hi-chi/pipic
-Contact: arkady.gonoskov@gu.se.
+Contact: joel.magnusson@physics.gu.se.
 -------------------------------------------------------------------------------------------------------*/
 // Description: A C/C++ extension that can be used to account for Landau-Lifshitz radiation reaction.
 
