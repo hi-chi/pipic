@@ -33,6 +33,11 @@ The basic layout of a simulation includes five elements:
 
 We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].  
 
+# New in $\pi$-PIC v1.1
+- [`extensions`][extensions] for QED-PIC simulations (`qed_volokitin2023`, `qed_gonoskov2015`)
+- [`extension`][extensions] for ensemble down-sampling (`downsampler_gonoskov2022`)
+
+See all releases [here][releases].
 
 # Reference
 A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [J. Comput. Phys., 502, 112820](https://doi.org/10.1016/j.jcp.2024.112820); [arXiv:2302.01893][] (2024).
@@ -51,5 +56,6 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
 [extensions]: https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md
 [extension_development]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSION_DEVELOPMENT.md
+[releases]: https://github.com/hi-chi/pipic/blob/main/docs/RELEASES.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
 <!-- prettier-ignore-end -->
