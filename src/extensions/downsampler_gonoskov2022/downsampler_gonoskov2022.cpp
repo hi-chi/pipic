@@ -46,7 +46,7 @@ struct Spec{ // scpecification of downsampling parameters for each type of inter
     int cap;
     double targetRatio;
     int numOfConstraints(int dim){
-        return 1 + preserverEnergy + 3*preserveMomentum + (1 << dim)*preserveCICWeight;
+        return (!preserveCICWeight) + preserverEnergy + 3*preserveMomentum + (1 << dim)*preserveCICWeight;
     }
 };
 static vector<Spec> spec;
@@ -54,10 +54,10 @@ static vector<Spec> spec;
 struct threadHandler{
     struct particleRef{
         particle* P;
-        double e[13]; // coefficients of constraints
+        double e[12]; // coefficients of constraints
         particleRef(particle *P): P(P) {}
     };
-    double v[14][14];
+    double v[13][13];
     vector<particleRef> PR;
     vector<particleRef*> PP;
     int dim;
@@ -89,6 +89,10 @@ struct threadHandler{
                     if(s == 0) return; // cancel downsampling for this case
                     s = sqrt(s);
                     for(int in = 0; in < n; in++) v[ivn][in] /= s;
+
+                    //a check on limitations of numerical arithmetics:
+                    s = 0; for(int in = 0; in < n; in++) s += sqr(v[ivn][in]);
+                    if(abs(s - 1.0) > 1e-11) return;
                 }
             }
             vnum--;
@@ -124,20 +128,25 @@ struct threadHandler{
 			}
 		}
 		if((!fp)||(!fn)) return;
-        int iRem;
+        double threshold = 1e-13;
+        double w_max = 0; for(int in = 0; in < n; in++) if(w_max < PP[in]->P->w) w_max = PP[in]->P->w;
         if(random() < ap/(ap - an)){
-            for(int in = 0; in < n; in++)
+            for(int in = 0; in < n; in++){
                 PP[in]->P->w += an*v[0][in];
-			PP[ian]->P->w = 0;
-            iRem = ian;
+                if((in == ian)||(PP[in]->P->w < w_max*threshold)) PP[in]->P->w = 0;
+            }
 		}else{
-            for(int in = 0; in < n; in++)
+            for(int in = 0; in < n; in++){
                 PP[in]->P->w += ap*v[0][in];
-			PP[iap]->P->w = 0;
-            iRem = iap;
+                if((in == iap)||(PP[in]->P->w < w_max*threshold)) PP[in]->P->w = 0;
+            }
 		}
-        PP[iRem] = PP[PP.size() - 1];
-        PP.pop_back();
+        
+        for(int ip = int(PP.size()) - 1; ip >= 0; ip--)
+        if(PP[ip]->P->w == 0){
+            PP[ip] = PP[PP.size() - 1];
+            PP.pop_back();
+        }
     }
     void addParticles(int is, int3 i, int3 n, double3 min, double3 step){
         PR.clear();
@@ -258,8 +267,10 @@ struct threadHandler{
         for(int ip = 0; ip < int(PR.size()); ip++){
             particle &P(*PR[ip].P);
             int ie = 0;
-            PR[ip].e[ie] = 1; ie++;
-            if(spec[is].preserverEnergy == true) {
+            if(!spec[is].preserveCICWeight){
+                PR[ip].e[ie] = 1; ie++;
+            }
+            if(spec[is].preserverEnergy){
                 if(C.particleMass == 0){
                     PR[ip].e[ie] = lightVelocity*P.p.norm();
                 } else {
@@ -269,12 +280,12 @@ struct threadHandler{
                 }
                 ie++;
             }
-            if(spec[is].preserveMomentum == true){
+            if(spec[is].preserveMomentum){
                 PR[ip].e[ie] = P.p.x; ie++;
                 PR[ip].e[ie] = P.p.y; ie++;
                 PR[ip].e[ie] = P.p.z; ie++;
             }
-            if(spec[is].preserveCICWeight == true){
+            if(spec[is].preserveCICWeight){
                 if(dim == 1){
                     double xf = (C.globalMin.x + (C.i.x + 1.5)*C.step.x - P.r.x)*C.invStep.x;
                     PR[ip].e[ie] = xf; ie++;
@@ -304,8 +315,8 @@ struct threadHandler{
             }
         }
     }
-    int hypoteticalMax(cellInterface &C){ // computes the sum of P.size() of involved cells
-        int hMax = 0, it = C.particleTypeIndex, ig, ix = C.i.x, iy = C.i.y, iz = C.i.z;
+    int hypoteticalMax(cellInterface &C, int it){ // computes the sum of P.size() of involved cells
+        int hMax = 0, ig, ix = C.i.x, iy = C.i.y, iz = C.i.z;
         ig = ix + (iy + iz*C.n.y)*C.n.x; 
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
         ix++; if(ix == C.n.x) ix = 0; ig = ix + (iy + iz*C.n.y)*C.n.x;
@@ -331,7 +342,7 @@ struct threadHandler{
             if(C.threadNum == 0){cout << name << ": Error: The number of constraints must be less than cap and int(target_ratio*cap)." << endl;}
             return;
         }
-        if(hypoteticalMax(C) <= spec[is].cap) return;
+        if(hypoteticalMax(C, spec[is].typeIndex) <= spec[is].cap) return;
         addParticles(is, C.i, C.n, C.globalMin, C.step);
         if(int(PR.size()) <= spec[is].cap) return;
         set_constraints(is, C);
@@ -349,18 +360,17 @@ static vector<threadHandler> Thread;
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface C(I, D, F, P, NP);
-    for(int is = 0; is < int(spec.size()); is++) 
-        if (spec[is].typeIndex == C.particleTypeIndex){
-            Thread[omp_get_thread_num()].downsample(is, C);
-        }
+    if(C.particleTypeIndex != -1){cout << name << ": Error: Inconsistent subject, set it to 'cells'." << endl; exit(0);}
+    for(int is = 0; is < int(spec.size()); is++) Thread[omp_get_thread_num()].downsample(is, C);
 };
 
 // extension initialization
 int64_t handler(int64_t ensembleData, int typeIndex, bool preserveEnergy = true, 
                 bool preserveMomentum = true, bool preserveCICWeight = true, 
                 int cap = 15, double targetRatio = 1.0){
-    if(targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl;}
-    spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, targetRatio});
+    double _targetRatio = targetRatio; 
+    if(_targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl; _targetRatio = 1.0;}
+    spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, _targetRatio});
     Thread.resize(omp_get_max_threads());
     cell = (cellContainer***)ensembleData;
     return (int64_t)Handler;

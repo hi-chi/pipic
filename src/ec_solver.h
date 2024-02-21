@@ -85,6 +85,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
         subField[omp_get_thread_num()].CIC(c, cil, E, B);
     }
     void processParticle(particle &P, double charge, double mass, double timeStep){
+        if(timeStep == 0) return;
         fieldSubMap64 &map(subField[omp_get_thread_num()]);
         simulationBox &box(field->box);
         int thread = omp_get_thread_num();

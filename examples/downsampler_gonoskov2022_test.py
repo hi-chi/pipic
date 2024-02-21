@@ -13,14 +13,14 @@ debye_length = math.sqrt(temperature/(4*math.pi*density*electron_charge**2))
 plasma_period = math.sqrt(math.pi*electron_mass/(density*electron_charge**2))
 L = 128*debye_length
 xmin, xmax = -L, L
-nx, ny, ppc = 64, 32, 15
+nx, ny, ppc = 64, 32, 100
 ymin, ymax = -L/2, L/2
 stepx, stepy = (xmax - xmin)/nx, (ymax - ymin)/ny
 time_step = plasma_period/64
 
 #---------------------setting solver and simulation region---------------------- 
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax, ny=ny, ymin=ymin, ymax=ymax)
-
+sim.set_rng_seed(1)
 #------------------------------adding electrons---------------------------------
 @cfunc(add_particles_callback)
 def density_callback(r, data_double, data_int):  # callback function
@@ -32,7 +32,7 @@ sim.add_particles(name='electron', number=int(ppc*nx*ny/8.0),
 #------------------------------adding extension---------------------------------
 downsampler = downsampler_gonoskov2022.handler(sim.ensemble_data(), sim.get_type_index('electron'),
                                                preserve_energy=False, preserve_momentum=False, cap=6)
-sim.add_handler(name=downsampler_gonoskov2022.name, subject='electron',
+sim.add_handler(name=downsampler_gonoskov2022.name, subject='cells',
                 handler=downsampler)
 
 #=================================OUTPUT========================================
