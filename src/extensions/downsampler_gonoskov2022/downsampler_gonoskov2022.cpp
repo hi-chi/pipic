@@ -71,6 +71,7 @@ struct threadHandler{
     void downsampleSingle(int is, cellInterface &C){
         int m = spec[is].numOfConstraints(C.dim);
         int n = m + 1; // apply algorithm to first m + 1 particles
+	if(n > int(PP.size())) return;
         for(int in = 0; in < n; in++){
             for(int jn = 0; jn < n; jn++) v[in][jn] = 0;
             v[in][in] = 1; 
