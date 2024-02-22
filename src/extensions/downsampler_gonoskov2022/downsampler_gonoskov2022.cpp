@@ -362,7 +362,7 @@ static vector<threadHandler> Thread;
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface C(I, D, F, P, NP);
     if(C.particleTypeIndex != -1){cout << name << ": Error: Inconsistent subject, set it to 'cells'." << endl; exit(0);}
-    for(int is = 0; is < int(spec.size()); is++) Thread[omp_get_thread_num()].downsample(is, C);
+    for(int is = 0; is < int(spec.size()); is++) Thread[C.threadNum].downsample(is, C);
 };
 
 // extension initialization
