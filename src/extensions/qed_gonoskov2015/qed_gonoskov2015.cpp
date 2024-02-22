@@ -231,7 +231,7 @@ static vector<threadHandler> Thread;
 
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP);
-    threadHandler &cthread(Thread[omp_get_thread_num()]); // cthread (current thread) is to run in a thread-safe way
+    threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
     cthread.rng.seed(CI.rngSeed);
     if(CI.particleTypeIndex == photonType) for(int ip = 0; ip < CI.particleSubsetSize; ip++) cthread.handlePhoton(ip, CI);
     if(CI.particleTypeIndex == electronType) for(int ip = 0; ip < CI.particleSubsetSize; ip++) cthread.handleElectronOrPositron(ip, electronType, CI);
