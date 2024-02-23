@@ -43,6 +43,7 @@ See all releases [here][releases].
 A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [J. Comput. Phys., 502, 112820](https://doi.org/10.1016/j.jcp.2024.112820); [arXiv:2302.01893][] (2024).
 
 
+
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/hi-chi/pipic/workflows/CI/badge.svg
 [actions-link]:             https://github.com/hi-chi/pipic/actions
