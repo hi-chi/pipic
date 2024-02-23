@@ -101,9 +101,6 @@ def ph_cb(r, p, w, id, data_double, data_int):
 def remove_low_en_ph():
     sim.particle_loop(name='photon', handler=ph_cb.address)
 # ===============================SIMULATION======================================
-output_folder = 'qed_aeg_output'
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
 N0 = get_N_e_ep()
 Nsteps = round(t_sim/time_step)
 for i in range(Nsteps):
