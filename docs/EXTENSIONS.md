@@ -3,7 +3,7 @@
 Here we list extensions with short descriptions, references and contacts of developers, which is followed by the list of parameters (if applicable the default values are specified in parenthesis). For an extension named `<name>` an extended description and the usage example can be found in `/src/extensions/<name>/<name>.cpp` and `/examples/<name>_test.py`.
 
 - **qed_volokitin2023** is an optimized QED event generator that performs minimal possible number of rate computations per QED event [[V.&nbsp;Volokitin et al. JCS **74**, 102170 (2023)](https://doi.org/10.1016/j.jocs.2023.102170)]<br/>
-*implemented by Joel Magnusson* (joel.magnusson@physics.gu.se)
+*implemented by Joel Magnusson* (joel.magnusson@physics.gu.se) *, based on the implementation of pyHiChi*
     - `electron_type`, `positron_type` and `photon_type` are the type indices of electrons, positrons and photons; these types must be declared for the simulation container using `add_particles()` and then indices can be retrieved by `get_type_index(type_name)`
 
 </br>
