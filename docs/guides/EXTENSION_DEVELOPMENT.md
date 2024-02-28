@@ -88,7 +88,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`const string name = "<name>";`  
 	`cout << “hi from <name>” << endl;` add this line to the body of `handler()`  
 	`PYBIND11_MODULE(<name>, object) {`  
-13. Rename and amend the `<name>.py`:  
+13. Rename the py file to `<name>_test.py` and amend it as follows:  
 	`import <name>`   
 	`extension_handler = <name>.handler(location=-L/4-L/32, thickness=L/16,`  
 	`typeTo=sim.get_type_index('electron'))`  
