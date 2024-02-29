@@ -46,17 +46,17 @@ struct pulse{
         r[0] = min.x + i.x*step.x;
         r[1] = min.y + i.y*step.y;
         r[2] = min.z + i.z*step.z;
-        double R = sqrt(sqr(r[0]) + sqr(r[1]) + sqr(r[2]));
+        double R = sqrt(sqr(r[0] - center.x) + sqr(r[1] - center.y) + sqr(r[2] - center.z));
         if(R == 0) return;
         double rd = dist - R; // relative distance
         if(abs(rd) > 0.5*l_size) return;
-        double3 r0(r[0], r[1], r[2]);
+        double3 r0(r[0] - center.x, r[1] - center.y, r[2] - center.z);
         r0 = (1/R)*r0;
         double3 b0 = cross(r0, e_axis);
-        b0.normalize(); //needs checker here
+        b0.normalize();
         double3 e0 = cross(r0, b0);
     
-        double par[4];// relative distance, theta, alpha, beta = acos(dot(e_axis, r0))
+        double par[4]; // relative distance, theta, alpha, beta = acos(dot(e_axis, r0))
         par[0] = rd;
         double r0npath_dot = dot(r0, npath);
         if(1 - abs(r0npath_dot) > 1e-10) par[1] = acos(-r0npath_dot); else par[1] = pi*(r0npath_dot > 0);
@@ -99,11 +99,50 @@ struct pulse{
         hi_max.x = floor((center.x + dist + 0.5*l_size - min.x)*size_.x) + 1;
         hi_max.y = floor((center.y + dist + 0.5*l_size - min.y)*size_.y) + 1;
         hi_max.z = floor((center.z + dist + 0.5*l_size - min.z)*size_.z) + 1;
-        for(int hix = hi_min.x; hix <= hi_max.x; hix += 1)
+        
+        //full loop over all hypercells (~(dist/l_size)^3):
+        //for(int hix = hi_min.x; hix <= hi_max.x; hix += 1)
+        //for(int hiy = hi_min.y; hiy <= hi_max.y; hiy += 1)
+        //for(int hiz = hi_min.z; hiz <= hi_max.z; hiz += 1)
+        //    singlePointSet({hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);
+        //return;
+
+        //optimized loop (~(dist/l_size)^2):
         for(int hiy = hi_min.y; hiy <= hi_max.y; hiy += 1)
         for(int hiz = hi_min.z; hiz <= hi_max.z; hiz += 1)
-            singlePointSet({hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);
-        
+        {
+            double rsx = min.x + i[0]*step.x - center.x;
+            double rsy = min.y + i[1]*step.y - center.y;
+            double rsz = min.z + i[2]*step.z - center.z;
+
+            double rt2 = sqr(hiy*(max.y - min.y) + rsy) + sqr(hiz*(max.z - min.z) + rsz);
+            double rmin2 = sqr(dist - 0.5*l_size);
+            double rmax2 = sqr(dist + 0.5*l_size);
+            int hiMin, hiMax;
+
+            double rxmin = -1, rxmax = -1; 
+
+            if(rt2 >= rmin2) hiMin = (rsx <= 0); 
+            else {
+                rxmin = sqrt(rmin2 - rt2);
+                hiMin = floor((rxmin - rsx)*size_.x) + 1;
+            }
+            if(rt2 > rmax2) hiMax = -1;
+            else {
+                rxmax = sqrt(rmax2 - rt2);
+                hiMax = floor((rxmax - rsx)*size_.x);
+            }
+            for(int hix = hiMin; hix <= hiMax; hix += 1)
+                singlePointSet({hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);
+
+            if(rt2 >= rmin2) hiMin = (rsx > 0);
+            else hiMin = floor((rxmin + rsx)*size_.x) + 1;
+            if(rt2 > rmax2) hiMax = -1;
+            else hiMax = floor((rxmax + rsx)*size_.x);
+
+            for(int hix = hiMin; hix <= hiMax; hix += 1)
+                singlePointSet({-hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);   
+        }
     }
 };
 static vector<pulse> Pulse(1);
