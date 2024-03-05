@@ -74,8 +74,8 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 7. Bring files to local development:  
 	`cp ../../primitives.h .`  
 	`cp ../../interfaces.h .`  
-	`cp ../../CMakeLists.h .`  
-8. Amend CMakeLists.h:  
+	`cp ../../CMakeLists.txt .`  
+8. Amend CMakeLists.txt:  
 	`set(<name>`  
 	`<name>.cpp)`  
 	`pybind11_add_module(<name>${<name>})`  
