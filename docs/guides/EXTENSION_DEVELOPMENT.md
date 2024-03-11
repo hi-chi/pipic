@@ -149,7 +149,7 @@ As an example see an extension [`x_converter_c.cpp`](https://github.com/hi-chi/p
 - Change source files, e.g. in pipic.h add a line to pipic::pipic():  
     `cout << “running test version” << endl;`  
 - In pipic.h rename the struct pipic to test_pipic, three occasions: name (line 28), constructor (line 37) and destructor (line 51). [this is needed to avoid name conflict]  
-- In pipic.ccp add a line in the beginning (e.g. after line 41):  
+- In pipic.cpp add a line in the beginning (e.g. after line 41):  
     `typedef test_pipic pipic;`  
 - Generate so-file:  
     `cmake .`  
