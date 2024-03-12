@@ -12,11 +12,11 @@ import moving_window
 #===========================SIMULATION INITIALIZATION===========================
 wavelength = 1e-4 #units? cm?
 pulseWidth = 10e-15*consts.light_velocity
-nx, xmin, xmax = 2**6, -15*wavelength, 15*wavelength
-ny, ymin, ymax = 2**7, -5*pulseWidth, 5*pulseWidth
-nz, zmin, zmax = 2**7, -5*pulseWidth, 5*pulseWidth
+nx, xmin, xmax = 2**7, -20*wavelength, 15*wavelength
+ny, ymin, ymax = 2**6, -8*pulseWidth, 8*pulseWidth
+nz, zmin, zmax = 2**6, -8*pulseWidth, 8*pulseWidth
 dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
-timestep = 0.25*dx/consts.light_velocity
+timestep = 0.5*dx/consts.light_velocity
 thickness = 20 # thickness (in dx) of the area where the density and field is restored/removed 
 
 #---------------------setting solver and simulation region----------------------
@@ -27,18 +27,21 @@ amplitude_a0 = 100.
 omega = 2 * np.pi * consts.light_velocity / wavelength
 a0 = consts.electron_mass * consts.light_velocity * omega / (-consts.electron_charge)
 fieldAmplitude = amplitude_a0 * a0
+print(a0)
 PulseDuration = 10e-15 #s
 k = 2*np.pi / wavelength
 spotsize = PulseDuration*consts.light_velocity #1e-2*1e-4 #cm
 R = 1e-2 # wavefront curvature #0./(PulseDuration*consts.light_velocity)
-print(consts.light_velocity)
 
-N_cr = 1e-2*consts.electron_mass * omega ** 2 / (4 * np.pi * consts.electron_charge ** 2)
+N_cr = 1e-1*consts.electron_mass * omega ** 2 / (4 * np.pi * consts.electron_charge ** 2)
 density = N_cr
 debye_length = .1*wavelength/64.0 #>>3/(4*pi*density), <dx ???
 temperature = 4 * np.pi * density * (consts.electron_charge ** 2) * debye_length ** 2
-particles_per_cell = 10
+particles_per_cell = 5
 
+pwl = np.sqrt(4*np.pi*density*consts.electron_charge**2/consts.electron_mass)
+print('lambda:',2*np.pi*consts.light_velocity/pwl)
+print('pulse_length:',PulseDuration*consts.light_velocity)
 
 fp = f'data.txt'
 
@@ -61,7 +64,7 @@ def initiate_field_callback(ind, r, E, B, data_double, data_int):
  
 
 @cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):# callback function
+def initiate_density(r, data_double, data_int):# Just to add electrons to particle list
 
     rollback = np.floor(data_int[0]*timestep*consts.light_velocity/dx)   
 
@@ -95,8 +98,8 @@ def remove_field(ind, r, E, B, data_double, data_int):
 Ey = np.zeros((nx,ny,nz), dtype=np.double) 
 rho_rad = np.zeros((nx,ny//2), dtype=np.double) 
 ps = np.zeros((nx,nx//2), dtype=np.double) 
-pmin = -60
-pmax = 0
+pmin = -1
+pmax = 1
 r = np.arange(dy/2,ymax+dy/2,dy)
 norm_rad = (np.pi*((r+dy/2)**2-(r-dy/2)**2))[np.newaxis,:]
 
@@ -114,11 +117,11 @@ def get_radial_density(r, p, w, id, data_double, data_int):
 @cfunc(types.particle_loop_callback)
 def get_phase_space(r, p, w, id, data_double, data_int):   
     ix = int(ps.shape[0]*(r[0] - xmin)/(xmax - xmin))
-    ip = int(ps.shape[1]*(np.log(np.abs(p[0])) - pmin)/(pmax - pmin))
+    ip = int(ps.shape[1]*(p[0] - pmin)/(pmax - pmin))
     data = carray(data_double, ps.shape, dtype=np.double)
     
     if ip>=0 and ip < ps.shape[1] and ix < ps.shape[0]:
-        data[ix, ip] += w[0]/(dx*dy*dz)
+        data[ix, ip] = p[0]#w[0]/(dx*dy*dz)
 
 
 @cfunc(types.field_loop_callback)
@@ -155,15 +158,12 @@ window_speed = consts.light_velocity #speed of moving window
 #for passing variables to the handler  
 data_double = np.zeros((4, ), dtype=np.double)
 data_double[0] = density
-data_double[1] = thickness
-data_double[2] = particles_per_cell
-data_double[3] = 0
 
 #data_double=np.zeros((1,), dtype=np.double)
 
 
 
-density_handler_adress = moving_window.handler(density=density,
+density_handler_adress = moving_window.handler(#density=density,
                                                thickness=thickness,
                                                number_of_particles=particles_per_cell,
                                                temperature=temperature,)
@@ -171,7 +171,8 @@ density_handler_adress = moving_window.handler(density=density,
 sim.add_handler(name=moving_window.name, 
                 subject='electron,cells',
                 handler=density_handler_adress,
-                data_int=pipic.addressof(data_int),)
+                data_int=pipic.addressof(data_int),
+                data_double=pipic.addressof(data_double))
 
 #-----------------------initiate field and plasma-------------------------
 sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof(data_int),
@@ -179,7 +180,7 @@ sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof
 
 sim.add_particles(name='electron', number=int(ny*nz*nx),#particles_per_cell),
                  charge=-consts.electron_charge, mass=consts.electron_mass,
-                 temperature=temperature, density=density_callback.address,
+                 temperature=temperature, density=initiate_density.address,
                  data_int=pipic.addressof(data_int))
 
 
@@ -194,7 +195,7 @@ for i in range(1,1000):
                    use_omp=True)
 
     if i==200:
-        data_double[0] = density*1e-1
+        data_double[0] = density*5e-1
 
     if i%10==0:
         rho_rad.fill(0)
@@ -204,8 +205,8 @@ for i in range(1,1000):
                       data_double=pipic.addressof(rho_rad))
         sim.particle_loop(name='electron', handler=get_phase_space.address,
                       data_double=pipic.addressof(ps))
-        
         load_fields()
+
         E = Ey[:,:,nz//2]
         roll_back =  int(np.floor(i*timestep*window_speed/dx))  
         E = np.roll(E,-roll_back,axis=0)
@@ -216,7 +217,7 @@ for i in range(1,1000):
 
         ps = np.roll(ps,-roll_back,axis=0)
         phase_space_plot.set_data(ps.T)
-        print(ps.mean())
+        print(ps.max(),ps.min())
 
         rho_ = rho_rad[-1,-10:].mean()
         print(i,f':{rho_,density}')

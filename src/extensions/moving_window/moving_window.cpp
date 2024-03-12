@@ -5,7 +5,7 @@
 #include <pybind11/operators.h>
 
 const string name = "moving_window";
-static double _density, _temperature, _thickness; 
+static double _temperature, _thickness; 
 static int nbp;
 
 void addParticle(cellInterface &CI, particle &P){
@@ -37,6 +37,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
     double ts = CI.timeStep;
     double dx = CI.step.x;
+    double _density = dataDouble[0];
 
     int rollback = floor(dataInt[0]*ts*lightVelocity/dx);
     int rollback_ = floor((dataInt[0]-1)*ts*lightVelocity/dx);
@@ -95,8 +96,8 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
 
 // extension initialization
-int64_t handler(double density, double thickness, int number_of_particles, double temperature){
-    _density = density;
+int64_t handler(double thickness, int number_of_particles, double temperature){
+    //_density = density;
     _thickness = thickness;
     nbp = number_of_particles;
     _temperature = temperature;
@@ -108,6 +109,6 @@ int64_t handler(double density, double thickness, int number_of_particles, doubl
 namespace py = pybind11;
 PYBIND11_MODULE(moving_window, object) {
     object.attr("name") = name;
-    object.def("handler", &handler, py::arg("density"), py::arg("thickness"), py::arg("number_of_particles"), py::arg("temperature"));
+    object.def("handler", &handler, py::arg("thickness"), py::arg("number_of_particles"), py::arg("temperature"));
 }
 
