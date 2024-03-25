@@ -179,7 +179,7 @@ sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof
                    use_omp=True)
 
 sim.add_particles(name='electron', number=int(ny*nz*nx),#particles_per_cell),
-                 charge=-consts.electron_charge, mass=consts.electron_mass,
+                 charge=consts.electron_charge, mass=consts.electron_mass,
                  temperature=temperature, density=initiate_density.address,
                  data_int=pipic.addressof(data_int))
 

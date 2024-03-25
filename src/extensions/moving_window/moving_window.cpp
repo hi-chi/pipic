@@ -35,48 +35,38 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
     threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
     cthread.rng.seed(CI.rngSeed);
 
-    double ts = CI.timeStep;
-    double dx = CI.step.x;
-    double _density = dataDouble[0];
-
-    int rollback = floor(dataInt[0]*ts*lightVelocity/dx);
-    int rollback_ = floor((dataInt[0]-1)*ts*lightVelocity/dx);
+    int rollback = floor(dataInt[0]*CI.timeStep*lightVelocity/CI.step.z);
+    int rollback_ = floor((dataInt[0]-1)*CI.timeStep*lightVelocity/CI.step.z);
 
     if(rollback!=rollback_){        
-        int nx = CI.n.x;
-        double dy = CI.step.y;
-        double dz = CI.step.z;
-        double xmin = CI.globalMin.x; 
-        double xmax = CI.globalMax.x;
 
-        double r_rel = xmin + dx*(rollback%nx); 
-        double r_min = r_rel - _thickness*dx;
-        double r_max = r_rel;
+        double r_rel = CI.globalMin.z + CI.step.z*(rollback%CI.n.z); 
+        double r_min = r_rel - _thickness*CI.step.z;
         double3 cell_min = CI.cellMin();
         double3 cell_max = CI.cellMax();
-        double eps = dx/10;
+        double eps = CI.step.z/10;
 
-        if ((cell_min.x+eps >= r_min and cell_max.x-eps <= r_max) || 
-                (cell_max.x+eps >= xmax - (xmin - r_min)) || 
-                (cell_min.x-eps <= xmin + (r_max - xmax))){
+        if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) || 
+                (cell_max.z+eps >= CI.globalMax.z - (CI.globalMin.z - r_min)) || 
+                (cell_min.z-eps <= CI.globalMin.z + (r_rel - CI.globalMax.z))){
 
-            int ti = CI.particleTypeIndex;
-            if (ti==0) {
+            if (CI.particleTypeIndex==0) {
                 for(int ip = 0; ip < CI.particleSubsetSize; ip++){
                     CI.Particle(ip)->w = 0;
                 }
-            } else if (ti==-1){ 
-                double nb_particles = _density*dx*dy*dz;
+            } else if (CI.particleTypeIndex==-1){
+
+                double nb_particles = dataDouble[0]*CI.step.x*CI.step.y*CI.step.z;
                 double weight = nb_particles/(double)nbp;   
-                double expectedNumber = _density*dx*dy*dz/weight;
+                double expectedNumber = dataDouble[0]*CI.step.x*CI.step.y*CI.step.z/weight;
                 int numberToGenerate = int(expectedNumber) + (cthread.random() < (expectedNumber - int(expectedNumber)));
                 if(numberToGenerate > 0){
                     for(int ip = 0; ip < numberToGenerate; ip++){
                         particle P;
                         // generate position
-                        P.r.x = cell_min.x + (cthread.random())*dx;
-                        P.r.y = cell_min.y + (cthread.random())*dy;
-                        P.r.z = cell_min.z + (cthread.random())*dz;
+                        P.r.x = cell_min.x + (cthread.random())*CI.step.x;
+                        P.r.y = cell_min.y + (cthread.random())*CI.step.y;
+                        P.r.z = cell_min.z + (cthread.random())*CI.step.z;
                         
                         // generate momentum
                         double3 p = {cthread.nrandom(), cthread.nrandom(), cthread.nrandom()};
