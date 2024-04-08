@@ -39,9 +39,9 @@ if __name__ == '__main__':
 
     pulseWidth_x = (pulseDuration_FWHM/2.355)*consts.light_velocity # [cm]
     spotsize = 2*pulseWidth_x
-    nx, xmin, xmax = 2**6, -7*spotsize, 7*spotsize
-    ny, ymin, ymax = 2**6, -7*spotsize, 7*spotsize
-    nz, zmin, zmax = 2**8, -8*spotsize, 3*spotsize
+    nx, xmin, xmax = 2**5, -7*spotsize, 7*spotsize
+    ny, ymin, ymax = 2**5, -7*spotsize, 7*spotsize
+    nz, zmin, zmax = 2**6, -8*spotsize, 3*spotsize
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
     timestep = 1e-1/(2*np.pi*consts.light_velocity/wl) 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     N_cr = consts.electron_mass * omega ** 2 / (4 * np.pi * consts.electron_charge ** 2)
 
     debye_length = 1e-2 # [cm] 
-    temperature = 0 #4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] (?)
+    temperature = 0 #4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] 
     particles_per_cell = 5
 
     @cfunc(types.field_loop_callback)
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     fields = [Ex,Ey,Ez,rho,ps]
     ncp = s//checkpoint
 
-    hdf5_fp = 'test_z.h5'
+    hdf5_fp = 'low_res.h5'
     create_hdf5(hdf5_fp, shape=(ncp,nx,ny,nz),dsets=dsets[:-1])
     create_hdf5(hdf5_fp, shape=(ncp,nps,nz),dsets=['ps'],mode="r+")
 
