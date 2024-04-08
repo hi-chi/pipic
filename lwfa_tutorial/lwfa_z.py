@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numba import cfunc, carray, types as nbt
-import moving_window
+from pipic.extensions import moving_window
 import h5py
 
 
@@ -24,7 +24,8 @@ def create_hdf5(fp, shape, dsets=['Ex','Ez','Ey','Bx','Bz','By','rho'],mode="w")
 
 
 if __name__ == '__main__':
-    #===========================SIMULATION INITIALIZATION===========================
+
+    #===========================SIMULATION INITIALIZATION=========================== 
     # Electron number density
     n0 = 8e18 #1e18 # [1/cm^3]
     # plasma frequency, [e] = statC, [me] = g, [n0] = 1/cm^3, [c] = cm/s
@@ -38,13 +39,18 @@ if __name__ == '__main__':
 
     pulseWidth_x = (pulseDuration_FWHM/2.355)*consts.light_velocity # [cm]
     spotsize = 2*pulseWidth_x
-    nx, xmin, xmax = 2**6, -7*pulseWidth_x, 7*pulseWidth_x
+    nx, xmin, xmax = 2**6, -7*spotsize, 7*spotsize
     ny, ymin, ymax = 2**6, -7*spotsize, 7*spotsize
     nz, zmin, zmax = 2**8, -8*spotsize, 3*spotsize
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
-    timestep = 1e-1/(2*np.pi*consts.light_velocity/wl) #0.5*dx_/consts.light_velocity
+    timestep = 1e-1/(2*np.pi*consts.light_velocity/wl) 
     thickness = 10 # thickness (in dx) of the area where the density and field is restored/removed 
+ 
+    # simulation iterations
+    s = 8000 
+    # saving data every 50th iteration
+    checkpoint = 50      
     
     #---------------------setting solver and simulation region----------------------
     sim=pipic.init(solver='ec',nx=nx,ny=ny,nz=nz,xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,zmin=zmin,zmax=zmax)
@@ -55,20 +61,12 @@ if __name__ == '__main__':
     a0 = 5. # [unitless]
     # Field amplitude
     E0 = -a0 * consts.electron_mass * consts.light_velocity * omega / consts.electron_charge #[statV/cm] 
-    print('electric field:',E0)
-
     focusPosition = wp*2
-
-    print('lambda:',wp)
-    print('pulse_length:',pulseWidth_x)
 
     k = 2*np.pi/wl
     Zr = np.pi*omega**1/wl 
     R = focusPosition*(1+(Zr/focusPosition)**2)
     spotsize_init = spotsize*np.sqrt(1+(focusPosition/Zr)**2)
-
-    print('spotsize:',spotsize)
-
 
     # laser wave number
     k = 2*np.pi / wl # [1/cm]
@@ -77,7 +75,6 @@ if __name__ == '__main__':
 
     debye_length = 1e-2 # [cm] 
     temperature = 0 #4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] (?)
-
     particles_per_cell = 5
 
     @cfunc(types.field_loop_callback)
@@ -103,9 +100,8 @@ if __name__ == '__main__':
             # x-polarized 
             E[0] = gp       
             B[1] = gp        
-            # y-polarized
-            #E[1] = gp
-            #B[0] = -gp
+
+    #---------------------------setting plasma density--------------------------
 
     @cfunc(types.add_particles_callback)
     def initiate_density(r, data_double, data_int):# Just to add electrons to particle list
@@ -120,22 +116,41 @@ if __name__ == '__main__':
             return n0*1e-10
         else:
             return 0 
+    
+    
+    # plasma profile
+    simulation_length = s*timestep*consts.light_velocity
+    upramp = 0.3*0.01273239544735163
+    density_drop = 0.3*0.01273239544735163
+    end_of_plasma = 0.8*simulation_length 
+    
+    @cfunc(types.add_particles_callback)
+    def density_profile(r, data_double, data_int):
+        # r is the position in the 'lab frame'  
+        pos = r[2] - (zmax - thickness*dz)
+        if pos < upramp: 
+            return n0*(pos/upramp)
+        elif pos > density_drop and pos < end_of_plasma:
+            return n0*2e-1
+        else: 
+            return 0
 
+    #--------------------------- removal of the em-field for moving window --------------------------
 
     @cfunc(types.field_loop_callback)
     def remove_field(ind, r, E, B, data_double, data_int):
         rollback = np.floor(data_int[0]*timestep*consts.light_velocity/dz)
-        r_rel = zmin + dz*(rollback%nz) 
-        
-        r_min = r_rel - thickness*dz
-        r_max = r_rel #+ thickness*dx
-        if (r[2] > r_min and r[2] < r_max) or (r[2] > zmax - (zmin - r_min)) or (r[2] < zmin + (r_max - zmax)): 
-            E[1] = 0
-            B[2] = 0
-            E[2] = 0 
-            B[1] = 0
-            E[0] = 0
-            B[0] = 0 
+        if rollback%(thickness//2)==0:
+            r_rel = zmin + dz*(rollback%nz)  
+            r_min = r_rel - thickness*dz
+            r_max = r_rel 
+            if (r[2] > r_min and r[2] < r_max) or (r[2] > zmax - (zmin - r_min)) or (r[2] < zmin + (r_max - zmax)): 
+                E[1] = 0
+                B[2] = 0
+                E[2] = 0 
+                B[1] = 0
+                E[0] = 0
+                B[0] = 0 
 
     #=================================OUTPUT========================================
     #-------------------------preparing output of fields (x)-----------------------------
@@ -149,7 +164,7 @@ if __name__ == '__main__':
     nps = 2**8
     ps = np.zeros((nps,nz), dtype=np.double) 
 
-    #------------------get functions-----------------------------------------------
+    #------------------retrival functions-----------------------------------------------
         
     @cfunc(types.particle_loop_callback)
     def get_density(r, p, w, id, data_double, data_int):   
@@ -189,7 +204,6 @@ if __name__ == '__main__':
         _E = carray(data_double, Ez.shape, dtype=np.double)
         _E[ind[0], ind[1], ind[2]] = E[2]
 
-
     def load_fields():
         sim.field_loop(handler=get_field_Ey.address, data_double=pipic.addressof(Ey))
         sim.field_loop(handler=get_field_Ex.address, data_double=pipic.addressof(Ex))
@@ -198,14 +212,7 @@ if __name__ == '__main__':
     #===============================SIMULATION======================================
 
     data_int = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
-    s = 8000 #nb of iterations
-    window_speed = consts.light_velocity #speed of moving window
 
-    #-----------------------adding the handler of extension-------------------------
-
-    # variable for passing density to the handler  
-    data_double = np.zeros((1, ), dtype=np.double)
-    data_double[0] = n0*1e-10 # initiate with something low
 
     #-----------------------initiate field and plasma-------------------------
 
@@ -216,42 +223,32 @@ if __name__ == '__main__':
     sim.advance(time_step=0, number_of_iterations=1,use_omp=True)
     sim.fourier_solver_settings(divergence_cleaning=0, sin2_kfilter=-1)
  
-
-    density_handler_adress = moving_window.handler(#density=density,
-                                                thickness=thickness,
-                                                number_of_particles=particles_per_cell,
-                                                temperature=temperature,)
-    sim.add_handler(name=moving_window.name, 
-                    subject='electron,cells',
-                    handler=density_handler_adress,
-                    data_int=pipic.addressof(data_int),
-                    data_double=pipic.addressof(data_double))
-
-    sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof(data_int),
-                    use_omp=True)
+    #-----------------------adding the handler of extension-------------------------
 
     # This part is just for initiating the electron species, 
-    # so that the algorithm knows that there is a species called electron
     # it is therefore not important where the electrons are or what density they have
-    sim.add_particles(name='electron', number=int(ny*nz*nx),#*particles_per_cell),
+    sim.add_particles(name='electron', number=int(ny*nz*nx),#particles_per_cell),
                     charge=consts.electron_charge, mass=consts.electron_mass,
                     temperature=temperature, density=initiate_density.address,
                     data_int=pipic.addressof(data_int))
-    #-----------------------run simulation-------------------------
-    s = 8000 
-    checkpoint = 50   
 
-    # plasma profile
-    simulation_length = s*timestep*window_speed
-    upramp = 0.3*0.01273239544735163
-    density_drop = 0.3*0.01273239544735163
-    end_of_plasma = 0.8*simulation_length 
-    
+    density_handler_adress = moving_window.handler(thickness=thickness,
+                                                   particles_per_cell=particles_per_cell,
+                                                   temperature=temperature,
+                                                   density=density_profile.address,)
+    sim.add_handler(name=moving_window.name, 
+                    subject='electron,cells',
+                    handler=density_handler_adress,
+                    data_int=pipic.addressof(data_int),)
+
+
+    #-----------------------run simulation-------------------------
+   
     dsets = ['Ex','Ey','Ez','rho','ps']
     fields = [Ex,Ey,Ez,rho,ps]
     ncp = s//checkpoint
 
-    hdf5_fp = 'lwfa_z.h5'
+    hdf5_fp = 'test_z.h5'
     create_hdf5(hdf5_fp, shape=(ncp,nx,ny,nz),dsets=dsets[:-1])
     create_hdf5(hdf5_fp, shape=(ncp,nps,nz),dsets=['ps'],mode="r+")
 
@@ -281,14 +278,7 @@ if __name__ == '__main__':
         sim.field_loop(handler=remove_field.address, data_int=pipic.addressof(data_int),
                     use_omp=True)
         
-        pos = i*timestep*window_speed
-        if pos < upramp: 
-            data_double[0] = n0*(pos/upramp)
-        elif pos > density_drop and pos < end_of_plasma:
-            data_double[0] = n0*2e-1
-        elif pos > end_of_plasma: 
-            data_double[0] = 0
-        
+       
         if i%checkpoint==0:
             print(i)
             rho.fill(0)
@@ -299,7 +289,7 @@ if __name__ == '__main__':
             sim.particle_loop(name='electron', handler=get_phase_space.address,
                         data_double=pipic.addressof(ps))
             load_fields()
-            roll_back =  int(np.floor(i*timestep*window_speed/dz))  
+            roll_back =  int(np.floor(i*timestep*consts.light_velocity/dz))  
 
             try:
                 with h5py.File(hdf5_fp,"r+") as file:
