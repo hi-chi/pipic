@@ -48,7 +48,7 @@ As an example see an extension [`x_reflector_py.py`](https://github.com/hi-chi/p
 
 C/C++ extensions
 --
-Creating an extension in C/C++ provides full flexibility and performance, while also permitting the creation of small extensions compiled locally. The layout of development is similar to the one for Python developments. In case of contributing to the toolbox of $\pi$-PIC, the following layout is recommended (if your extension concerns the modification of $\pi$-PIC core/interface, consider using the procedure described in the [next section](#core-development)): 
+Creating an extension in C/C++ provides full flexibility and performance, while also permitting the creation of small extensions compiled locally. The layout of development is similar to the one for Python developments. In case of contributing to the toolbox of $\pi$-PIC, the following routine is recommended (if the extension concerns a modification of $\pi$-PIC core/interface, consider using the procedure described in the [next section](#core-development)): 
 
 
 1. Create a local folder for your extension, name it as the extension:  
@@ -74,8 +74,8 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 7. Bring files to local development:  
 	`cp ../../primitives.h .`  
 	`cp ../../interfaces.h .`  
-	`cp ../../CMakeLists.h .`  
-8. Amend CMakeLists.h:  
+	`cp ../../CMakeLists.txt .`  
+8. Amend CMakeLists.txt:  
 	`set(<name>`  
 	`<name>.cpp)`  
 	`pybind11_add_module(<name>${<name>})`  
@@ -88,7 +88,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`const string name = "<name>";`  
 	`cout << “hi from <name>” << endl;` add this line to the body of `handler()`  
 	`PYBIND11_MODULE(<name>, object) {`  
-13. Rename and amend the `<name>.py`:  
+13. Rename the py file to `<name>_test.py` and amend it as follows:  
 	`import <name>`   
 	`extension_handler = <name>.handler(location=-L/4-L/32, thickness=L/16,`  
 	`typeTo=sim.get_type_index('electron'))`  
@@ -149,7 +149,7 @@ As an example see an extension [`x_converter_c.cpp`](https://github.com/hi-chi/p
 - Change source files, e.g. in pipic.h add a line to pipic::pipic():  
     `cout << “running test version” << endl;`  
 - In pipic.h rename the struct pipic to test_pipic, three occasions: name (line 28), constructor (line 37) and destructor (line 51). [this is needed to avoid name conflict]  
-- In pipic.ccp add a line in the beginning (e.g. after line 41):  
+- In pipic.cpp add a line in the beginning (e.g. after line 41):  
     `typedef test_pipic pipic;`  
 - Generate so-file:  
     `cmake .`  

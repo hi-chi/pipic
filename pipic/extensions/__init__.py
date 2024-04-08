@@ -7,6 +7,8 @@ from . import _qed_gonoskov2015 as qed_gonoskov2015
 from . import _qed_volokitin2023 as qed_volokitin2023
 from . import _downsampler_gonoskov2022 as downsampler_gonoskov2022
 from . import x_reflector_py
+from . import _moving_window as moving_window
+
 
 __all__ = ['x_converter_c',
            'x_reflector_c',
@@ -14,4 +16,5 @@ __all__ = ['x_converter_c',
            'x_reflector_py',
            'qed_gonoskov2015',
            'qed_volokitin2023',
-           'downsampler_gonoskov2022']
+           'downsampler_gonoskov2022',
+           'moving_window']
