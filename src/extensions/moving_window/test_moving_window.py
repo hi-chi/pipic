@@ -2,12 +2,12 @@
 #for results see fig. 6 in arXiv:2302.01893
 import sys
 import pipic
+from pipic.extensions import moving_window
 from pipic import consts,types
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numba import cfunc, carray, types as nbt
-import moving_window
 import h5py
 
 
@@ -24,8 +24,8 @@ def create_hdf5(fp, shape, dsets=['Ex','Ez','Ey','Bx','Bz','By','rho'],mode="w")
 
 
 if __name__ == '__main__':
-    s = 3000 
-    checkpoint = 100   
+    s = 100 
+    checkpoint = 10   
 
     #===========================SIMULATION INITIALIZATION===========================
     # Electron number density

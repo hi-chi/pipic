@@ -115,7 +115,7 @@ int64_t handler(int thickness, int particles_per_cell, double temperature, int64
 
 
 namespace py = pybind11;
-PYBIND11_MODULE(moving_window, object) {
+PYBIND11_MODULE(_moving_window, object) {
     object.attr("name") = name;
     object.def("handler", &handler, py::arg("thickness"), py::arg("particles_per_cell"), py::arg("temperature"),py::arg("density"));
 }
