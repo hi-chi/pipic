@@ -1,5 +1,3 @@
-#Basic setup for a laser pulse interation with a solid-density plasma layer 
-#for results see fig. 6 in arXiv:2302.01893
 import sys
 import pipic
 from pipic import consts,types
@@ -45,7 +43,7 @@ if __name__ == '__main__':
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
     timestep = 1e-1/(2*np.pi*consts.light_velocity/wl) 
-    thickness = 10 # thickness (in dx) of the area where the density and field is restored/removed 
+    thickness = 10 # thickness (in dz) of the area where the density and field is restored/removed 
  
     # simulation iterations
     s = 8000 
@@ -62,20 +60,6 @@ if __name__ == '__main__':
     # Field amplitude
     E0 = -a0 * consts.electron_mass * consts.light_velocity * omega / consts.electron_charge #[statV/cm] 
     focusPosition = wp*2
-
-    k = 2*np.pi/wl
-    Zr = np.pi*omega**1/wl 
-    R = focusPosition*(1+(Zr/focusPosition)**2)
-    spotsize_init = spotsize*np.sqrt(1+(focusPosition/Zr)**2)
-
-    # laser wave number
-    k = 2*np.pi / wl # [1/cm]
-    # Critical density
-    N_cr = consts.electron_mass * omega ** 2 / (4 * np.pi * consts.electron_charge ** 2)
-
-    debye_length = 1e-2 # [cm] 
-    temperature = 0 #4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] 
-    particles_per_cell = 5
 
     @cfunc(types.field_loop_callback)
     def initiate_field_callback(ind, r, E, B, data_double, data_int):
@@ -124,6 +108,11 @@ if __name__ == '__main__':
     density_drop = 0.3*0.01273239544735163
     end_of_plasma = 0.8*simulation_length 
     
+    debye_length = 1e-2 # [cm] 
+    temperature = 0 #4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] 
+    particles_per_cell = 5
+
+   
     @cfunc(types.add_particles_callback)
     def density_profile(r, data_double, data_int):
         # r is the position in the 'lab frame'  
