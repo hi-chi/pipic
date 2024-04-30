@@ -192,7 +192,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
     if((CI.particleTypeIndex == electronType)||(CI.particleTypeIndex == positronType)||(CI.particleTypeIndex == photonType))
     for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
         threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
-        cthread.rng.seed(CI.rngSeed);
+        if(ip == 0) cthread.rng.seed(CI.rngSeed);
         particle *P = CI.Particle(ip); // Grab a single particle from CellInterface
 
         double3 E, B; 
