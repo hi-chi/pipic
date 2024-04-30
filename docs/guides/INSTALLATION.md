@@ -20,7 +20,24 @@ If using a non-standard compiler (for example using `gcc` installed through [`ho
 ```
 CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
+## Compiling latest or specific version from GitHub
 
+1. Create a local folder:  
+	`mkdir <name>`  
+	`cd <name>`  
+2. Clone the project from there and cd to a folder named `pipic`:  
+	`git clone https://github.com/hi-chi/pipic.git`  
+	`cd pipic`  
+3. (optional) Switch to a needed branch:   
+	`git checkout <name>`  
+4. (optional) Uninstall previous version of pipic:  
+	`pip uninstall pipic`
+5. Install pipic (you might need to use python instead of python3):  
+	`python3 -m pip install .`  
+6. (optional) Check that it works:  
+    `python3 examples/basic_example.py` 
+
+<!---
 ## CMake
 As an alternative, manual compilation is also available using `cmake`. This extends the above requirements to also include:
 - [`CMake`](https://cmake.org/) 3.1 or higher
@@ -43,3 +60,4 @@ To compile:
 - To use compilers other than default, set the `CC` and `CXX` environment variables prior to running `cmake`, or pass the compilers as arguments to `cmake` using the `-DCMAKE_C_COMPILER=` and `-DCMAKE_CXX_COMPILER=` flags.
 
 To use $\pi$-PIC requires that both the `pipic/` subfolder (python package) and the `_pipic.*.so` binary (C/C++ package) are present in your project folder or otherwise made available, e.g. through your `$PATH`.
+-->
