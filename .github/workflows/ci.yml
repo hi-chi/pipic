@@ -67,6 +67,12 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.INSTALL_DEPS }}
 
+      - name: Check gcc
+        run: which gcc
+
+      - name: Check gcc version
+        run: gcc --version
+
       - name: Build package
         run: |
           export LDFLAGS="${{ matrix.LDFLAGS }}"
