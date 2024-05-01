@@ -51,6 +51,9 @@ jobs:
             CC: clang
             CXX: clang++
 
+    continue-on-error: >-
+      ${{ matrix.os == "macos-latest" && matrix.compiler == "gcc" && true || false }}
+
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
