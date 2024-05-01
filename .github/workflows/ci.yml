@@ -39,8 +39,8 @@ jobs:
           - os: macos-latest
             compiler: gcc
             INSTALL_DEPS: brew install fftw libomp
-            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib"
-            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include"
+            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
+            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
             CC: gcc-13
             CXX: g++-13
           - os: macos-latest
@@ -67,11 +67,11 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.INSTALL_DEPS }}
 
-      - name: Check ${{ matrix.CC }}
-        run: which ${{ matrix.CC }}
-
       - name: Check ${{ matrix.CC }} version
         run: ${{ matrix.CC }} --version
+
+      - name: Check ${{ matrix.CXX }} version
+        run: ${{ matrix.CXX }} --version
 
       - name: Build package
         run: |
