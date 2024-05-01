@@ -43,6 +43,7 @@ jobs:
             CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include"
             CC: gcc-13
             CXX: g++-13
+            continue-on-error: true
           - os: macos-latest
             compiler: clang
             INSTALL_DEPS: brew install fftw libomp
@@ -50,9 +51,6 @@ jobs:
             CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
             CC: clang
             CXX: clang++
-
-    continue-on-error: >-
-      ${{ matrix.os == 'macos-latest' && matrix.compiler == 'gcc' && success() || failure() }}
 
     steps:
       - name: Checkout project
