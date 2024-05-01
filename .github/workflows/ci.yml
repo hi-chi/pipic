@@ -38,9 +38,9 @@ jobs:
             CXX: g++
           - os: macos-latest
             compiler: gcc
-            INSTALL_DEPS: brew install fftw libomp
-            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
-            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+            INSTALL_DEPS: brew install fftw
+            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib"
+            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include"
             CC: gcc-13
             CXX: g++-13
           - os: macos-latest
