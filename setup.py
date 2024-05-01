@@ -41,10 +41,11 @@ def has_flag(compiler, flagname):
     import tempfile
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
+        print("\033[33mNOTE\033[0m: The following is just a compiler flag test.")
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
-            print('Compiler flag test failed!\n')
+            print('\033[33mCompiler flag test failed! Flag will be ignored.\033[0m')
             return False
     return True
 
