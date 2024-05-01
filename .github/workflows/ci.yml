@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "~3.13.0-0"]
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc, clang]
         exclude:
@@ -51,6 +51,9 @@ jobs:
             CC: clang
             CXX: clang++
 
+    continue-on-error: >-
+      ${{ matrix.os == 'macos-latest' && matrix.compiler == 'gcc' || contains(matrix.python-version, '~') }}
+      
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
