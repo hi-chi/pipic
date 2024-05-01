@@ -67,13 +67,6 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.INSTALL_DEPS }}
 
-      - name: search for fftw and omp dependencies
-        run: |
-          brew --prefix
-          ls $(brew --prefix)/opt
-          ls $(brew --prefix)/opt/fftw
-          ls $(brew --prefix)/opt/libomp
-
       - name: Build package
         run: |
           export LDFLAGS="${{ matrix.LDFLAGS }}"
