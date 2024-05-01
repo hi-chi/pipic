@@ -67,11 +67,11 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.INSTALL_DEPS }}
 
-      - name: Check gcc
-        run: which gcc
+      - name: Check ${{ matrix.CC }}
+        run: which ${{ matrix.CC }}
 
-      - name: Check gcc version
-        run: gcc --version
+      - name: Check ${{ matrix.CC }} version
+        run: ${{ matrix.CC }} --version
 
       - name: Build package
         run: |
