@@ -52,7 +52,7 @@ jobs:
             CXX: clang++
 
     continue-on-error: >-
-      ${{ contains(matrix.os,'macos') && contains(matrix.compiler,'gcc') && true || false }}
+      ${{ matrix.os == 'macos-latest' && matrix.compiler == 'gcc' && true || false }}
 
     steps:
       - name: Checkout project
