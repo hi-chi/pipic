@@ -38,7 +38,7 @@ jobs:
             CXX: g++
           - os: macos-latest
             compiler: gcc
-            INSTALL_DEPS: brew install fftw
+            INSTALL_DEPS: brew install gcc fftw
             LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib"
             CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include"
             CC: gcc-13
