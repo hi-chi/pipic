@@ -29,6 +29,8 @@ jobs:
         exclude:
           - os: ubuntu-latest
             compiler: clang
+          - os: macos-latest
+            python-version: ~3.13.0-0
         include:
           - os: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
@@ -52,7 +54,7 @@ jobs:
             CXX: clang++
 
     continue-on-error: >-
-      ${{ matrix.os == 'macos-latest' && matrix.compiler == 'gcc' || contains(matrix.python-version, '~') }}
+      ${{ contains(matrix.python-version, '~') }}
       
     steps:
       - name: Checkout project
