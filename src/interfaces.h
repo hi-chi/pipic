@@ -28,6 +28,8 @@ struct particle
     double3 r, p; // coordinate and momentum
     double w; // weight
     unsigned long long int id; // id 
+    double a; // one extra slot of memory
+    particle(): a(0.0) {}
     // If necessary add variables to allocate memory for additional attributes (must be of type double).
     // The code must be rebuilt for a specific number of attributes.
     // Use of attributes should be coordinated between extensions.
