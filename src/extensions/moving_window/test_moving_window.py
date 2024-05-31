@@ -41,14 +41,15 @@ if __name__ == '__main__':
 
     pulseWidth_x = (pulseDuration_FWHM/2.355)*consts.light_velocity # [cm]
     spotsize = 2*pulseWidth_x
-    nx, xmin, xmax = 2**6, -5*pulseWidth_x, 5*pulseWidth_x 
-    ny, ymin, ymax = 2**6, -5*spotsize, 5*spotsize
-    nz, zmin, zmax = 2**8, -3*spotsize, 3*spotsize
+    nx, xmin, xmax = 2**7, -5*spotsize, 5*spotsize 
+    ny, ymin, ymax = 2**7, -5*spotsize, 5*spotsize
+    nz, zmin, zmax = 2**7, -5*pulseWidth_x, 5*pulseWidth_x
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
-    timestep = 1e-1/(2*np.pi*consts.light_velocity/wl) #0.5*dx_/consts.light_velocity
+    timestep = 0.1/(2*np.pi*consts.light_velocity/wl) #0.5*dx_/consts.light_velocity
     thickness = 10 # thickness (in dz) of the area where the density and field is restored/removed 
-    
+
+
     #---------------------setting solver and simulation region----------------------
     sim=pipic.init(solver='ec',nx=nx,ny=ny,nz=nz,xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,zmin=zmin,zmax=zmax)
 
@@ -103,32 +104,20 @@ if __name__ == '__main__':
     # plasma profile
     simulation_length = s*timestep*consts.light_velocity
     upramp = 0.5*simulation_length
-    density_drop =0.5*simulation_length
-    end_of_plasma =  0.8*simulation_length 
+    density_drop = 0.5*simulation_length
+    end_of_plasma = 0.8*simulation_length 
 
     @cfunc(types.add_particles_callback)
     def density_profile(r, data_double, data_int):
         # r is the position in the 'lab frame'  
         R = r[2] - (zmax - thickness*dz)
-        if R < upramp: 
+            
+        if R > 0 and R < upramp: 
             return n0*(R/upramp)
+        elif R > upramp and R < density_drop:
+            return n0
         elif R > density_drop and R < end_of_plasma:
             return n0*0.5
-        else:
-            return 0 
-    
-
-    @cfunc(types.add_particles_callback)
-    def initiate_density(r, data_double, data_int):# Just to add electrons to particle list
-
-        rollback = np.floor(data_int[0]*timestep*consts.light_velocity/dz)   
-
-        r_rel = zmin + dz*(rollback%nz)
-
-        r_min = r_rel 
-        r_max = r_rel + dz
-        if (r[2] > r_min and r[2] < r_max) or (r[2] > zmax - (zmin - r_min)) or (r[2] < zmin + (r_max - zmax)):
-            return n0*1e-10
         else:
             return 0 
 
@@ -178,8 +167,8 @@ if __name__ == '__main__':
     
     @cfunc(types.particle_loop_callback)
     def get_phase_space(r, p, w, id, data_double, data_int):   
-        iz = int(ps.shape[0]*(r[0] - zmin)/(zmax - zmin))
-        ip = int(ps.shape[1]*(p[0] - pmin)/(pmax - pmin))
+        iz = int(ps.shape[0]*(r[2] - zmin)/(zmax - zmin))
+        ip = int(ps.shape[1]*(p[2] - pmin)/(pmax - pmin))
         data = carray(data_double, ps.shape, dtype=np.double)
         
         if ip>=0 and ip < ps.shape[1] and iz < ps.shape[0]:
@@ -231,12 +220,13 @@ if __name__ == '__main__':
     # This part is just for initiating the electron species, 
     # so that the algorithm knows that there is a species called electron
     # it is therefore not important where the electrons are or what density they have
-    sim.add_particles(name='electron', number=int(ny*nz*nx),#particles_per_cell),
+    sim.add_particles(name='electron', number=1,#particles_per_cell),
                     charge=consts.electron_charge, mass=consts.electron_mass,
-                    temperature=temperature, density=initiate_density.address,
+                    temperature=temperature, density=density_profile.address,
                     data_int=pipic.addressof(data_int))
-
-    density_handler_adress = moving_window.handler(thickness=thickness,
+    
+    density_handler_adress = moving_window.handler(sim.ensemble_data(),
+                                                   thickness=thickness,
                                                    particles_per_cell=particles_per_cell,
                                                    temperature=temperature,
                                                    density=density_profile.address,)
@@ -245,7 +235,7 @@ if __name__ == '__main__':
                     handler=density_handler_adress,
                     data_int=pipic.addressof(data_int),
                     data_double=pipic.addressof(data_double))
-
+    
     #-----------------------run simulation-------------------------
     
     dsets = ['Ex','Ey','Ez','rho','ps']
@@ -301,7 +291,7 @@ if __name__ == '__main__':
             try:
                 with h5py.File(hdf5_fp,"r+") as file:
                     for j,f in enumerate(dsets):
-                         file[f][i//checkpoint] = np.roll(fields[j],-roll_back,axis=-1) 
+                        file[f][i//checkpoint] = np.roll(fields[j],-roll_back,axis=-1) 
             except IOError:
                 input('Another process is accessing the hdf5 file. Close the file and press enter.')
                 with h5py.File(hdf5_fp,"r+") as file:
