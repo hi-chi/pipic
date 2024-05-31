@@ -41,11 +41,13 @@ def has_flag(compiler, flagname):
     import tempfile
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
+        print("\033[33mNOTE: The following is just a compiler flag test.\033[0m")
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
-            print('Compiler flag test failed!\n')
+            print('\033[33mCompiler flag test failed! Flag will be ignored.\033[0m')
             return False
+    print("\033[33mCompiler flag test completed.\033[0m")
     return True
 
 
@@ -85,6 +87,8 @@ class BuildExt(build_ext):
                 opts.append('-Xclang')  # Must come before the next -fopenmp (see ct=='unix' below)
             else:
                 opts.append('-stdlib=libstdc++')
+                # Fixes issue with xcode 15 linker 
+                opts.append('-ld_classic')
         if ct == 'unix':
             opts.append('-fopenmp')
             opts.append("-DVERSION_INFO='{}'"

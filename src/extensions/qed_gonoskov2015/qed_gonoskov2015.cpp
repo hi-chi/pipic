@@ -200,7 +200,7 @@ struct threadHandler{
         double3 v = (1/(electronMass*gamma))*CI.Particle(ip)->p;
         double3 E, B;
         CI.interpolateField(CI.Particle(ip)->r, E, B);
-        double H_eff = sqr(E + (1/lightVelocity)*cross(v, B)) - (1/lightVelocity)*sqr(dot(E, v));
+        double H_eff = sqr(E + (1/lightVelocity)*cross(v, B)) - (1/sqr(lightVelocity))*sqr(dot(E, v));
         if(H_eff < 0) H_eff = 0;
         H_eff = sqrt(H_eff);
         double E_E_cr = H_eff/schwingerField;

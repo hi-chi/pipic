@@ -23,12 +23,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "~3.13.0-0"]
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc, clang]
         exclude:
           - os: ubuntu-latest
             compiler: clang
+          - os: macos-latest
+            python-version: ~3.13.0-0
         include:
           - os: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
@@ -39,18 +41,21 @@ jobs:
           - os: macos-latest
             compiler: gcc
             INSTALL_DEPS: brew install fftw
-            LDFLAGS: "-L/usr/local/opt/fftw/lib"
-            CPPFLAGS: "-I/usr/local/opt/fftw/include"
+            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib"
+            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include"
             CC: gcc-13
             CXX: g++-13
           - os: macos-latest
             compiler: clang
-            INSTALL_DEPS: brew install fftw
-            LDFLAGS: "-L/usr/local/opt/fftw/lib -L/usr/local/opt/libomp/lib"
-            CPPFLAGS: "-I/usr/local/opt/fftw/include -I/usr/local/opt/libomp/include"
+            INSTALL_DEPS: brew install fftw libomp
+            LDFLAGS: "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
+            CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
             CC: clang
             CXX: clang++
 
+    continue-on-error: >-
+      ${{ contains(matrix.python-version, '~') }}
+      
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
@@ -66,6 +71,12 @@ jobs:
 
       - name: Install dependencies
         run: ${{ matrix.INSTALL_DEPS }}
+
+      - name: Check ${{ matrix.CC }} version
+        run: ${{ matrix.CC }} --version
+
+      - name: Check ${{ matrix.CXX }} version
+        run: ${{ matrix.CXX }} --version
 
       - name: Build package
         run: |
