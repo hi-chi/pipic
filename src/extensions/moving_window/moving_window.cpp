@@ -47,27 +47,19 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
     //threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
     //cthread.rng.seed(CI.rngSeed);
 
-    int rollback = floor(dataInt[0]*CI.timeStep*lightVelocity/CI.step.z);
-    if(rollback%(_thickness/2)==0){        
-        int rollback_prev = floor((dataInt[0]-1)*CI.timeStep*lightVelocity/CI.step.z);
-        if(rollback_prev!=rollback){
+    if (CI.particleTypeIndex==-1){
 
-            // initial r_rel is at the end of the cell and marks the end of the cleaning region 
-            double r_rel = CI.globalMin.z + CI.step.z*(rollback%CI.n.z); 
-            // r_min marks the beggining of the cleaning region
-            double r_min = r_rel - _thickness*CI.step.z;
-            double3 cell_min = CI.cellMin();
-            double3 cell_max = CI.cellMax();
-            double eps = CI.step.z/10;
-            
-            int ig, ix = CI.i.x, iy = CI.i.y, iz = CI.i.z; 
-            ig = ix + (iy + iz*CI.n.y)*CI.n.x; 
+        int rollback = floor(dataInt[0]*CI.timeStep*lightVelocity/CI.step.z);
+        if(rollback%(_thickness/2)==0){        
+            int rollback_prev = floor((dataInt[0]-1)*CI.timeStep*lightVelocity/CI.step.z);
+            if(rollback_prev!=rollback){
 
             if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) || 
                 (cell_max.z+eps >= CI.globalMax.z - (CI.globalMin.z - r_min)) || 
                 (cell_min.z-eps <= CI.globalMin.z + (r_rel - CI.globalMax.z))){
 
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
+
                     // removing particles
                     if(cell[ig] != nullptr){
                         int it = 0;
