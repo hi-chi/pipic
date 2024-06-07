@@ -115,7 +115,7 @@ void addParticle(cellInterface &CI, particle &P){
     }
 }
 
-struct cascadeParticle{double weight, gamma, chi0; int type;};
+struct cascadeParticle{double weight, gamma, chi0, gamma0; int type;}; // chi0 is chi at generation and gamma0 is gamma of electron producing the photon
 
 struct threadHandler{
     mt19937 rng;
@@ -137,8 +137,8 @@ struct threadHandler{
                     if(cParticle[ip].weight > 0){
                         double delta = Pair_Generator(1.0, chi, cParticle[ip].gamma, timeSubStep, random(), random());
                         if(delta > 0){
-                            cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*delta, chi, electronType});
-                            cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*(1 - delta), chi, positronType});
+                            cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*delta, chi, 0, electronType});
+                            cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*(1 - delta), chi, 0, positronType});
                             cParticle[ip].weight = 0; // removing the photon
                         }
                     }
@@ -146,7 +146,7 @@ struct threadHandler{
                     // handling electron or positron
                     double delta = Photon_MGenerator(1.0, chi, cParticle[ip].gamma, timeSubStep, random(), random());
                     if(delta > 0){
-                        cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*delta, chi, photonType});
+                        cParticle.push_back({cParticle[ip].weight, cParticle[ip].gamma*delta, chi, cParticle[ip].gamma, photonType});
                         cParticle[ip].gamma *= (1 - delta);
                     }
                 }
@@ -160,6 +160,7 @@ struct threadHandler{
             CI.newParticle(CI.particleBufferSize-1)->w = cParticle[ip].weight;
             CI.newParticle(CI.particleBufferSize-1)->id = cParticle[ip].type;
             CI.attribute(CI.newParticle(CI.particleBufferSize-1), attibuteIndex) = cParticle[ip].chi0;
+            CI.attribute(CI.newParticle(CI.particleBufferSize-1), attibuteIndex+1) = cParticle[ip].gamma0;
         }
         CI.Particle(seed_ip)->p = (cParticle[0].gamma*gamma0_1)*CI.Particle(seed_ip)->p;
         CI.Particle(seed_ip)->w = cParticle[0].weight;
@@ -197,7 +198,7 @@ struct threadHandler{
             //handle cascade
             cParticle.clear();
             double gamma = p_norm/(electronMass*lightVelocity);
-            cParticle.push_back({CI.Particle(ip)->w, gamma, 0, photonType});
+            cParticle.push_back({CI.Particle(ip)->w, gamma, 0, 0, photonType});
             handleCascade(E_E_cr, CI.timeStep, ip, CI);
         }
     }
@@ -223,13 +224,14 @@ struct threadHandler{
                     CI.newParticle(CI.particleBufferSize-1)->p = delta * CI.Particle(ip)->p;
                     CI.newParticle(CI.particleBufferSize-1)->id = photonType;
                     CI.attribute(CI.newParticle(CI.particleBufferSize-1), attibuteIndex) = chi;
+                    CI.attribute(CI.newParticle(CI.particleBufferSize-1), attibuteIndex+1) = gamma;
                     CI.Particle(ip)->p = (1 - delta) * CI.Particle(ip)->p;
                 }
             }
         } else {
             //handle cascade
             cParticle.clear();
-            cParticle.push_back({CI.Particle(ip)->w, gamma, 0, type});
+            cParticle.push_back({CI.Particle(ip)->w, gamma, 0, 0, type});
             handleCascade(E_E_cr, CI.timeStep, ip, CI);
         }
     }
