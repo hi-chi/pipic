@@ -57,9 +57,14 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) || 
                 (cell_max.z+eps >= CI.globalMax.z - (CI.globalMin.z - r_min)) || 
                 (cell_min.z-eps <= CI.globalMin.z + (r_rel - CI.globalMax.z))){
+<<<<<<< HEAD
 
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
 
+=======
+
+                if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
+>>>>>>> 8e3cea3 (Update moving_window.cpp)
                     // removing particles
                     if(cell[ig] != nullptr){
                         int it = 0;
