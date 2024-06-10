@@ -42,9 +42,10 @@ static vector<threadHandler> Thread;
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
-    
-    threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
-    cthread.rng.seed(CI.rngSeed);
+
+    //moved this to the place below, where we need random number generation
+    //threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
+    //cthread.rng.seed(CI.rngSeed);
 
     int rollback = floor(dataInt[0]*CI.timeStep*lightVelocity/CI.step.z);
     if(rollback%(_thickness/2)==0){        
@@ -65,8 +66,8 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) || 
                 (cell_max.z+eps >= CI.globalMax.z - (CI.globalMin.z - r_min)) || 
                 (cell_min.z-eps <= CI.globalMin.z + (r_rel - CI.globalMax.z))){
-                    
-                if (CI.particleTypeIndex==-1){
+
+                if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
                     // removing particles
                     if(cell[ig] != nullptr){
                         int it = 0;
@@ -76,6 +77,12 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                             C->P.resize(C->endShift);
                             };
                     };
+                }
+                
+                if (CI.particleTypeIndex==-1){
+
+                    threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
+                    cthread.rng.seed(CI.rngSeed);
                     
                     // adding particles
                     double3 r = (cell_min + 0.5*CI.step);
@@ -99,7 +106,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                     //double expectedNumber = nb_particles/weight;
                     //int numberToGenerate = int(expectedNumber) + (cthread.random() < (expectedNumber - int(expectedNumber)));
                     if(ppc > 0){
-                        for(int ip = 0; ip < ppc; ip++){
+                        for(int ip = 0; ip < ppc; ip++){ //it can be problematic to have ppc as int here: say if ppc = 1.5 it would be better to have ppc=1 in 50% cases and ppc=2 in 50% cases; you can generalize this logic
                             particle P;
                             // generate position
                             P.r.x = cell_min.x + (cthread.random())*CI.step.x;
