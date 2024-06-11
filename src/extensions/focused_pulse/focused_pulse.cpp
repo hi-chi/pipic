@@ -151,6 +151,14 @@ void add_pulse(){ // a function to add a pulse and start configuring it
     Pulse.push_back(pulse());
 };
 
+size_t get_pulse_count() { //Added method to retrieve the number of pulses placed in the domain. Solely for debug and flexibility.
+    return Pulse.size();
+};
+
+void clear_pulse() { //Added method to clear entire pulse vector, for reusability purposes.
+    while (Pulse.size() > 0) Pulse.pop_back();
+};
+
 void set_box(int nx, int ny, int nz, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax){
     int cp = Pulse.size() - 1; // current pulse to set
     Pulse[cp].n = int3(nx, ny, nz); Pulse[cp].checklist[0] = true;
@@ -210,5 +218,7 @@ PYBIND11_MODULE(_focused_pulse, object) {
     object.def("set_l_size", &set_l_size, py::arg("l_size"));
     object.def("set_shape", &set_shape, py::arg("shape"));
     object.def("add_pulse", &add_pulse);
+    object.def("get_pulse_count", &get_pulse_count);
+    object.def("clear_pulse", &clear_pulse);
     object.def("field_loop_cb", &field_loop_cb);
 }
