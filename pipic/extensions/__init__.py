@@ -8,10 +8,12 @@ from . import _qed_volokitin2023 as qed_volokitin2023
 from . import _downsampler_gonoskov2022 as downsampler_gonoskov2022
 from . import x_reflector_py
 
-__all__ = ['x_converter_c',
-           'x_reflector_c',
-           'landau_lifshitz',
-           'x_reflector_py',
-           'qed_gonoskov2015',
-           'qed_volokitin2023',
-           'downsampler_gonoskov2022']
+__all__ = [
+    "x_converter_c",
+    "x_reflector_c",
+    "landau_lifshitz",
+    "x_reflector_py",
+    "qed_gonoskov2015",
+    "qed_volokitin2023",
+    "downsampler_gonoskov2022",
+]
