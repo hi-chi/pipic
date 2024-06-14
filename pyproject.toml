@@ -66,3 +66,6 @@ local_scheme = "dirty-tag"
 [project.urls]
 Homepage = "https://github.com/hi-chi/pipic"
 Issues = "https://github.com/hi-chi/pipic/issues"
+
+[tool.black]
+line-length = 100
