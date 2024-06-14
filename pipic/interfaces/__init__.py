@@ -2,4 +2,4 @@
 
 from .cellinterface import CellInterface
 
-__all__ = ['CellInterface']
+__all__ = ["CellInterface"]
