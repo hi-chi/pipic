@@ -1,4 +1,4 @@
-#Basic setup for a laser pulse interation with a solid-density plasma layer
+#Basic setup for a laser pulse interaction with a solid-density plasma layer
 #for results see Sec. 8 in arXiv:2302.01893
 import pipic
 from pipic import consts, types

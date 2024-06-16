@@ -31,7 +31,7 @@ The layout of a Python extension includes the following elements:
         C = CellInterface(CI_I, CI_D, CI_F, CI_P, CI_NP) # unpacking data
         ...
     ```
-4.  Develop a function that initiates the exension (i.e. set the internal data based on any parameters needed) and returns the address to the `Handler`:
+4.  Develop a function that initiates the extension (i.e. set the internal data based on any parameters needed) and returns the address to the `Handler`:
     ```
     def handler(<parameters>):
         ...
@@ -101,7 +101,7 @@ Creating an extension in C/C++ provides full flexibility and performance, while 
 	`python3 <name>.py`
 16. Develop the extension; to recompile use:
 	`make`
-17. For testing and debugging purposes it can be useful to disable the use threads by setting `use_omp = False` among parameters of `advance()`. When commiting changes to git do not add copied/generated files.
+17. For testing and debugging purposes it can be useful to disable the use threads by setting `use_omp = False` among parameters of `advance()`. When committing changes to git do not add copied/generated files.
 
 ### When finished with the developments and tests, update and upload the branch:
 

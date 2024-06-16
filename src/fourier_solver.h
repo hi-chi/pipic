@@ -308,7 +308,7 @@ struct fieldSubMap64 // structure for a local field buffer (for optimization pur
     double3 cell0, step, invStep;
     int3 i3;
     int dim;
-    double F_data[384]; // em-field at the coners of the cell and other real-value parameters
+    double F_data[384]; // em-field at the corners of the cell and other real-value parameters
     intg cig[64];
     fieldSubMap64() {}
     double3& E_(int i){

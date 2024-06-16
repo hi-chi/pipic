@@ -85,7 +85,7 @@ struct rndGen
         for(int i = 0; i < nx; i++) localGen[i]->seed(uniform(rng));
     }
     rndGen(int nx): nx(nx){
-        rngSeed = 0; // can be set to clock() if reproducability is not needed.
+        rngSeed = 0; // can be set to clock() if reproducibility is not needed.
         pipic_log.message("rng_seed = " + to_string(rngSeed));
         localGen = new mt19937*[nx];
         for(int i = 0; i < nx; i++) localGen[i] = new mt19937;
