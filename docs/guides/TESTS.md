@@ -1,7 +1,7 @@
 # Unit test guide
 The following document provides a guide for unit testing $\pi$-PIC in order to maintain correctness during development.
 
-## How to run 
+## How to run
 In order to be able to run the tests, the project must first be built (because the binaries must be compiled). To do this, simply start by installing the local project
 ```
 pip install .

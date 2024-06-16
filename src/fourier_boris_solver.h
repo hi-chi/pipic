@@ -27,10 +27,10 @@ struct fourier_boris_solver: public pic_solver
     bool overStepMigration;
     double3 *dtJ; // array for storing the cumulative current multiplied by timeStep
     // auxiliary variables for optimization:
-    double invCellVolume; 
+    double invCellVolume;
     vector<fieldSubMap64> subField; // local field state, thread-local
     vector<double> inv_mc_, qdt_2_; // thread-local
-    fourier_boris_solver(simulationBox box): n(box.n), 
+    fourier_boris_solver(simulationBox box): n(box.n),
     subField(omp_get_max_threads()), inv_mc_(omp_get_max_threads()), qdt_2_(omp_get_max_threads())
     {
         field = new fourierSolver(box, FFTW_PATIENT);
@@ -110,7 +110,7 @@ struct fourier_boris_solver: public pic_solver
         P.p = u0 + cross(u1, s) + qdt_2*E;
         gamma = sqrt(1 + P.p.norm2()*sqr(inv_mc));
         double3 dtv = (timeStep/(mass*gamma))*P.p;
-        
+
         if(unlikely(abs(dtv.x) > 0.99999*box.step.x)){ dtv = 0.99999*(box.step.x/abs(dtv.x))*dtv; overStepMigration = true;}
         if(box.dim > 1)if(unlikely(abs(dtv.y) > 0.99999*box.step.y)){ dtv = 0.99999*(box.step.y/abs(dtv.y))*dtv; overStepMigration = true;}
         if(box.dim > 2)if(unlikely(abs(dtv.z) > 0.99999*box.step.z)){ dtv = 0.99999*(box.step.z/abs(dtv.z))*dtv; overStepMigration = true;}
@@ -125,7 +125,7 @@ struct fourier_boris_solver: public pic_solver
             if(r.x < box.min.x) r.x += box.max.x - box.min.x; else if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
             if(r.y < box.min.y) r.y += box.max.y - box.min.y; else if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
             if(r.z < box.min.z) r.z += box.max.z - box.min.z; else if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
-            
+
             int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
             int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;
             int ciy_ = 0, ciz_ = 0;
@@ -162,7 +162,7 @@ struct fourier_boris_solver: public pic_solver
             if(r.x < box.min.x) r.x += box.max.x - box.min.x; else if(r.x > box.max.x) r.x -= box.max.x - box.min.x;
             if(r.y < box.min.y) r.y += box.max.y - box.min.y; else if(r.y > box.max.y) r.y -= box.max.y - box.min.y;
             if(r.z < box.min.z) r.z += box.max.z - box.min.z; else if(r.z > box.max.z) r.z -= box.max.z - box.min.z;
-            
+
             int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
             int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;
             int ciy_ = 0, ciz_ = 0;

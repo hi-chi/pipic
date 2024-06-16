@@ -22,20 +22,20 @@ CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
 ## Compiling latest or specific version from GitHub
 
-1. Create a local folder:  
-	`mkdir <name>`  
-	`cd <name>`  
-2. Clone the project from there and cd to a folder named `pipic`:  
-	`git clone https://github.com/hi-chi/pipic.git`  
-	`cd pipic`  
-3. (optional) Switch to a needed branch:   
-	`git checkout <name>`  
-4. (optional) Uninstall previous version of pipic:  
+1. Create a local folder:
+	`mkdir <name>`
+	`cd <name>`
+2. Clone the project from there and cd to a folder named `pipic`:
+	`git clone https://github.com/hi-chi/pipic.git`
+	`cd pipic`
+3. (optional) Switch to a needed branch:
+	`git checkout <name>`
+4. (optional) Uninstall previous version of pipic:
 	`pip uninstall pipic`
-5. Install pipic (you might need to use python instead of python3):  
-	`python3 -m pip install .`  
-6. (optional) Check that it works:  
-    `python3 examples/basic_example.py` 
+5. Install pipic (you might need to use python instead of python3):
+	`python3 -m pip install .`
+6. (optional) Check that it works:
+    `python3 examples/basic_example.py`
 
 <!---
 ## CMake

@@ -87,7 +87,7 @@ class BuildExt(build_ext):
                 opts.append('-Xclang')  # Must come before the next -fopenmp (see ct=='unix' below)
             else:
                 opts.append('-stdlib=libstdc++')
-                # Fixes issue with xcode 15 linker 
+                # Fixes issue with xcode 15 linker
                 opts.append('-ld_classic')
         if ct == 'unix':
             opts.append('-fopenmp')

@@ -13,7 +13,7 @@ namespace pfc
     {
     private:
         inline static const uint64_t int_g_emis[] = {
-#include "QED_emis.in" 
+#include "QED_emis.in"
         };
 
         double* g_emis;

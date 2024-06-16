@@ -43,7 +43,7 @@ def null_callback(r, data_double, data_int):
 sim.add_particles(name='photon', number=0, charge=0, mass=0,
                   temperature=0, density=null_callback.address)
 
-sim.add_particles(name='positron', number=0, 
+sim.add_particles(name='positron', number=0,
                   charge=-consts.electron_charge, mass=consts.electron_mass,
                   temperature=0, density=null_callback.address)
 

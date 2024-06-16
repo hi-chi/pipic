@@ -54,7 +54,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         if(loopNumber == 1){
             unsigned long long int totalOverStepMoves = 0;
             for(int i = 0 ; i < omp_get_max_threads(); i++) totalOverStepMoves += overStepMove[i];
-            if(totalOverStepMoves != 0){ 
+            if(totalOverStepMoves != 0){
                 string warning = "ec2_solver warning: restricting overstep move in " + to_string(totalOverStepMoves);
                 warning += " (" + to_string(100*0.5*totalOverStepMoves/double(Ensemble->totalNumberOfParticles)) + "%) occasions (two checks ber update). ";
                 warning +=  "Consider reducing time step.";
@@ -93,7 +93,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         fieldSubMap64 &map(subField[omp_get_thread_num()]);
         simulationBox &box(field->box);
         int thread = omp_get_thread_num();
-        
+
         double &inv_mc(data[thread].val[0]);
         double &qdt_4mc(data[thread].val[1]);
         double &_4piq2_mVg(data[thread].val[2]);
@@ -102,18 +102,18 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         double &Vg_8pimc2(data[thread].val[5]);
         double &mc(data[thread].val[6]);
         double &Vg_4piq(data[thread].val[7]);
-        
+
         double p2_ = P.p.norm2()*sqr(inv_mc);
         double gamma = sqrt(1 + p2_);
         double inv_gamma = 1/gamma;
 
         double3 vdt_4 = 0.25*timeStep*inv_gamma*lightVelocity*inv_mc*P.p;
         moveCap(vdt_4, 0.4999999*box.step);
-        
+
         double c[8]; int cil[8];
         double3 E({0, 0, 0}), B({0, 0, 0});
         CIC(P.r + vdt_4, c, cil, E, B);
-        
+
         //Boris rotation:
         if(loopNumber == 0){
             double3 t = (qdt_4mc*inv_gamma)*B;
@@ -143,16 +143,16 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         for(int i = 0; i < (1 << dim); i++) map.E_(cil[i]) += c[i]*dE;
         double E2_a = 0; // \sum E^2 after update
         for(int i = 0; i < (1 << dim); i++) E2_a += map.E_(cil[i]).norm2();
-        
+
         if(P.w*p.norm2() > 0){
             if(gamma - 1 > 1e-7){ // relativistic case
                 double val = (sqr((E2_b - E2_a)*Vg_8pimc2 + P.w*gamma) - sqr(P.w))/(sqr(P.w)*p.norm2());
                 if(val < 0) val = 0;
-                sigma = sqrt(val); 
+                sigma = sqrt(val);
             } else { // non-relativistic case (needed due to limitations of numerical arithmetic)
                 double val = (2*(E2_b - E2_a)*Vg_8pimc2 + P.w*p2_)/(P.w*p.norm2());
                 if(val < 0) val = 0;
-                sigma = sqrt(val); 
+                sigma = sqrt(val);
             }
         }
 

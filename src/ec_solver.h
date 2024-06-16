@@ -104,11 +104,11 @@ struct ec_solver: public pic_solver //energy-conserving solver
 
         double3 vdt_2 = 0.5*timeStep*inv_gamma*lightVelocity*inv_mc*P.p;
         moveCap(vdt_2, 0.4999999*box.step);
-        
+
         double c[8]; int cil[8];
         double3 E({0, 0, 0}), B({0, 0, 0});
         CIC(P.r + vdt_2, c, cil, E, B);
-        
+
         //Boris rotation:
         double3 t = (qdt_2mc*inv_gamma)*B;
         double3 u1 = P.p + cross(P.p, t);
@@ -140,13 +140,13 @@ struct ec_solver: public pic_solver //energy-conserving solver
             if(gamma - 1 > 1e-7){ // relativistic case
                 double val = (sqr((E2_b - E2_a)*Vg_8pimc2 + P.w*gamma) - sqr(P.w))/(sqr(P.w)*p.norm2());
                 if(val < 0) val = 0;
-                sigma = sqrt(val); 
+                sigma = sqrt(val);
             } else { // non-relativistic case (needed due to limitations of numerical arithmetic)
                 double val = (2*(E2_b - E2_a)*Vg_8pimc2 + P.w*p2_)/(P.w*p.norm2());
                 if(val < 0) val = 0;
-                sigma = sqrt(val); 
+                sigma = sqrt(val);
             }
-        }       
+        }
         P.p = (sigma*mc)*p;
         double3 dr = (-Vg_4piq/P.w)*dE;
         if(field->divergenceCleaning){
@@ -157,7 +157,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
             placePeriodic(P.r.x, box.min.x, box.max.x);
             if(dim > 1) placePeriodic(P.r.y, box.min.y, box.max.y);
             if(dim > 2) placePeriodic(P.r.z, box.min.z, box.max.z);
-            
+
             int cix = floor((r.x - box.min.x)*box.invStep.x); c[1] = (r.x - box.min.x)*box.invStep.x - cix; c[0] = 1 - c[1];
             int cix_ = cix + 1; if(cix_ == box.n.x) cix_ = 0;
             int ciy_ = 0, ciz_ = 0;
