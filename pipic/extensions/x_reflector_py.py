@@ -1,7 +1,7 @@
-import pipic
-from pipic.tools import *
 import numpy
 from numba import cfunc
+
+from pipic.tools import CellInterface, Double3, addressof, handler_callback
 
 name = "x_reflector_py"  # extension's name
 DataDouble = numpy.zeros((2,), dtype=numpy.double)  # extension's data
