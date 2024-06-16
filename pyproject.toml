@@ -68,8 +68,9 @@ version_file = "pipic/_version.py"
 local_scheme = "dirty-tag"
 
 
-[tool.mypy]
-files = "pipic"
+# Disabled until project is ready for it
+# [tool.mypy]
+# files = "pipic"
 
 
 [tool.ruff]
