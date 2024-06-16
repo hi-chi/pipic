@@ -1,8 +1,8 @@
-import pipic.types as types
 import pipic.consts as consts
 import pipic.ctypes as ctypes
-import pipic.interfaces as interfaces
 import pipic.extensions as extensions
+import pipic.interfaces as interfaces
+import pipic.types as types
 
 __version__: str
 

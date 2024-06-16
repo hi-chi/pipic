@@ -3,11 +3,11 @@
 Main module of the pipic package.
 """
 
-from ._version import __version__
+import pipic.consts as consts
+import pipic.extensions as extensions
+import pipic.interfaces as interfaces
+import pipic.types as types
+from pipic.ctypes import addressof
 
 from ._pipic import *
-import pipic.types as types
-import pipic.consts as consts
-from pipic.ctypes import addressof
-import pipic.interfaces as interfaces
-import pipic.extensions as extensions
+from ._version import __version__
