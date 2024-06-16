@@ -1,5 +1,5 @@
 [build-system]
-requires = ['meson-python', 'pybind11']
+requires = ['meson-python', 'pybind11', 'versioningit']
 build-backend = 'mesonpy'
 
 
@@ -55,14 +55,26 @@ docs = [
 ]
 dev = ['pipic[test,mpl]', "setuptools>=64", "setuptools-scm>=8", "wheel", "pybind11"]
 
-
-# Automatically determine project version using setuptools_scm.
-# Requires project.dynamic = ["version"]
-[tool.setuptools_scm]
-version_file = "pipic/_version.py"
-local_scheme = "dirty-tag"
-
-
 [project.urls]
 Homepage = "https://github.com/hi-chi/pipic"
 Issues = "https://github.com/hi-chi/pipic/issues"
+
+
+# Automatically determine project version using versioningit.
+# Requires project.dynamic = ["version"]
+[tool.versioningit]
+[tool.versioningit.next-version]
+method = "smallest"
+
+[tool.versioningit.format]
+distance = "{next_version}.dev{distance}"
+# Example formatted version: 1.2.4.dev42
+
+dirty = "{base_version}+dirty"
+# Example formatted version: 1.2.3+dirty
+
+distance-dirty = "{next_version}.dev{distance}+dirty"
+# Example formatted version: 1.2.4.dev42+dirty
+
+[tool.versioningit.write]
+file = "pipic/_version.py"

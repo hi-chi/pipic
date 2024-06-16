@@ -1,7 +1,7 @@
 project(
     'pipic',
     'cpp',
-    version: '1.1',
+    version: run_command('python','-m','versioningit','-w', check: true).stdout().strip(),
     default_options: [
         'cpp_std=c++11',
     ],
@@ -30,6 +30,7 @@ _global_cpp_args = cpp.get_supported_arguments(
     '-Wno-conversion',
     '-Wno-misleading-indentation',
     '-O3',
+    '-fopenmp',
 )
 add_project_arguments(_global_cpp_args, language : 'cpp')
 
