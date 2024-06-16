@@ -2,40 +2,62 @@
 
 The project aims to use modern tools for streamlining code development, improve code quality and align code style between developers.
 
-## Python development tools
 
-### Formatting
+## Python development tools
 > [!NOTE]
 > Formatting rules are not currently enforced, but might be at an unspecified time in the future.
 
-For autoformatting python-code the project uses [`black`](https://github.com/psf/black), _'the uncompromising Python code formatter'_, which can be installed with
+
+### pre-commit hooks
+In order to speed up development it is useful to have early feedback in the iteration cycle. [`pre-commit`](https://pre-commit.com/) is a framework that allows for automating this process.
 ```
-pip install black
+pip install pre-commit
 ```
 
-The formatter can be run manually on the python directory using
+`pre-commit` can be run manually on the changed files using
 ```
-black --config pyproject.toml pipic/
+pre-commit run
 ```
-Config settings are stored in `pyproject.toml` under `[tool.black]`.
+or on all files in the repo using
+```
+pre-commit run --all-files
+```
 
-Upon occasion, manual formatting is desired. This can be achived by temporarily turning formatting off: 
+The commands to run are defined in `.pre-commit-config.yaml`. These commands can also be installed as git pre-commit hooks through
 ```
-# fmt off
-Manually formatted python code goes here
-# fmt on
+pre-commit install
 ```
+which is highly recommended.
+
+
+### Formatting and linting
+
+The traditional way was to use [`black`](https://github.com/psf/black) for autoformatting, coupled with [`isort`](https://pycqa.github.io/isort/) for automatically sorting imports, and then use another tool for linting. A more modern approach is to use [`ruff`](https://github.com/astral-sh/ruff) for both formatting and linting, as it can largely replace previous tools.
+
+`ruff` is configured in `pyproject.toml` under `[tool.ruff]`.
+
 
 #### Automation
-For increased quality-of-life it is recommended to use black for automatic formatting in your IDE of choice. _E.g._, the black formatter extension can be installed on VS Code. Simply turn on format-on-save, and add `--line-length=100` as argument.
+For increased quality-of-life it is recommended to install automatic formatting in your IDE of choice and turn on format-on-save. _E.g._, by installing the [`ruff` extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) to VS Code.
 
+In your `settings.json` add the following settings:
+```json
+"[python]": {
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "charliermarsh.ruff"
+}
+```
 
-### Linting
-[`ruff`](https://github.com/astral-sh/ruff)
 
 ### Static type checking
 [`mypy`](https://github.com/python/mypy)
 
+`mypy` is configured in `pyproject.toml` under `[tool.mypy]`.
 
-## C++ development tools
-clang-tidy
+
+## Resources
+- [Scientific Python Library Development Guide](https://learn.scientific-python.org/development/guides/style/)

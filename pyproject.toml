@@ -56,6 +56,11 @@ docs = [
 dev = ['pipic[test,mpl]', "setuptools>=64", "setuptools-scm>=8", "wheel", "pybind11"]
 
 
+[project.urls]
+Homepage = "https://github.com/hi-chi/pipic"
+Issues = "https://github.com/hi-chi/pipic/issues"
+
+
 # Automatically determine project version using setuptools_scm.
 # Requires project.dynamic = ["version"]
 [tool.setuptools_scm]
@@ -63,13 +68,10 @@ version_file = "pipic/_version.py"
 local_scheme = "dirty-tag"
 
 
-[project.urls]
-Homepage = "https://github.com/hi-chi/pipic"
-Issues = "https://github.com/hi-chi/pipic/issues"
+[tool.mypy]
+files = "pipic"
 
-[tool.black]
-line-length = 100
 
 [tool.ruff]
-# Set the maximum line length
 line-length = 100
+src = ["pipic"]
