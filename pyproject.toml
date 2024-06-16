@@ -77,3 +77,8 @@ local_scheme = "dirty-tag"
 line-length = 100
 src = ["pipic"]
 exclude= ["src", "examples", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401", "F403"]
+"**/__init__.pyi" = ["F401"]
+"pipic/tools.py" = ["F403"]
