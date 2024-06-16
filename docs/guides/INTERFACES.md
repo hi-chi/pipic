@@ -33,7 +33,7 @@ Interfaces and functions of containers
 
 - `field_loop(handler, data_double = 0, data_int = 0, use_omp = False)` makes a loop over grid nodes
     - `handler` is the address of a callback that defines the action on field components: `handler(ind, r, E, B, data_double, data_int)` (decorator `@cfunc(types.field_loop_callback)` must be placed before function definition)
-        - `ind[0]`, `ind[1]` and `ind[2]` are indices of the gird node along $x$, $y$ and $z$, respectively (read only)
+        - `ind[0]`, `ind[1]` and `ind[2]` are indices of the grid node along $x$, $y$ and $z$, respectively (read only)
         - `r[0]`, `r[1]` and `r[2]` are the coordinates along $x$, $y$ and $z$, respectively (read only, collocated grid is used in all solvers)
         - `E[0]`, `E[1]`, `E[2]`, `B[0]`, `B[1]` and `B[2]` are the components of electric and magnetic fields (read/write)
         - `data_double` and `data_int` are pointers to data of double and int type (read/write)
@@ -74,7 +74,7 @@ Interfaces and functions of containers
     - `handler` is the address of the function to act on particles (see [Making extensions](EXTENSIONS.md))
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
 
-Convensions, assumptions and properties
+Conventions, assumptions and properties
 --
 
 - CGS units are used for all dimensional quantities

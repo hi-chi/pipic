@@ -29,7 +29,7 @@ Contact: arkady.gonoskov@gu.se.
 
 const string name = "downsampler_gonoskov2022";
 
-//Warning: the implementation of this extension expoits accessing raw data from nearby cells,
+//Warning: the implementation of this extension exploits accessing raw data from nearby cells,
 // which is not provided by the cellInterface at the moment of development.
 
 struct cellContainer
@@ -91,7 +91,7 @@ struct threadHandler{
                     s = sqrt(s);
                     for(int in = 0; in < n; in++) v[ivn][in] /= s;
 
-                    //a check on limitations of numerical arithmetics:
+                    //a check on limitations of numerical arithmetic:
                     s = 0; for(int in = 0; in < n; in++) s += sqr(v[ivn][in]);
                     if(abs(s - 1.0) > 1e-11) return;
                 }
@@ -157,7 +157,7 @@ struct threadHandler{
         if(n.z == 1) dim = 2;
         if((n.y == 1)&&(n.z == 1)) dim = 1;
 
-        bool exclProcessed = false; // if true, the cell::endShift is accounted fpr to exclude processed particles
+        bool exclProcessed = false; // if true, the cell::endShift is accounted for to exclude processed particles
 
         int ix = i.x, iy = i.y, iz = i.z;
         int ig;

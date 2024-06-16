@@ -50,7 +50,7 @@ struct cellInterface // main structure for developing extensions; provides acces
     // raw data to be accessed via interfaces (see below):
     int *I; // integer parameters
     double *D; // double parameters
-    double *F_data; // em-field at the coners of the cell
+    double *F_data; // em-field at the corners of the cell
     double *P_data; // data for storing particles at the cell of the type being processed
     double *NP_data; // data for the buffer array of particles to be added
 
@@ -138,7 +138,7 @@ struct field_solver
     //read-only interface for accessing fields in a set of points:
     virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0) = 0;
 
-    //functions neded for cellInterface
+    //functions needed for cellInterface
     inline void setGridType(cellInterface &CI, int gridType){CI.I[12] = gridType;};
     inline double*& getCI_F_Data(cellInterface &CI){return CI.F_data;};
     virtual ~field_solver(){}

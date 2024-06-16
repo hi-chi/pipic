@@ -12,7 +12,7 @@ def Handler(CI_I, CI_D, CI_F, CI_P, CI_NP, data_double, data_int):
     """
     function called for each cell and for each requested type (or cells)
     that can be used to modify states, add or remove particles;
-    'data_double' referes to 'DataDouble' (usage must be thread-safe)
+    'data_double' refers to 'DataDouble' (usage must be thread-safe)
     """
     C = CellInterface(CI_I, CI_D, CI_F, CI_P, CI_NP)  # unpacking data
     r = Double3(0, 0, 0)  # memory allocation (can be expensive in numba)
