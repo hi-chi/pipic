@@ -33,13 +33,13 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
     // changing type requires replacing existing particle with a new particle with altered typeIndex
     for(int ip = 0; ip < CI.particleSubsetSize; ip++)
         if((CI.Particle(ip)->r.x > xMin)&&(CI.Particle(ip)->r.x < xMax))
-            if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
+            if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle
                 *CI.newParticle(CI.particleBufferSize) = *CI.Particle(ip); // copy particle to a new particle (buffer)
                 CI.newParticle(CI.particleBufferSize)->id = typeTo; // put the new particle type in id (convention)
                 CI.Particle(ip)->w = 0; // zero weight indicates that the particle has to be removed
                 CI.particleBufferSize++;
             }
-    
+
 };
 
 // extension initialization

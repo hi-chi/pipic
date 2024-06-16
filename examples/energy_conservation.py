@@ -32,7 +32,7 @@ if fig_label == 'ec2':
 #------------------------------adding electrons---------------------------------
 @cfunc(types.add_particles_callback)
 def density_callback(r, data_double, data_int):# callback function
-    return density # can be any function of coordinate r[0] 
+    return density # can be any function of coordinate r[0]
 sim.add_particles(name='electron', number=nx*100,
                  charge=-consts.electron_charge, mass=consts.electron_mass,
                  temperature=temperature, density=density_callback.address)
@@ -56,7 +56,7 @@ pxLim = 5*np.sqrt(temperature * consts.electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1]/(xmax - xmin))*(xpx_dist.shape[0]/(2*pxLim))
 
 @cfunc(types.particle_loop_callback)
-def xpx_callback(r, p, w, id, data_double, data_int):   
+def xpx_callback(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1]*(r[0] - xmin)/(xmax - xmin))
     iy = int(xpx_dist.shape[0]*0.5*(1 + p[0]/pxLim))
     data = carray(data_double, xpx_dist.shape, dtype=np.double)
@@ -83,7 +83,7 @@ m2c2 = (consts.electron_mass * consts.light_velocity)**2
 kineticEnergy = np.zeros((1, ), dtype=np.double)
 
 @cfunc(types.particle_loop_callback)
-def kineticEn_cb(r, p, w, id, data_double, data_int):   
+def kineticEn_cb(r, p, w, id, data_double, data_int):
     data_double[0] += w[0]*mc2*(np.sqrt(1+(p[0]**2+p[1]**2+p[2]**2)/m2c2)-1)
 
 def getKineticEn(sim):
@@ -120,7 +120,7 @@ for i in range(n_plasma_periods*iterations_period):
     Ek = getKineticEn(sim)
     Ef = getFieldEnergy(sim)
     if i == 0:
-        E0 = Ek+Ef  
+        E0 = Ek+Ef
     timeP = np.append(timeP, i*time_step/plasma_period)
     Efield = np.append(Efield, Ef/E0)
     Etot = np.append(Etot, (Ek+Ef)/E0)

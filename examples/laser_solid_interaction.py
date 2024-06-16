@@ -1,4 +1,4 @@
-#Basic setup for a laser pulse interation with a solid-density plasma layer 
+#Basic setup for a laser pulse interation with a solid-density plasma layer
 #for results see Sec. 8 in arXiv:2302.01893
 import pipic
 from pipic import consts, types
@@ -49,7 +49,7 @@ def field_callback(ind, r, E, B, data_double, data_int):
         # computing longitudinal and transverse coordinates:
         lCoord = np.sin(incidenceAngle) * r[0] - np.cos(incidenceAngle) * r[1] + \
                  + (arrivalDelay - data_int[0]*time_step) * consts.light_velocity
-        tCoord = np.cos(incidenceAngle)*r[0] + np.sin(incidenceAngle)*r[1] 
+        tCoord = np.cos(incidenceAngle)*r[0] + np.sin(incidenceAngle)*r[1]
         tShape = cos2shape(tCoord, 3*wavelength, 2*wavelength)
         # computing both field components of the CP pulse
         f_1 = fieldAmplitude*tShape*pulse(2*np.pi*lCoord/wavelength + 4*np.pi, np.pi)
@@ -87,8 +87,8 @@ temperature = 4 * np.pi * density * (consts.electron_charge ** 2) * debye_length
 particlesPerCell = 100
 
 @cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):# callback function 
-    return density*cos2shape(r[1] + wavelength, wavelength, wavelength) 
+def density_callback(r, data_double, data_int):# callback function
+    return density*cos2shape(r[1] + wavelength, wavelength, wavelength)
 sim.add_particles(name='electron', number=int(nx*ny*0.25*particlesPerCell),
                  charge=-consts.electron_charge, mass=consts.electron_mass,
                  temperature=temperature, density=density_callback.address)
@@ -130,7 +130,7 @@ def plot_field():
 oN = np.zeros((ny, nx), dtype=np.double)
 
 @cfunc(types.particle_loop_callback)
-def density_cb(r, p, w, id, data_double, data_int):   
+def density_cb(r, p, w, id, data_double, data_int):
     ix = int(oN.shape[1]*(r[0] - xmin)/(xmax - xmin))
     iy = int(oN.shape[0]*(r[1] - ymin)/(ymax - ymin))
     data = carray(data_double, oN.shape, dtype=np.double)

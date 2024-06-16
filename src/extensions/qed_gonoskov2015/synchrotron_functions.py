@@ -27,7 +27,7 @@ def plot_synch1():
     for i in range(1000):
         y[i] = qed_gonoskov2015.synch_func_1(x=x[i])
         #y[i] = qed_aeg.synch_func_2(x=x[i])
-    
+
     plt.plot(x, y)
     plt.savefig('synch1.png')
 
