@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------------------------
-This file is an implementaion of an extension 'qed_volokitin2023', which uses Fast_QED module of
+This file is an implementation of an extension 'qed_volokitin2023', which uses Fast_QED module of
 hi-chi/pyHiChi (Dec 2023) and ports it to the interface of pi-PIC.
 
 qed_volokitin2023, Copyright 2024 Joel Magnusson

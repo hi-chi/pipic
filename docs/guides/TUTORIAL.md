@@ -2,7 +2,7 @@
 
 To use $\pi$-PIC, follow one of the installation paths described in the [installation instructions](INSTALLATION.md). Then, write your own Python script describing your simulation setup (you can start from one of the [examples](../../examples)).
 
-After sucessfull installation of $\pi$-PIC you can import the package as:
+After successful installation of $\pi$-PIC you can import the package as:
 ```
 import pipic
 from pipic import consts, types
@@ -23,7 +23,7 @@ nx = 128
 time_step = plasma_period/64
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)
 ```
-Here we instruct the container to use first-order energy-conserving solver and allocate 1D region (one can initiate 2D and 3D geomety by specifying `ny, nz, ymin, ymax, zmin, zmax` in the parameter line).
+Here we instruct the container to use first-order energy-conserving solver and allocate 1D region (one can initiate 2D and 3D geometry by specifying `ny, nz, ymin, ymax, zmin, zmax` in the parameter line).
 > [!NOTE]
 > Note that all physical quantities are in CGS units.
 

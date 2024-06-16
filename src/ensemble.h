@@ -39,7 +39,7 @@ struct cellContainer
 struct loopLayoutStride8x // structure for making a loop with stride 8 along x
 {
     vector<int> offset; // i-th stage is to process cells with offset offset[i] and stride 8
-    vector<int> index; // one-cell extended lookup table to determine wheather a cell has been processed or not: cells with k-th offset are processed at stage index[k+1];
+    vector<int> index; // one-cell extended lookup table to determine whether a cell has been processed or not: cells with k-th offset are processed at stage index[k+1];
     int stage; // to be varied from 0 to 7;
     loopLayoutStride8x():
     offset(8), index(10)
@@ -62,7 +62,7 @@ struct threadData
 {
     unsigned long long int numMigrated, numDeleted, numCreated; // counters
     vector<int> toRemove; // list of indices of particles to be removed from the list being processed;
-    vector<bool> toRemoveLocal; // indicates wheather the particle can be removed immideately or should be relocated after the OMP loop
+    vector<bool> toRemoveLocal; // indicates whether the particle can be removed immediately or should be relocated after the OMP loop
     vector<P_pointer> postOmpMigrationList; // (ig, it, ip), list of particles that were called to be relocated to a cell that can be potentially operated by another thread at the time
     cellInterface* CI; // pointer to cell interface
     vector<particle> NP; // buffer for new particles
@@ -199,7 +199,7 @@ struct ensemble
             totalRealParticles_[omp_get_thread_num()] += Density[box.ig({ix, iy, iz})]*box.step.x*box.step.y*box.step.z;
         }
 
-        double totalRealParticles = 0; // total nuber of real particles
+        double totalRealParticles = 0; // total number of real particles
         for(int i = 0; i < int(totalRealParticles_.size()); i++) totalRealParticles += totalRealParticles_[i];
         double weight = totalRealParticles/totalNumber; // estimated weight to be used for all particles
 
