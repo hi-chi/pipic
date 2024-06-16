@@ -20,8 +20,9 @@ Contact: arkady.gonoskov@gu.se.
 """
 
 import numpy as np
-from numba import types, int32
+from numba import int32, types
 from numba.experimental import jitclass
+
 from pipic.types import Double3
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
@@ -43,7 +44,7 @@ _double_uint64_1 = 4.9406564584124654417657e-324  # double with binary code of u
 
 @jitclass(_struct_cellInterface)
 class CellInterface:
-    def __init__(self, I, D, F, P, NP):
+    def __init__(self, I, D, F, P, NP):  # noqa: E741
         self.I = I
         self.D = D
         self.F = F
@@ -240,17 +241,17 @@ class CellInterface:
     def get_w(self, idx, w):
         """w is particle weight."""
         size = 8 + self.I[7]
-        w = self.P[idx * size + 6]
+        w = self.P[idx * size + 6]  # noqa: F841
 
     def get_id_d(self, idx, id_d):
         """id given as a 'double'"""
         size = 8 + self.I[7]
-        id_d = self.P[idx * size + 7]
+        id_d = self.P[idx * size + 7]  # noqa: F841
 
     def get_a(self, idx, attribute_idx, a):
         """a is particle attribute."""
         size = 8 + self.I[7]
-        a = self.P[idx * size + 7 + attribute_idx]
+        a = self.P[idx * size + 7 + attribute_idx]  # noqa: F841
 
     def set_p(self, idx, p):
         size = 8 + self.I[7]

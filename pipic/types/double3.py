@@ -19,8 +19,8 @@ Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 """
 
-import numpy as np
 import numba as nb
+import numpy as np
 from numba.experimental import jitclass
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'

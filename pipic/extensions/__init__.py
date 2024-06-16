@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from . import _x_converter_c as x_converter_c
-from . import _x_reflector_c as x_reflector_c
+from . import _downsampler_gonoskov2022 as downsampler_gonoskov2022
 from . import _landau_lifshitz as landau_lifshitz
 from . import _qed_gonoskov2015 as qed_gonoskov2015
 from . import _qed_volokitin2023 as qed_volokitin2023
-from . import _downsampler_gonoskov2022 as downsampler_gonoskov2022
+from . import _x_converter_c as x_converter_c
+from . import _x_reflector_c as x_reflector_c
 from . import x_reflector_py
 
 __all__ = [

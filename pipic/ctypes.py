@@ -20,6 +20,7 @@ Contact: arkady.gonoskov@gu.se.
 """
 
 import ctypes
+
 import numpy as np
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
