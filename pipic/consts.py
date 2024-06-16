@@ -19,8 +19,9 @@ Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 """
 
-from . import _pipic
 import numpy as np
+
+from . import _pipic
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
 __all__ = [
