@@ -76,3 +76,4 @@ local_scheme = "dirty-tag"
 [tool.ruff]
 line-length = 100
 src = ["pipic"]
+exclude= ["src", "examples", "tests"]
