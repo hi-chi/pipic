@@ -28,15 +28,15 @@ Contact: arkady.gonoskov@gu.se.
 struct pipic
 {
     int nx, ny, nz;
-    double XMin, XMax, YMin, YMax, ZMin, ZMax; 
+    double XMin, XMax, YMin, YMax, ZMin, ZMax;
     simulationBox box;
     field_solver *Field;
     ensemble *Ensemble;
     pic_solver *Solver;
     bool reportPerformance;
-    pipic(string solverName, int nx, double XMin, double XMax, int ny = 1, double YMin = -0.5, double YMax = 0.5, int nz = 1, double ZMin = -0.5, double ZMax = 0.5): 
-    nx(nx), ny(ny), nz(nz), XMin(XMin), XMax(XMax), YMin(YMin), YMax(YMax), ZMin(ZMin), ZMax(ZMax), 
-    box(int3(nx, ny, nz), double3(XMin, YMin, ZMin), double3(XMax, YMax, ZMax)) 
+    pipic(string solverName, int nx, double XMin, double XMax, int ny = 1, double YMin = -0.5, double YMax = 0.5, int nz = 1, double ZMin = -0.5, double ZMax = 0.5):
+    nx(nx), ny(ny), nz(nz), XMin(XMin), XMax(XMax), YMin(YMin), YMax(YMax), ZMin(ZMin), ZMax(ZMax),
+    box(int3(nx, ny, nz), double3(XMin, YMin, ZMin), double3(XMax, YMax, ZMax))
     {
         Solver = nullptr;
         if(solverName == "fourier_boris") Solver = new fourier_boris_solver(box);
@@ -105,7 +105,7 @@ struct pipic
         int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
         Ensemble->Manager.addCellHandler(name, subject, handler, dataDouble_, dataInt_);
     }
-    int64_t ensembleData(){ 
+    int64_t ensembleData(){
         return int64_t(Ensemble->cell);
     }
 };

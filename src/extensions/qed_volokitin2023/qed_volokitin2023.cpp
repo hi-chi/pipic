@@ -1,15 +1,15 @@
 /*-------------------------------------------------------------------------------------------------------
-This file is an implementaion of an extension 'qed_volokitin2023', which uses Fast_QED module of 
+This file is an implementaion of an extension 'qed_volokitin2023', which uses Fast_QED module of
 hi-chi/pyHiChi (Dec 2023) and ports it to the interface of pi-PIC.
 
 qed_volokitin2023, Copyright 2024 Joel Magnusson
 ---------------------------------------------------------------------------------------------------------
-qed_volokitin2023 is free software: you can redistribute it and/or modify it under the terms of the GNU 
-General Public License as published by the Free Software Foundation, either version 3 of the License, or 
+qed_volokitin2023 is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-qed_volokitin2023 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
-even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+qed_volokitin2023 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with pi-PIC. If not, se
@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description: The extension enables QED event generation using the minimal possible number of rate 
+// Description: The extension enables QED event generation using the minimal possible number of rate
 // computations per QED event [V. Volokitin et al. JCS (2023) https://doi.org/10.1016/j.jocs.2023.102170].
 
 #include "interfaces.h"
@@ -84,7 +84,7 @@ void handleElectronOrPositron(threadHandler &cthread, int ip, const double3 &E, 
         if (H_eff < 0) H_eff = 0;
         H_eff = sqrt(H_eff);
         double chi = gamma * H_eff / pfc::schwingerField;
-        
+
         // Compute rate and subtimestep (dt)
         double rate = 0.0, dt = timeStep; // temporal setting
         if (chi > 0.0) {
@@ -130,7 +130,7 @@ void handlePhoton(threadHandler &cthread, int ip, const double3 &E, const double
         double3 k_ = p/pNorm; // normalized wave vector
         double H_eff = sqrt(sqr(E + cross(k_, B)) - sqr(dot(E, k_)));
         double chi = gamma * H_eff / pfc::schwingerField;
-        
+
         // Compute rate and subtimestep (dt)
         double rate = 0.0, dt = timeStep;
         if (chi > 0.0) {
@@ -143,7 +143,7 @@ void handlePhoton(threadHandler &cthread, int ip, const double3 &E, const double
             time = timeStep;
         } else {
             time += dt; // Move photon by a subtimestep (dt).
-            
+
             // determine new particle energy
             double delta = cthread.pairGenerator(chi);
 
@@ -195,7 +195,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
         if(ip == 0) cthread.rng.seed(CI.rngSeed);
         particle *P = CI.Particle(ip); // Grab a single particle from CellInterface
 
-        double3 E, B; 
+        double3 E, B;
         CI.interpolateField(P->r, E, B); // Compute the field at particle position (E, B are passed by reference)
 
         cthread.container.clear(); // Clear particle container and place there the particle

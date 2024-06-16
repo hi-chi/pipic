@@ -17,7 +17,7 @@ field_amplitude = -0.01*4*math.pi*(xmax - xmin)*electron_charge*density
 nx = 128  # number of cells
 time_step = plasma_period/64
 
-#---------------------setting solver and simulation region---------------------- 
+#---------------------setting solver and simulation region----------------------
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)
 
 #-----------------------adding the handler of extension-------------------------
@@ -49,7 +49,7 @@ pxLim = 5*math.sqrt(temperature*electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1]/(xmax - xmin))*(xpx_dist.shape[0]/(2*pxLim))
 
 @cfunc(particle_loop_callback)
-def xpx_callback(r, p, w, id, data_double, data_int):   
+def xpx_callback(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1]*(r[0] - xmin)/(xmax - xmin))
     iy = int(xpx_dist.shape[0]*0.5*(1 + p[0]/pxLim))
     data = carray(data_double, xpx_dist.shape, dtype=numpy.double)
@@ -103,6 +103,6 @@ for i in range(i_max):
     plot_xpx()
     plot_Ex()
     fig.savefig(outputFolder + '/im' + str(i) + '.png')
-    print(i, '/', i_max) 
+    print(i, '/', i_max)
 print('Total time of simulation and output is', time.time() - time_start, 's.')
 print('For the time taken by components of pi-PIC see pipic_performance.txt.')

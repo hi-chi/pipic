@@ -50,7 +50,7 @@ twine check dist/*
 ```
 
 In order to actually distribute it, here via [TestPyPI](https://test.pypi.org/), you write (using _only_ source):
-> [!CAUTION]  
+> [!CAUTION]
 > Only run the following command if you actually want to distribute the current build.
 ```
 twine upload --repository testpypi dist/*.tar.gz

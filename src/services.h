@@ -134,13 +134,13 @@ unsigned long long int generateID(){ // thread-safe generation of a particle ID
 
 inline void placePeriodic(double &v, double vMin, double vMax){
     if(unlikely(v < vMin)){
-        v += vMax - vMin; 
+        v += vMax - vMin;
         if(unlikely(v < vMin)) v -= (vMax - vMin)*floor(v/(vMax - vMin));
     }
     if(unlikely(v > vMax)){
-        v -= vMax - vMin; 
+        v -= vMax - vMin;
         if(unlikely(v > vMax)) v -= (vMax - vMin)*floor(v/(vMax - vMin));
-    } 
+    }
 };
 
 struct cellHandler
@@ -153,16 +153,16 @@ struct cellHandler
     int *dataInt;
     bool firstRun;
     void(*handler_)(int*, double*, double*, double*, double*, double*, int*);
-    
+
     vector<chronometer> Chronometer_particles, Chronometer_actOnCell;
     vector<unsigned long long int> latest_numberProcessed;
-    double best_partilesTime_ns, best_cellTime_ns, total_partilesTime_s, total_cellTime_s, total_numberProcessed; 
-    
+    double best_partilesTime_ns, best_cellTime_ns, total_partilesTime_s, total_cellTime_s, total_numberProcessed;
+
     cellHandler(string name, string subject, int64_t handler, double* dataDouble, int* dataInt):
     name(name), subject(subject), dataDouble(dataDouble), dataInt(dataInt), firstRun(true),
     Chronometer_particles(omp_get_max_threads()), Chronometer_actOnCell(omp_get_max_threads()),
     latest_numberProcessed(omp_get_max_threads(), 0),
-    best_partilesTime_ns(numeric_limits<double>::max()), best_cellTime_ns(numeric_limits<double>::max()), 
+    best_partilesTime_ns(numeric_limits<double>::max()), best_cellTime_ns(numeric_limits<double>::max()),
     total_partilesTime_s(0), total_cellTime_s(0), total_numberProcessed(0)
     {
         handler_ = (void(*)(int*, double*, double*, double*, double*, double*, int*))handler;
@@ -177,7 +177,7 @@ struct cellHandler
             latest_numberProcessed[omp_get_thread_num()] += CI->particleSubsetSize;
         }
     }
-    void preLoop(vector<string> typeName){        
+    void preLoop(vector<string> typeName){
         actOn.resize(typeName.size());
         for(int i = 0; i < int(actOn.size()); i++) actOn[i] = false;
         actOnCell = false;
@@ -225,7 +225,7 @@ struct cellHandler
             total_cellTime_s += 0.001*time_actOncell_ms;
         }
         if(total_latestProcessed > 0) {
-            best_partilesTime_ns = min(best_partilesTime_ns, (1e+6)*time_particles_ms/double(total_latestProcessed)); 
+            best_partilesTime_ns = min(best_partilesTime_ns, (1e+6)*time_particles_ms/double(total_latestProcessed));
             total_partilesTime_s += 0.001*time_particles_ms;
             total_numberProcessed += total_latestProcessed;
         }
@@ -250,7 +250,7 @@ struct handlerManager
     {}
     void iterationEnd(intg ng){
         for(int ih = 0; ih < int(Handler.size()); ih++) Handler[ih]->postLoop(ng);
-        
+
         best_cellUpdateTime_ns = std::min(best_cellUpdateTime_ns, (1e+9)*latestFieldTime/numberOfCells);
         if(latestParticleUpdates > 0) best_particleUpdateTime_ns = std::min(best_particleUpdateTime_ns, (1e+9)*latestEnsembleTime/latestParticleUpdates);
         totalEnsembleTime += latestEnsembleTime;
@@ -259,7 +259,7 @@ struct handlerManager
         totalCellUpdates += numberOfCells;
         if(reportPerformance){
             string statement = "iteration completed in " + to_string(latestEnsembleTime + latestFieldTime) + " s";
-            if(latestParticleUpdates > 0) statement += + " (particles: " + to_string(int(100*latestEnsembleTime/(latestEnsembleTime + latestFieldTime))) + "\%); " 
+            if(latestParticleUpdates > 0) statement += + " (particles: " + to_string(int(100*latestEnsembleTime/(latestEnsembleTime + latestFieldTime))) + "\%); "
                                                                     + to_string((1e+9)*latestEnsembleTime/latestParticleUpdates) + " ns per particle "
                                                                     + "(av_ppc=" + to_string(latest_av_ppc, 1) + ", av_cmr=" + to_string(latest_av_cmr, 2) + ")";
             statement += "; " + to_string((1e+9)*latestFieldTime/numberOfCells) + " ns per cell.";

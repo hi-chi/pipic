@@ -17,7 +17,7 @@ Because of reduced computational demands, the solvers can be found useful for qu
 ---
 
 # Overview
-$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions (see [extensions][extensions] for a list of extensions included in $\pi$-PIC installation). The project and its development are hosted on [GitHub][]. 
+$\pi$-PIC provides all tools necessary for designing 1D/2D/3D simulations and arbitrary outputs directly from Python. In addition, it has interfaces for incorporating extensions (read/modify field and particles, add/remove particles) that can be developed in Python, C/C++, Fortran or any other language that generate callable functions (see [extensions][extensions] for a list of extensions included in $\pi$-PIC installation). The project and its development are hosted on [GitHub][].
 
 To get started, it should for most cases be sufficient to install $\pi$-PIC via _pip_ (this requires: `gcc`, `openmp` and `fftw3`; for details and information on compilation via CMake see [installation instructions][installation]):
 ```
@@ -31,7 +31,7 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].  
+We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].
 
 # New in $\pi$-PIC v1.1
 - [`extensions`][extensions] for QED-PIC simulations (`qed_volokitin2023`, `qed_gonoskov2015`)

@@ -66,15 +66,15 @@ inline double sqr(double x){
 	return x*x;
 };
 
-struct int3 
-{ 
-    int x, y, z; 
-    int3(int x=0, int y=0, int z=0) : x(x), y(y), z(z) {}; 
+struct int3
+{
+    int x, y, z;
+    int3(int x=0, int y=0, int z=0) : x(x), y(y), z(z) {};
 };
 
 struct double3
-{ 
-    double x, y, z; 
+{
+    double x, y, z;
     double3(double x=0, double y=0, double z=0) : x(x), y(y), z(z) {};
     void normalize(){
         double r = sqrt(sqr(x) + sqr(y) + sqr(z));
@@ -146,7 +146,7 @@ void print(vector<Type> x, string name = "")
     cout << "{";
     if(x.size() > 0) cout << x[0];
     if(x.size() > 1) for(int i = 1; i < x.size(); i++) cout << ", " << x[i];
-    cout << "}";  
+    cout << "}";
 };
 
 string to_string(double x, int precision){

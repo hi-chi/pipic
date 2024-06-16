@@ -18,7 +18,7 @@ ymin, ymax = -L/2, L/2
 stepx, stepy = (xmax - xmin)/nx, (ymax - ymin)/ny
 time_step = plasma_period/64
 
-#---------------------setting solver and simulation region---------------------- 
+#---------------------setting solver and simulation region----------------------
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax, ny=ny, ymin=ymin, ymax=ymax)
 sim.set_rng_seed(1)
 #------------------------------adding electrons---------------------------------
@@ -44,7 +44,7 @@ Ne = numpy.zeros((ny, nx), dtype=numpy.double)
 dxdy = (xmax - xmin)*(ymax - ymin)/(nx*ny)
 
 @cfunc(particle_loop_callback)
-def Ne_cb(r, p, w, id, data_double, data_int):   
+def Ne_cb(r, p, w, id, data_double, data_int):
     data = carray(data_double, Ne.shape, dtype=numpy.double)
     # CIC cell-wise counting (2D):
     ix = int(Ne.shape[1]*(r[0] - 0.5*stepx - xmin)/(xmax - xmin) + 2) - 2
@@ -76,7 +76,7 @@ def plot_initial_density():
                       extent=[xmin, xmax, ymin, ymax], interpolation='none',
                       aspect='auto', cmap='YlOrBr')
     fig.colorbar(plot0, ax=axs[0], location='right')
-    
+
 axs[1].set_title('Density after downsampling')
 axs[1].set(ylabel='$y$ (cm)')
 axs[1].xaxis.set_ticklabels([])
@@ -89,7 +89,7 @@ def plot_density():
     sim.particle_loop(name='electron', handler=Ne_cb.address,
                       data_double=addressof(Ne))
     plot1.set_data(Ne)
-    
+
 #===============================SIMULATION======================================
 outputFolder = 'output_downsampler_gonoskov2022'
 if not os.path.exists(outputFolder):

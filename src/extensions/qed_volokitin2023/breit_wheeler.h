@@ -11,7 +11,7 @@ namespace pfc
     {
     private:
         inline static const uint64_t int_g_pair[] = {
-#include "QED_pair_half.in" 
+#include "QED_pair_half.in"
         };
 
         double* g_pair;
@@ -263,7 +263,7 @@ namespace pfc
                     + (x_target - x1) / (x2 - x1) * g[index_f + 1 + N];
                 FP x0 = z0 * chi;
                 FP coeff = y0 * (pow(x0, (FP)-1.5) * exp(((FP)2.0)/((FP)3.0 * x0)));
-                delta = ((FP)4.0)/((FP)9.0 * chi * 
+                delta = ((FP)4.0)/((FP)9.0 * chi *
                     lambertW(((FP)4.0) / ((FP)9.0) * pow(coeff / r, ((FP)2.0)/((FP)3.0))));
             }
             return delta;

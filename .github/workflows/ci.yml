@@ -55,7 +55,7 @@ jobs:
 
     continue-on-error: >-
       ${{ contains(matrix.python-version, '~') }}
-      
+
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
