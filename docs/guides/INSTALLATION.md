@@ -11,6 +11,8 @@ Furthermore, the following python packages are generally needed for running the 
 - [`numba`](https://numba.pydata.org/)
 - [`numpy`](https://numpy.org/)
 
+
+
 ## PyPI
 $\pi$-PIC is available through PyPI, which is the recommended installation method:
 ```
@@ -20,6 +22,39 @@ If using a non-standard compiler (for example using `gcc` installed through [`ho
 ```
 CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
+
+### macOS
+Installation on macOS depends on which compiler is being used.
+
+#### gcc
+Assuming that `gcc` is installed through homebrew it will be named _e.g._ `gcc-14`. Note that the built-in `gcc` on macOS is in fact an Apple-compiled `clang` (this can be confirmed with the `gcc --version`), which lacks `openmp`.
+
+First, make sure you have `fftw` installed
+```
+brew install fftw
+```
+Then, assuming `gcc-14`, `pipic` can be installed with
+```
+export LDFLAGS="-L$(brew --prefix)/opt/fftw/lib"
+export CPPFLAGS="-I$(brew --prefix)/opt/fftw/include"
+CC=gcc-14 CXX=g++-14 pip install pipic
+```
+
+The export flag statements can be added to `.bashrc`/`.bash_profile` in order to not have to manually specify it in every shell.
+
+#### clang
+`openmp` can be installed for `clang` through homebrew, using `libomp`.
+```
+brew install fftw libomp
+```
+Then, assuming that the default compiler (`gcc`) has not been changed (_i.e._ it still invokes `clang`), `pipic` can be installed with
+```
+export LDFLAGS="-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
+export CPPFLAGS="-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+pip install pipic
+```
+
+
 ## Compiling latest or specific version from GitHub
 
 1. Create a local folder:
@@ -36,6 +71,8 @@ CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 	`python3 -m pip install .`
 6. (optional) Check that it works:
     `python3 examples/basic_example.py`
+
+Note that the install command also here can be prefixed with `CC=<c-compiler> CXX=<c++-compiler>` in order to use a non-default compiler, and that `LDFLAGS`/`CPPFLAGS` may need to be supplied as shown earlier.
 
 <!---
 ## CMake
