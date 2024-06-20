@@ -23,14 +23,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "~3.13.0-0"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc, clang]
         exclude:
           - os: ubuntu-latest
             compiler: clang
-          - os: macos-latest
-            python-version: ~3.13.0-0
         include:
           - os: ubuntu-latest
             INSTALL_DEPS: sudo apt-get install -y libfftw3-dev
@@ -52,9 +50,6 @@ jobs:
             CPPFLAGS: "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
             CC: clang
             CXX: clang++
-
-    continue-on-error: >-
-      ${{ contains(matrix.python-version, '~') }}
 
     steps:
       - name: Checkout project
