@@ -1,5 +1,5 @@
 # Build and test the package with latest Python.
-name: Latest Python test
+name: Test latest Python
 
 on:
   schedule:
