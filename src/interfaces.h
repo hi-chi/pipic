@@ -153,6 +153,7 @@ struct pic_solver
     void preLoop(){};
     void postLoop(){};
     virtual ~pic_solver(){}
+    string name;
 };
 
 void cellInterface::interpolateField(double3 r, double3 &E, double3 &B){

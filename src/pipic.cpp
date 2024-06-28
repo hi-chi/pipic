@@ -70,5 +70,6 @@ PYBIND11_MODULE(_pipic, object) {
         .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
         .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0)
         .def("ensemble_data", &pipic::ensembleData)
+        .def("en_corr_type", &pipic::en_corr_type, py::arg("correction_type") = 2)
     ;
 }

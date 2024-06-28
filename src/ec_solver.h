@@ -30,6 +30,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
     vector<threadData> data; // thread-local
     double invCellVolume;
     vector<fieldSubMap64> subField;
+    int en_corr_type;
 
     ec_solver(simulationBox box): overStepMove(omp_get_max_threads(), 0),
     data(omp_get_max_threads()), subField(omp_get_max_threads())
@@ -39,6 +40,8 @@ struct ec_solver: public pic_solver //energy-conserving solver
         Ensemble = new ensemble(Field->box);
         Ensemble->shuffle = true;
         invCellVolume = 1/(Field->box.step.x*Field->box.step.y*Field->box.step.z);
+        name = "ec";
+        en_corr_type = 2;
     }
     ~ec_solver(){
         delete field;
@@ -116,38 +119,59 @@ struct ec_solver: public pic_solver //energy-conserving solver
         P.p += cross(u1, s);
 
         double3 p = inv_mc*P.p; // dimensionless momentum, like in the paper
+        double3 p_b(p);
         // E-p coupling
         double xi = 0;
         int dim = box.dim;
         for(int i = 0; i < (1 << dim); i++) xi += sqr(c[i]);
         double sqrt_kappa = sqrt(_4piq2_mVg*P.w*inv_gamma*xi);
-        float b = sqrt_kappa*timeStep;
-        double cosb = cos(b);
-        double sinb = sin(b);
+        double b = sqrt_kappa*timeStep;
+        double cosb_1, sinb;
+        if(abs(b) > 1e-5){
+            cosb_1 = cos(b) - 1;
+            sinb = sin(b);
+        } else {
+            cosb_1 = -0.5*sqr(b) + (1/24.0)*sqr(sqr(b));
+            sinb = b - (1/6.0)*b*sqr(b) + (1/120.0)*b*sqr(sqr(b));
+        }
         double3 pt = q_mc*E;
-        double3 pt_ = cosb*pt - sqrt_kappa*sinb*p;
-        p = cosb*p + (1/sqrt_kappa)*sinb*pt;
-        double3 dE = (1/xi)*(mc_q*pt_ - E);
+        double3 pt_diff = cosb_1*pt - sqrt_kappa*sinb*p; // pt_diff = pt_ - pt
+        p = (1 + cosb_1)*p + (1/sqrt_kappa)*sinb*pt;
+        double3 dE = (1/xi)*(mc_q*pt_diff);
+        double eta = 0;
+        if(en_corr_type == 1){ // achieves machine accuracy for energy conservation by multiplying p by a number close to 1; keeps dE unchanged
+            double E2_diff = 0;
+            for(int i = 0; i < (1 << dim); i++)
+                E2_diff += -c[i]*dE.x*(2*map.E_(cil[i]).x + c[i]*dE.x) + 
+                            -c[i]*dE.y*(2*map.E_(cil[i]).y + c[i]*dE.y) + 
+                            -c[i]*dE.z*(2*map.E_(cil[i]).z + c[i]*dE.z);
 
-        double sigma = 1;
-        double E2_b = 0; // \sum E^2 before update
-        for(int i = 0; i < (1 << dim); i++) E2_b += map.E_(cil[i]).norm2();
-        //update field
-        for(int i = 0; i < (1 << dim); i++) map.E_(cil[i]) += c[i]*dE;
-        double E2_a = 0; // \sum E^2 after update
-        for(int i = 0; i < (1 << dim); i++) E2_a += map.E_(cil[i]).norm2();
-        if(P.w*p.norm2() > 0){
-            if(gamma - 1 > 1e-7){ // relativistic case
-                double val = (sqr((E2_b - E2_a)*Vg_8pimc2 + P.w*gamma) - sqr(P.w))/(sqr(P.w)*p.norm2());
-                if(val < 0) val = 0;
-                sigma = sqrt(val);
-            } else { // non-relativistic case (needed due to limitations of numerical arithmetic)
-                double val = (2*(E2_b - E2_a)*Vg_8pimc2 + P.w*p2_)/(P.w*p.norm2());
-                if(val < 0) val = 0;
-                sigma = sqrt(val);
+            if(P.w*p.norm2() > 0){
+                double alpha = E2_diff*Vg_8pimc2;
+                double p__2 = 1/(sqr(P.w)*p.norm2());
+                double h = p__2*(alpha*(alpha + 2*P.w*gamma) + sqr(P.w)*((p_b.x - p.x)*(p_b.x + p.x) + (p_b.y - p.y)*(p_b.y + p.y) + (p_b.z - p.z)*(p_b.z + p.z)));
+                if(h > 1e-7) eta = sqrt(1 + h) - 1; 
+                else eta = (1/2.0)*h - (1/8.0)*h*h + (1/16.0)*h*h*h;
             }
         }
-        P.p = (sigma*mc)*p;
+        if(en_corr_type == 2){ // (default) achieves machine accuracy for energy conservation by multiplying dE by a number close to 1; keeps p unchanged
+            double C = P.w*dot(p - p_b, p_b + p)/(gamma + sqrt(1 + p.norm2()));
+            double alpha = Vg_8pimc2;
+            double b = alpha*2*dot(E, dE);
+            double a = alpha*xi*dE.norm2();
+            double sigma = 1;
+            if(a != 0){
+                double D = b*b - 4*a*C; if(D > 0) D = sqrt(D); else D = 0;
+                double a2_ = 1/(2*a);
+                double sigma1 = (-b + D)*a2_;
+                double sigma2 = (-b - D)*a2_;
+                if(abs(sigma1 - 1) < abs(sigma2 - 1)) sigma = sigma1; else sigma = sigma2;
+            }
+            dE = sigma*dE;
+        }
+        P.p = (1 + eta)*mc*p;
+        for(int i = 0; i < (1 << dim); i++) map.E_(cil[i]) += c[i]*dE;
+
         double3 dr = (-Vg_4piq/P.w)*dE;
         if(field->divergenceCleaning){
             moveCap(dr, 0.999999*box.step);

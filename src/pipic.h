@@ -108,6 +108,19 @@ struct pipic
     int64_t ensembleData(){
         return int64_t(Ensemble->cell);
     }
+    void en_corr_type(int correction_type){
+        if(Solver->name == "ec"){
+            ec_solver *solver = dynamic_cast<ec_solver*>(Solver);
+            solver->en_corr_type = correction_type;
+            return;
+        }
+        if(Solver->name == "ec2"){
+            ec2_solver *solver = dynamic_cast<ec2_solver*>(Solver);
+            solver->en_corr_type = correction_type;
+            return;
+        }
+        cout << "pi-PIC error: en_corr_type() is only applicable to ec and ec2 solvers.";
+    }
 };
 
 #endif

@@ -41,6 +41,7 @@ struct fourier_boris_solver: public pic_solver
         memset((void*)&dtJ[0], 0, sizeof(double3)*intg(n.x)*n.y*n.z); // set cuttent to zero everywhere
         invCellVolume = 1/(Field->box.step.x*Field->box.step.y*Field->box.step.z);
         field->enableDivergenceCleaning();
+        name = "fourier_boris";
     }
     ~fourier_boris_solver(){
         delete Ensemble;
