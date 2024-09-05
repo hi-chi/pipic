@@ -64,7 +64,7 @@ Interfaces and functions of containers
 
 - `set_rng_seed(seed)` provides a way to change the seed used for pseudo-random number generation
 
-- `log_policy(log_to_file=True, log_to_screen=False)` defines how log messages are reported
+- `log_policy(log_to_file = True, log_to_screen = False)` defines how log messages are reported
 
 - `get_type_index(type_name)` returns the integer index of the type with name `type_name`
 
@@ -73,6 +73,13 @@ Interfaces and functions of containers
     - `subject` a string list of particle types to be affected, `cell` indicates that the handler is to be called for all cells (even if empty), `cell` can be used to affect all particles
     - `handler` is the address of the function to act on particles (see [Making extensions](EXTENSIONS.md))
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
+
+- `ensemble_data()` returns a global pointer to data of all particles to be used in extensions if standard way of accessing particles is insufficient (see example of use in [downsampler_gonoskov2022](src/extensions/downsampler_gonoskov2022/downsampler_gonoskov2022.cpp))
+
+- `en_corr_type(correction_type = 2)` can be used to change the way of correcting energy in `ec` and `ec2` solvers; the argument is an integer that enumerates the following options:
+    - `0` no correction: the feedback to energy exchange is still accounted for (energy is preserved to the next order accuracy as compared to `boris` pusher) but the energy is not preserved to machine accuracy; the inaccuracy becomes larger if a particle goes from non-relativistic to relativistic motion (or vice versa) within single time step (5 - 10 % faster than other options);   
+    - `1` achieves machine accuracy for energy conservation by multiplying particle's momentum by a number close to 1, while keeping the precomputed change of electric field unchanged;
+    - `2` (default) achieves machine accuracy for energy conservation by multiplying precomputed change of electric field by a number close to 1, while keeping particle's momentum unchanged.
 
 Conventions, assumptions and properties
 --
