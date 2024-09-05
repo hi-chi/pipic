@@ -2,7 +2,7 @@
 
 To use $\pi$-PIC, follow one of the installation paths described in the [installation instructions](INSTALLATION.md). Then, write your own Python script describing your simulation setup (you can start from one of the [examples](../../examples)).
 
-After sucessfull installation of $\pi$-PIC you can import the package as:
+After successful installation of $\pi$-PIC you can import the package as:
 ```
 import pipic
 from pipic import consts, types
@@ -23,11 +23,11 @@ nx = 128
 time_step = plasma_period/64
 sim = pipic.init(solver='ec', nx=nx, xmin=xmin, xmax=xmax)
 ```
-Here we instruct the container to use first-order energy-conserving solver and allocate 1D region (one can initiate 2D and 3D geomety by specifying `ny, nz, ymin, ymax, zmin, zmax` in the parameter line).
+Here we instruct the container to use first-order energy-conserving solver and allocate 1D region (one can initiate 2D and 3D geometry by specifying `ny, nz, ymin, ymax, zmin, zmax` in the parameter line).
 > [!NOTE]
 > Note that all physical quantities are in CGS units.
 
-To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electron_charge` and mass `electron_mass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in \,$`[L/4, L/4]` at temperature `temperature` (two-thirds of the average kinetic energy). Assuming `xmax=-xmin=L/2` this corresponds to 100 particles per cell (ppc) on average.   
+To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electron_charge` and mass `electron_mass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in \,$`[L/4, L/4]` at temperature `temperature` (two-thirds of the average kinetic energy). Assuming `xmax=-xmin=L/2` this corresponds to 100 particles per cell (ppc) on average.
 ```
 @cfunc(types.add_particles_callback)
 def density_callback(r, data_double, data_int):
@@ -36,7 +36,7 @@ def density_callback(r, data_double, data_int):
 sim.add_particles(name='electron', number=500*nx,
                   charge=-consts.electron_charge, mass=consts.electron_mass,
                   temperature=temperature, density=density_callback.address)
-``` 
+```
 The algorithm can include mathematical functions and most of the programming elements within the functionality of `numba` callbacks (see https://numba.readthedocs.io/en/stable/user/cfunc.html). Note that one can use global variables defined earlier, but their later change within Python routines will not take effect for the function. To communicate data between callback environment and Python environment one can pass address to allocated data blocks of double or integer type, `data_double` and `data_int`, respectively.
 
 To set the initial state of electromagnetic field one defines and pass to container the address to the function that computes the field for a given point of space. Indices `[0]`, `[1]` and `[2]` correspond to $x$, $y$ and $z$, respectively. In the following example, we assign $E_x$ field component in the form of one sinusoidal oscillation with amplitude `field_amplitude` and period `L/2` along $x$ coordinate, other components are set to zero by default:
@@ -49,7 +49,7 @@ sim.field_loop(handler=setField_callback.address)
 ```
 If necessary one can defined field via indices of the grid node (`ind[0]`, `ind[1]` and `ind[2]`). The value of `ind[4]` is allocated to indicate the type of the grid. Currently all grids are of type `0`, which corresponds to collocation of all field components at position $x=$`xmin + ind[0]*(xmax - xmin)/nx`, $y=$`ymin + ind[1]*(ymax - ymin)/ny` and $z=$`zmin + ind[2]*(zmax - zmin)/nz`. The field and distribution of charges unambiguously define (via Poisson's equation) the background distribution of charge that remains fixed throughout the simulation.
 
-Once all the species of particles are added to the container and the field is set, we can define the way we make output, again using callbacks. 
+Once all the species of particles are added to the container and the field is set, we can define the way we make output, again using callbacks.
 
 For example, to get the $x-p_x$ distribution of electrons we allocate two-dimensional `numpy` array to be filled, define callback function that details the contribution of macroparticles to respective cells of this array and pass addresses of both to the container for it to run a loop over the specified type of particles:
 ```

@@ -26,22 +26,22 @@ Contact: arkady.gonoskov@gu.se.
 struct fourierSolver: public field_solver // spectral solver for electromagnetic field evolution with zero current
 {
     fftw_complex *fdata[3];
-    fftw_plan fX, bX, fY, bY, fZ, bZ; // plans for FFT, the first letter standf for forward (f) or backward (b), whereas the second letter indicates the dimension. 
+    fftw_plan fX, bX, fY, bY, fZ, bZ; // plans for FFT, the first letter standf for forward (f) or backward (b), whereas the second letter indicates the dimension.
     double invNg; // inverse total number of cells
-    
+
     bool sin2Filter;
     bool divergenceCleaning;
     fftw_complex *rho;
     complex<double> *rhoBackground;
     bool initBackground;
-    
+
     fourierSolver(simulationBox box, int fftw_flags): field_solver(box),
     invNg(1/double(box.ng)), sin2Filter(false), divergenceCleaning(false), rho(nullptr)
     {
-        type = "fourier";        
+        type = "fourier";
         for(int i = 0; i < 3; i++) fdata[i] = (fftw_complex*)fftw_malloc(sizeof(fftw_complex)*box.ng);
         for(int i = 0; i < 3; i++) memset(fdata[i], 0, sizeof(fftw_complex)*box.ng);
-        
+
         fX = fftw_plan_many_dft(1, &box.n.x, 1, fdata[0], &box.n.x, 1, 1, fdata[0], &box.n.x, 1, 1, FFTW_FORWARD, fftw_flags);
         bX = fftw_plan_many_dft(1, &box.n.x, 1, fdata[0], &box.n.x, 1, 1, fdata[0], &box.n.x, 1, 1, FFTW_BACKWARD, fftw_flags);
         fY = fftw_plan_many_dft(1, &box.n.y, 1, fdata[0], &box.n.y, box.n.x, 1, fdata[0], &box.n.y, box.n.x, 1, FFTW_FORWARD, fftw_flags);
@@ -55,7 +55,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         r3.x += i.x*box.step.x;
         r3.y += i.y*box.step.y;
         r3.z += i.z*box.step.z;
-                
+
         double r[3] = {r3.x, r3.y, r3.z};
         int ind[4] = {i.x, i.y, i.z, 6};
         double E[3], B[3];
@@ -88,7 +88,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         if(unlikely((r.x < box.min.x)||(r.x >= box.max.x)||(r.y < box.min.y)||(r.y >= box.max.y)||(r.z < box.min.z)||(r.z >= box.max.z))){
             pipic_log.message("pi-PIC::fourierSolver::getEB_CIC(r, E, B): r is outside computational region.");
             return;
-        }    
+        }
         int ix = floor((r.x - box.min.x)*box.invStep.x);
         int iy = 0, iz = 0;
         double c[8];
@@ -106,15 +106,15 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
             for(int i = 0; i < 4; i++) c[i] *= wz_;
         }
         intg cig[8];
-        cig[0] = box.ig({ix    , iy, iz}); 
+        cig[0] = box.ig({ix    , iy, iz});
         cig[1] = box.ig({ix + 1, iy, iz});
         if(box.dim > 1){
-            cig[2] = box.ig({ix    , iy + 1, iz}); 
+            cig[2] = box.ig({ix    , iy + 1, iz});
             cig[3] = box.ig({ix + 1, iy + 1, iz});
             if(box.dim > 2){
-                cig[4] = box.ig({ix    , iy    , iz + 1}); 
+                cig[4] = box.ig({ix    , iy    , iz + 1});
                 cig[5] = box.ig({ix + 1, iy    , iz + 1});
-                cig[6] = box.ig({ix    , iy + 1, iz + 1}); 
+                cig[6] = box.ig({ix    , iy + 1, iz + 1});
                 cig[7] = box.ig({ix + 1, iy + 1, iz + 1});
             }
         }
@@ -154,7 +154,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         fftw_destroy_plan(fY);
         fftw_destroy_plan(bY);
         fftw_destroy_plan(fZ);
-        fftw_destroy_plan(bZ);        
+        fftw_destroy_plan(bZ);
         for(int i = 0; i < 3; i++) fftw_free(fdata[i]);
         if(rho != nullptr){
              fftw_free(rho);
@@ -248,7 +248,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
                 }
             }
             for(int id = 0; id < 3; id++) *F[id] = filterFactor*F_plus[id]*invNg; // setting F+ and accounting for the backward FFT factor
-        } else 
+        } else
             for(int id = 0; id < 3; id++) *((complex<double>*)fdata[id] + box.ig({0, 0, 0})) *= invNg; // FFT factor for (kx = 0, ky = 0, kz = 0) element
 
         #pragma omp parallel for collapse(3)
@@ -271,7 +271,7 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
         initBackground = true;
     }
     inline void cellSetField(cellInterface &CI, int3 i){
-        setGridType(CI, 0); // 
+        setGridType(CI, 0); //
         if(getCI_F_Data(CI) == nullptr) getCI_F_Data(CI) = new double[48];
         double* F_data = getCI_F_Data(CI);
         intg cig[8];
@@ -304,13 +304,13 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
 };
 
 struct fieldSubMap64 // structure for a local field buffer (for optimization purposes)
-{ 
+{
     double3 cell0, step, invStep;
     int3 i3;
     int dim;
-    double F_data[384]; // em-field at the coners of the cell and other real-value parameters
+    double F_data[384]; // em-field at the corners of the cell and other real-value parameters
     intg cig[64];
-    fieldSubMap64() {}   
+    fieldSubMap64() {}
     double3& E_(int i){
         return *((double3*)(&F_data[6*i]));
     }
@@ -418,7 +418,7 @@ struct fieldSubMap64 // structure for a local field buffer (for optimization pur
             field.Bz(cig[j]) = B(sx, sy, sz).z;
         }
     }
-    void CIC(double3 r, double3 &E, double3 &B); // CIC weighting of E and B field to point r 
+    void CIC(double3 r, double3 &E, double3 &B); // CIC weighting of E and B field to point r
     void CIC_c(double3 r, double *c, int *cil); // computation of coupling weights for grid nodes of the cell
     void CIC(double *c, int *cil, double3 &E, double3 &B); // CIC weighting of E and B field for a given set of coupling weights
 };

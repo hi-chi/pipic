@@ -2,12 +2,12 @@
 This file is an implementation of an extension qed_gonoskov2015, which is compartible with pi-PIC.
 qed_gonoskov2015, Copyright 2024 Arkady Gonoskov
 ---------------------------------------------------------------------------------------------------------
-qed_gonoskov2015 is free software: you can redistribute it and/or modify it under the terms of the GNU 
-General Public License as published by the Free Software Foundation, either version 3 of the License, or 
+qed_gonoskov2015 is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-qed_gonoskov2015 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
-even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+qed_gonoskov2015 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with qed_gonoskov2015. If not, se
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with qed
 Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description: a simple implementation of QED event generation based on rejection sampling and 
+// Description: a simple implementation of QED event generation based on rejection sampling and
 // subcycling [A. Gonoskov et al. PRE (2015), arXiv:1412.6426]
 
 #include "interfaces.h"
@@ -26,13 +26,13 @@ static int electronType;
 static int positronType;
 static int photonType;
 static double probabilityThreshold; // threshold below which events are rerified getting correspondingly increased weight factor
-static double probabilitySubcycle; // maximal estimated probability for a QED event within a single time substep 
+static double probabilitySubcycle; // maximal estimated probability for a QED event within a single time substep
 
 //implementation of approximations for the first and second synchrotron functions following [Fouka and Ouichaoui, arXiv:1301.6908]
 const double F1 = 2.149528241534479;
 const double F2 = 1.2533141373155001;
 const double G1 = 1.0747641207672396;
-const double G2 = 1.2533141373155001; 
+const double G2 = 1.2533141373155001;
 float K_2_3(float x){ // relative error < 0.0054
     float x13 = pow(x, 1/3.0), sqrtx = sqrt(x);
     float H1 = -1.3746667760953621*x + 0.44040512552162292*sqrtx - 0.15527012012316799*x13;
@@ -45,7 +45,7 @@ float synchFunc2(float x){
 float synchFunc1(float x){ // relative error < 0.0026
     float x13 = pow(x, 1/3.0), sqrtx = sqrt(x);
     float H1 = -0.97947838884478688*x - 0.83333239129525072*sqrtx + 0.15541796026816246*x13;
-    float H2 = -0.0469247165562628882*x - 0.70055018056462881*sqrtx + 0.0103876297841949544*x13;  
+    float H2 = -0.0469247165562628882*x - 0.70055018056462881*sqrtx + 0.0103876297841949544*x13;
     return F1*x13*exp(H1) + F2*exp(-x)*sqrtx*(1 - exp(H2));
 }
 
@@ -107,7 +107,7 @@ inline double Photon_MGenerator(double Factor, double chi, double gamma, double 
 }
 
 void addParticle(cellInterface &CI, particle &P){
-    if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
+    if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle
         *CI.newParticle(CI.particleBufferSize) = P; // copy particle to a new particle (buffer)
         CI.particleBufferSize++;
     }
@@ -171,7 +171,7 @@ struct threadHandler{
         double estimatedProbability = CI.timeStep*E_E_cr/(130*const1);
         if(estimatedProbability < probabilityThreshold){
             //handle single event
-            if(random() > estimatedProbability/probabilityThreshold) return; 
+            if(random() > estimatedProbability/probabilityThreshold) return;
             else {
                 double factor = probabilityThreshold/estimatedProbability;
                 double gamma = p_norm/(electronMass*lightVelocity);
@@ -200,14 +200,14 @@ struct threadHandler{
         double3 v = (1/(electronMass*gamma))*CI.Particle(ip)->p;
         double3 E, B;
         CI.interpolateField(CI.Particle(ip)->r, E, B);
-        double H_eff = sqr(E + (1/lightVelocity)*cross(v, B)) - (1/lightVelocity)*sqr(dot(E, v));
+        double H_eff = sqr(E + (1/lightVelocity)*cross(v, B)) - (1/sqr(lightVelocity))*sqr(dot(E, v));
         if(H_eff < 0) H_eff = 0;
         H_eff = sqrt(H_eff);
         double E_E_cr = H_eff/schwingerField;
         double estimatedProbability = CI.timeStep/(14*const1*pow(E_E_cr, -2/3.0));
         if(estimatedProbability < probabilityThreshold){
             //handle single event
-            if(random() > estimatedProbability/probabilityThreshold) return; 
+            if(random() > estimatedProbability/probabilityThreshold) return;
             else {
                 double factor = probabilityThreshold/estimatedProbability;
                 double chi = gamma*E_E_cr;
@@ -239,7 +239,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 // extension initialization
-int64_t handler(int electronType_, int positronType_, int photonType_, 
+int64_t handler(int electronType_, int positronType_, int photonType_,
                 double probabilityThreshold_, double probabilitySubcycle_){
     electronType = electronType_;
     positronType = positronType_;

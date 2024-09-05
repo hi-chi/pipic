@@ -47,7 +47,7 @@ PYBIND11_MODULE(_pipic, object) {
     object.attr("proton_mass") = protonMass;
 
     py::class_<pipic>(object, "init")
-        .def(py::init<string, int, double, double, int, double, double, int, double, double>(), 
+        .def(py::init<string, int, double, double, int, double, double, int, double, double>(),
         py::arg("solver"), py::arg("nx"), py::arg("xmin"), py::arg("xmax"), py::arg("ny")=1, py::arg("ymin")=-0.5, py::arg("ymax")=0.5, py::arg("nz")=1, py::arg("zmin")=-0.5, py::arg("zmax")=0.5)
         .def_readonly("nx", &pipic::nx)
         .def_readonly("xmin", &pipic::XMin)
@@ -70,5 +70,6 @@ PYBIND11_MODULE(_pipic, object) {
         .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
         .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0)
         .def("ensemble_data", &pipic::ensembleData)
+        .def("en_corr_type", &pipic::en_corr_type, py::arg("correction_type") = 2)
     ;
 }

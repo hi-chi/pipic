@@ -20,22 +20,23 @@ Contact: arkady.gonoskov@gu.se.
 """
 
 import numpy as np
-from numba import types, int32
+from numba import int32, types
 from numba.experimental import jitclass
+
 from pipic.types import Double3
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
-__all__ = ['CellInterface']
+__all__ = ["CellInterface"]
 
 
 _struct_cellInterface = [
-    ('I', types.CPointer(types.int32)),
-    ('D', types.CPointer(types.double)),
-    ('F', types.CPointer(types.double)),
-    ('P', types.CPointer(types.double)),
-    ('NP', types.CPointer(types.double)),
-    ('c_', types.double[:]),
-    ('c_init', int32),
+    ("I", types.CPointer(types.int32)),
+    ("D", types.CPointer(types.double)),
+    ("F", types.CPointer(types.double)),
+    ("P", types.CPointer(types.double)),
+    ("NP", types.CPointer(types.double)),
+    ("c_", types.double[:]),
+    ("c_init", int32),
 ]
 
 _double_uint64_1 = 4.9406564584124654417657e-324  # double with binary code of uint64(1), workaround for particle type setting
@@ -43,7 +44,7 @@ _double_uint64_1 = 4.9406564584124654417657e-324  # double with binary code of u
 
 @jitclass(_struct_cellInterface)
 class CellInterface:
-    def __init__(self, I, D, F, P, NP):
+    def __init__(self, I, D, F, P, NP):  # noqa: E741
         self.I = I
         self.D = D
         self.F = F
@@ -52,134 +53,176 @@ class CellInterface:
         self.c_init = 0
 
     @property
-    def ix(self):  # x-index of the cell being processed
+    def ix(self):
+        """x-index of the cell being processed"""
         return self.I[0]
 
     @property
-    def iy(self):  # y-index of the cell being processed
+    def iy(self):
+        """y-index of the cell being processed"""
         return self.I[1]
 
     @property
-    def iz(self):  # z-index of the cell being processed
+    def iz(self):
+        """z-index of the cell being processed"""
         return self.I[2]
 
     @property
-    def nx(self):  # x-size of the grid
+    def nx(self):
+        """x-size of the grid"""
         return self.I[3]
 
     @property
-    def ny(self):  # y-size of the grid
+    def ny(self):
+        """y-size of the grid"""
         return self.I[4]
 
     @property
-    def nz(self):  # z-size of the grid
+    def nz(self):
+        """z-size of the grid"""
         return self.I[5]
 
     @property
-    def dim(self):  # dimensionality of the simulation at hand
+    def dim(self):
+        """dimensionality of the simulation at hand"""
         return self.I[6]
 
     @property
-    def number_of_attributes(self):  # number of additional attributes of particles
+    def number_of_attributes(
+        self,
+    ):
+        """number of additional attributes of particles"""
         return self.I[7]
 
     @property
-    def particle_type_index(self):  # type index of the particles being processed, can be fetched via getTypeIndex(typeName)
+    def particle_type_index(
+        self,
+    ):
+        """type index of the particles being processed, can be fetched via getTypeIndex(typeName)"""
         return self.I[8]
 
     @property
-    def particle_subset_size(self):  # size of the subset of particles to be processed
+    def particle_subset_size(
+        self,
+    ):
+        """size of the subset of particles to be processed"""
         return self.I[9]
 
     @property
     def particle_buffer_capacity(self):
-        return self.I[10]  # capacity of the buffer for new particles, cannot be exceeded
+        """capacity of the buffer for new particles, cannot be exceeded"""
+        return self.I[10]
 
     @property
     def particle_buffer_size(self):
-        return self.I[11]  #
+        return self.I[11]
 
     @property
     def grid_type(self):
-        return self.I[12]  #
+        return self.I[12]
 
     @property
     def thread_num(self):
-        return self.I[13]  # number of current thread
+        """number of current thread"""
+        return self.I[13]
 
     @property
     def rng_seed(self):
-        return self.I[14]  # random integer (from -2147483648 to 2147483647, generated for each cell/iteration) to be used as a seed for keeping deterministism
+        """random integer (from -2147483648 to 2147483647, generated for each cell/iteration) to be used as a seed for keeping deterministism"""
+        return self.I[14]
 
     @property
-    def global_xmin(self):  # x-minimum of the entire simulation region
+    def global_xmin(self):
+        """x-minimum of the entire simulation region"""
         return self.D[0]
 
     @property
-    def global_ymin(self):  # y-minimum of the entire simulation region
+    def global_ymin(self):
+        """y-minimum of the entire simulation region"""
         return self.D[1]
 
     @property
-    def global_zmin(self):  # z-minimum of the entire simulation region
+    def global_zmin(self):
+        """z-minimum of the entire simulation region"""
         return self.D[2]
 
     @property
-    def global_xmax(self):  # x-maximum of the entire simulation region
+    def global_xmax(self):
+        """x-maximum of the entire simulation region"""
         return self.D[3]
 
     @property
-    def global_ymax(self):  # y-maximum of the entire simulation region
+    def global_ymax(self):
+        """y-maximum of the entire simulation region"""
         return self.D[4]
 
     @property
-    def global_zmax(self):  # z-maximum of the entire simulation region
+    def global_zmax(self):
+        """z-maximum of the entire simulation region"""
         return self.D[5]
 
     @property
-    def step_x(self):  # x-step of the grid
+    def step_x(self):
+        """x-step of the grid"""
         return self.D[6]
 
     @property
-    def step_y(self):  # y-step of the grid
+    def step_y(self):
+        """y-step of the grid"""
         return self.D[7]
 
     @property
-    def step_z(self):  # z-step of the grid
+    def step_z(self):
+        """z-step of the grid"""
         return self.D[8]
 
     @property
-    def inv_step_x(self):  # inverse step along x
+    def inv_step_x(self):
+        """inverse step along x"""
         return self.D[9]
 
     @property
-    def inv_step_y(self):  # inverse step along y
+    def inv_step_y(self):
+        """inverse step along y"""
         return self.D[10]
 
     @property
-    def inv_step_z(self):  # inverse step along z
+    def inv_step_z(self):
+        """inverse step along z"""
         return self.D[11]
 
     @property
-    def time_step(self):  # time step
+    def time_step(self):
+        """time step"""
         return self.D[12]
 
     @property
-    def particle_charge(self):  # charge of particles being processed
+    def particle_charge(self):
+        """charge of particles being processed"""
         return self.D[13]
 
     @property
-    def particle_mass(self):  # mass of particles being processed
+    def particle_mass(self):
+        """mass of particles being processed"""
         return self.D[14]
 
     @property
-    def cell_min(self):  # minimum of the cell being processed
-        return Double3(self.D[0] + self.I[0] * self.D[6], self.D[1] + self.I[1] * self.D[7],
-                       self.D[2] + self.I[2] * self.D[8])
+    def cell_min(self):
+        """minimum of the cell being processed"""
+        return Double3(
+            self.D[0] + self.I[0] * self.D[6],
+            self.D[1] + self.I[1] * self.D[7],
+            self.D[2] + self.I[2] * self.D[8],
+        )
 
     @property
-    def cell_max(self):  # minimum of the cell being processed
-        return Double3(self.D[0] + (self.I[0] + 1) * self.D[6], self.D[1] + (self.I[1] + 1) * self.D[7],
-                       self.D[2] + (self.I[2] + 1) * self.D[8])
+    def cell_max(self):
+        """minimum of the cell being processed"""
+        return Double3(
+            self.D[0] + (self.I[0] + 1) * self.D[6],
+            self.D[1] + (self.I[1] + 1) * self.D[7],
+            self.D[2] + (self.I[2] + 1) * self.D[8],
+        )
 
     def get_r(self, idx, r):
         """r is 3d position coordinate."""
@@ -198,16 +241,17 @@ class CellInterface:
     def get_w(self, idx, w):
         """w is particle weight."""
         size = 8 + self.I[7]
-        w = self.P[idx * size + 6]
+        w = self.P[idx * size + 6]  # noqa: F841
 
-    def get_id_d(self, idx, id_d):  # id given as a 'double'
+    def get_id_d(self, idx, id_d):
+        """id given as a 'double'"""
         size = 8 + self.I[7]
-        id_d = self.P[idx * size + 7]
+        id_d = self.P[idx * size + 7]  # noqa: F841
 
     def get_a(self, idx, attribute_idx, a):
         """a is particle attribute."""
         size = 8 + self.I[7]
-        a = self.P[idx * size + 7 + attribute_idx]
+        a = self.P[idx * size + 7 + attribute_idx]  # noqa: F841
 
     def set_p(self, idx, p):
         size = 8 + self.I[7]
@@ -223,7 +267,8 @@ class CellInterface:
         size = 8 + self.I[7]
         self.P[idx * size + 7 + attribute_idx] = a
 
-    def add_particle(self, r, p, w, type_index):  # additional attributes (if any) myst be set by particle_buffer_set_a()
+    def add_particle(self, r, p, w, type_index):
+        """additional attributes (if any) myst be set by particle_buffer_set_a()"""
         if self.I[11] < self.I[10]:
             self.I[11] += 1
             ip = self.I[11] - 1

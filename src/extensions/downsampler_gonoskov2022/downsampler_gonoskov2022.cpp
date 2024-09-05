@@ -16,11 +16,11 @@ Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 // Description: An implementation of agnostic conservative downsampling based on the method described in
-// [A. Gonoskov, Comput. Phys. Commun. 271 (2022)]. The extension considers each subset of particles 
-// that all give CIC contributions to a set of 2/4/8 nearby nodes, depending on dimensionality. 
+// [A. Gonoskov, Comput. Phys. Commun. 271 (2022)]. The extension considers each subset of particles
+// that all give CIC contributions to a set of 2/4/8 nearby nodes, depending on dimensionality.
 // The implementation is configured to always preserve total weight of particles in each subset.
 // In addition, the energy, momentum and CIC contributions are preserved (can be switched off).
-// The extension can act on several types of particles; this is to be configured with add_assignment().  
+// The extension can act on several types of particles; this is to be configured with add_assignment().
 
 #include "interfaces.h"
 #include <pybind11/pybind11.h>
@@ -29,7 +29,7 @@ Contact: arkady.gonoskov@gu.se.
 
 const string name = "downsampler_gonoskov2022";
 
-//Warning: the implementation of this extension expoits accessing raw data from nearby cells,
+//Warning: the implementation of this extension exploits accessing raw data from nearby cells,
 // which is not provided by the cellInterface at the moment of development.
 
 struct cellContainer
@@ -42,7 +42,7 @@ static cellContainer ***cell;
 
 struct Spec{ // scpecification of downsampling parameters for each type of interest
     int typeIndex;
-    bool preserverEnergy, preserveMomentum, preserveCICWeight; 
+    bool preserverEnergy, preserveMomentum, preserveCICWeight;
     int cap;
     double targetRatio;
     int numOfConstraints(int dim){
@@ -74,7 +74,7 @@ struct threadHandler{
 	if(n > int(PP.size())) return;
         for(int in = 0; in < n; in++){
             for(int jn = 0; jn < n; jn++) v[in][jn] = 0;
-            v[in][in] = 1; 
+            v[in][in] = 1;
         }
         int vnum = n;
         for(int im = 0; im < m; im++){
@@ -91,13 +91,13 @@ struct threadHandler{
                     s = sqrt(s);
                     for(int in = 0; in < n; in++) v[ivn][in] /= s;
 
-                    //a check on limitations of numerical arithmetics:
+                    //a check on limitations of numerical arithmetic:
                     s = 0; for(int in = 0; in < n; in++) s += sqr(v[ivn][in]);
                     if(abs(s - 1.0) > 1e-11) return;
                 }
             }
             vnum--;
-        }        
+        }
         double ap = 0, an = 0; //positive and negrative values of a that are closest to 0;
 		int iap = 0, ian = 0; // the corresponding indices;
 		bool fn = false, fp = false; // found negative, found positive
@@ -142,7 +142,7 @@ struct threadHandler{
                 if((in == iap)||(PP[in]->P->w < w_max*threshold)) PP[in]->P->w = 0;
             }
 		}
-        
+
         for(int ip = int(PP.size()) - 1; ip >= 0; ip--)
         if(PP[ip]->P->w == 0){
             PP[ip] = PP[PP.size() - 1];
@@ -152,13 +152,13 @@ struct threadHandler{
     void addParticles(int is, int3 i, int3 n, double3 min, double3 step){
         PR.clear();
         int it = spec[is].typeIndex;
-        
-        dim = 3;
-        if(n.z == 1) dim = 2; 
-        if((n.y == 1)&&(n.z == 1)) dim = 1; 
 
-        bool exclProcessed = false; // if true, the cell::endShift is accounted fpr to exclude processed particles
-        
+        dim = 3;
+        if(n.z == 1) dim = 2;
+        if((n.y == 1)&&(n.z == 1)) dim = 1;
+
+        bool exclProcessed = false; // if true, the cell::endShift is accounted for to exclude processed particles
+
         int ix = i.x, iy = i.y, iz = i.z;
         int ig;
         ig = ix + (iy + iz*n.y)*n.x;
@@ -318,7 +318,7 @@ struct threadHandler{
     }
     int hypoteticalMax(cellInterface &C, int it){ // computes the sum of P.size() of involved cells
         int hMax = 0, ig, ix = C.i.x, iy = C.i.y, iz = C.i.z;
-        ig = ix + (iy + iz*C.n.y)*C.n.x; 
+        ig = ix + (iy + iz*C.n.y)*C.n.x;
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
         ix++; if(ix == C.n.x) ix = 0; ig = ix + (iy + iz*C.n.y)*C.n.x;
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
@@ -328,7 +328,7 @@ struct threadHandler{
         ix--; if(ix == -1) ix = C.n.x - 1; ig = ix + (iy + iz*C.n.y)*C.n.x;
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
         if(C.dim == 2) return hMax;
-        iz++; if(iz == C.n.z) iz = 0; ig = ix + (iy + iz*C.n.y)*C.n.x; 
+        iz++; if(iz == C.n.z) iz = 0; ig = ix + (iy + iz*C.n.y)*C.n.x;
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
         ix++; if(ix == C.n.x) ix = 0; ig = ix + (iy + iz*C.n.y)*C.n.x;
         if(cell[ig] != nullptr) if(cell[ig][it] != nullptr) hMax += cell[ig][it]->P.size();
@@ -366,10 +366,10 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int typeIndex, bool preserveEnergy = true, 
-                bool preserveMomentum = true, bool preserveCICWeight = true, 
+int64_t handler(int64_t ensembleData, int typeIndex, bool preserveEnergy = true,
+                bool preserveMomentum = true, bool preserveCICWeight = true,
                 int cap = 15, double targetRatio = 1.0){
-    double _targetRatio = targetRatio; 
+    double _targetRatio = targetRatio;
     if(_targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl; _targetRatio = 1.0;}
     spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, _targetRatio});
     Thread.resize(omp_get_max_threads());
@@ -377,10 +377,10 @@ int64_t handler(int64_t ensembleData, int typeIndex, bool preserveEnergy = true,
     return (int64_t)Handler;
 };
 
-void addAssignment(int typeIndex, bool preserveEnergy = true, 
-                    bool preserveMomentum = true, bool preserveCICWeight = true, 
+void addAssignment(int typeIndex, bool preserveEnergy = true,
+                    bool preserveMomentum = true, bool preserveCICWeight = true,
                     int cap = 15, double targetRatio = 1.0){
-    double _targetRatio = targetRatio; 
+    double _targetRatio = targetRatio;
     if(_targetRatio > 1.0){cout << name << ": Warning: target_ratio must be <= 1; setting to 1.0." << endl; _targetRatio = 1.0;}
     spec.push_back({typeIndex, preserveEnergy, preserveMomentum, preserveCICWeight, cap, _targetRatio});
 };
@@ -389,9 +389,9 @@ namespace py = pybind11;
 PYBIND11_MODULE(_downsampler_gonoskov2022, object) {
     object.attr("name") = name;
     object.def("handler", &handler, py::arg("ensemble_data"), py::arg("type_index"), py::arg("preserve_energy") = true,
-               py::arg("preserve_momentum") = true, py::arg("preserve_cic_weight") = true, 
+               py::arg("preserve_momentum") = true, py::arg("preserve_cic_weight") = true,
                py::arg("cap") = 15, py::arg("target_ratio") = 1.0);
     object.def("add_assignment", &addAssignment, py::arg("type_index"), py::arg("preserve_energy") = true,
-               py::arg("preserve_momentum") = true, py::arg("preserve_cic_weight") = true, 
+               py::arg("preserve_momentum") = true, py::arg("preserve_cic_weight") = true,
                py::arg("cap") = 15, py::arg("target_ratio") = 1.0);
 }

@@ -42,7 +42,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
         double3 v = P->p / (gamma*m);
         double c_inv = 1/c;
 
-        double3 dp = dt * (2.0 / 3.0) * sqr(sqr(q) / (m * sqr(c))) * 
+        double3 dp = dt * (2.0 / 3.0) * sqr(sqr(q) / (m * sqr(c))) *
             (cross(E, B) + c_inv * (cross(B, cross(B, v)) + dot(v, E) * E) -
                 c_inv * sqr(gamma) * (sqr(E + c_inv * cross(v, B)) - sqr(dot(E, v) * c_inv)) * v);
 

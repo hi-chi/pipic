@@ -20,15 +20,15 @@ Contact: arkady.gonoskov@gu.se.
 """
 
 import ctypes
+
 import numpy as np
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
-__all__ = ['addressof']
+__all__ = ["addressof"]
+
 
 def addressof(data):
     if data.dtype == np.double:
         return ctypes.addressof(data.ctypes.data_as(ctypes.POINTER(ctypes.c_double)).contents)
     if data.dtype == np.intc:
         return ctypes.addressof(data.ctypes.data_as(ctypes.POINTER(ctypes.c_int)).contents)
-
-
