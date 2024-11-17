@@ -90,7 +90,8 @@ extend-select = [
 
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
-skip = "pp*"
+# skip = "pp*"
+build = "*-musllinux*"
 
 # Install system library
 [tool.cibuildwheel.linux]
@@ -98,4 +99,4 @@ before-all = "yum install -y fftw3-devel"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
-before-all = "apt-get install -y libfftw3-dev"
+before-all = "apt install -y libfftw3-dev"
