@@ -77,7 +77,7 @@ Interfaces and functions of containers
 - `ensemble_data()` returns a global pointer to data of all particles to be used in extensions if standard way of accessing particles is insufficient (see example of use in [downsampler_gonoskov2022](src/extensions/downsampler_gonoskov2022/downsampler_gonoskov2022.cpp))
 
 - `en_corr_type(correction_type = 2)` can be used to change the way of correcting energy in `ec` and `ec2` solvers; the argument is an integer that enumerates the following options:
-    - `0` no correction: the feedback to energy exchange is still accounted for (energy is preserved to the next order accuracy as compared to `boris` pusher) but the energy is not preserved to machine accuracy; the inaccuracy becomes larger if a particle goes from non-relativistic to relativistic motion (or vice versa) within single time step (5 - 10 % faster than other options);   
+    - `0` no correction: the feedback to energy exchange is still accounted for (energy is preserved to the next order accuracy as compared to `boris` pusher) but the energy is not preserved to machine accuracy; the inaccuracy becomes larger if a particle goes from non-relativistic to relativistic motion (or vice versa) within single time step (5 - 10 % faster than other options);
     - `1` achieves machine accuracy for energy conservation by multiplying particle's momentum by a number close to 1, while keeping the precomputed change of electric field unchanged;
     - `2` (default) achieves machine accuracy for energy conservation by multiplying precomputed change of electric field by a number close to 1, while keeping particle's momentum unchanged.
 

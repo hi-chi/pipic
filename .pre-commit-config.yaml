@@ -38,7 +38,7 @@ repos:
     rev: "v2.3.0"
     hooks:
       - id: codespell
-        args: ["--ignore-words-list", "Commun,CCompiler"]
+        args: ["--skip", "*.ipynb", "--ignore-words-list", "Commun,CCompiler"]
 
   # shellcheck - shell script checker
   - repo: https://github.com/shellcheck-py/shellcheck-py

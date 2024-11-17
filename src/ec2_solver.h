@@ -31,7 +31,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
     double invCellVolume;
     vector<fieldSubMap64> subField;
     int en_corr_type;
-    
+
     ec2_solver(simulationBox box): overStepMove(omp_get_max_threads(), 0),
     data(omp_get_max_threads()), subField(omp_get_max_threads())
     {
@@ -145,20 +145,20 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         double3 pt_diff = cosb_1*pt - sqrt_kappa*sinb*p; // pt_diff = pt_ - pt
         p = (1 + cosb_1)*p + (1/sqrt_kappa)*sinb*pt;
         double3 dE = (1/xi)*(mc_q*pt_diff);
-        
+
         double eta = 0;
         if(en_corr_type == 1){ // achieves machine accuracy for energy conservation by multiplying p by a number close to 1; keeps dE unchanged
             double E2_diff = 0;
             for(int i = 0; i < (1 << dim); i++)
-                E2_diff += -c[i]*dE.x*(2*map.E_(cil[i]).x + c[i]*dE.x) + 
-                            -c[i]*dE.y*(2*map.E_(cil[i]).y + c[i]*dE.y) + 
+                E2_diff += -c[i]*dE.x*(2*map.E_(cil[i]).x + c[i]*dE.x) +
+                            -c[i]*dE.y*(2*map.E_(cil[i]).y + c[i]*dE.y) +
                             -c[i]*dE.z*(2*map.E_(cil[i]).z + c[i]*dE.z);
 
             if(P.w*p.norm2() > 0){
                 double alpha = E2_diff*Vg_8pimc2;
                 double p__2 = 1/(sqr(P.w)*p.norm2());
                 double h = p__2*(alpha*(alpha + 2*P.w*gamma) + sqr(P.w)*((p_b.x - p.x)*(p_b.x + p.x) + (p_b.y - p.y)*(p_b.y + p.y) + (p_b.z - p.z)*(p_b.z + p.z)));
-                if(h > 1e-7) eta = sqrt(1 + h) - 1; 
+                if(h > 1e-7) eta = sqrt(1 + h) - 1;
                 else eta = (1/2.0)*h - (1/8.0)*h*h + (1/16.0)*h*h*h;
             }
         }
@@ -179,7 +179,7 @@ struct ec2_solver: public pic_solver //energy-conserving solver
         }
         P.p = ((1 + eta)*mc)*p;
         for(int i = 0; i < (1 << dim); i++) map.E_(cil[i]) += c[i]*dE;
-        
+
         double3 dr = (-Vg_4piq/P.w)*dE;
         moveCap(dr, 0.4999999*box.step);
         P.r += dr;
