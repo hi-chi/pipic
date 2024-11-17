@@ -26,6 +26,12 @@ jobs:
         with:
           fetch-depth: 0  # This is needed in order to fetch version tags from git
 
+      - name: Set MACOSX_DEPLOYMENT_TARGET to the current macOS version
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | awk -F '.' '{print $1"."0}')
+          echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
         # env:
