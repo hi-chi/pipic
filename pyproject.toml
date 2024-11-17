@@ -89,8 +89,8 @@ extend-select = [
 "pipic/tools.py" = ["F403"]
 
 # Install system library
-[tool.cibuildwheel.linux]
-before-all = "yum install -y fftw3-devel"
+[tool.cibuildwheel]
+linux.before-all = "yum install -y fftw3-devel"
 
 # Disable building PyPy wheels on all platforms
 skip = "pp*"
