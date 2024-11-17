@@ -99,4 +99,4 @@ before-all = "yum install -y fftw3-devel"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-musllinux*"
-before-all = "apt install -y libfftw3-dev"
+before-all = "apk add fftw-dev"
