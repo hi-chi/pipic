@@ -42,7 +42,7 @@ Here we list extensions with short descriptions, references and contacts of deve
         # par[0] = dist - abs(r), longitudinal coordinate relative to dist (\in [-l_size/2, l_size/2])
         # par[1] is the angle between r and -path, theta angle in polar coordinates (\in [0, pi))
         # par[2] is the angle between e_axis and r in the plane perpendicular to path (\in [0, 2*pi))
-        # par[3] is the angle between r and e_axis (\in [0, pi)) 
+        # par[3] is the angle between r and e_axis (\in [0, pi))
       return "any function of par"
       ```
       The use of the extension is examplified with the case of setting electric dipole wave in 'examples/focused_pulse_test.py'.

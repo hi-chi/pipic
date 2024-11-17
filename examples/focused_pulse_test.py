@@ -18,7 +18,7 @@ sim = pipic.init(solver='ec',
 
 #====== setting the field of a focused pulse ========
 from pipic.extensions import focused_pulse
-focused_pulse.set_box(nx=sim.nx, ny=sim.ny, nz=sim.nz, 
+focused_pulse.set_box(nx=sim.nx, ny=sim.ny, nz=sim.nz,
                       xmin=sim.xmin, ymin=sim.ymin, zmin=sim.zmin,
                       xmax=sim.xmax, ymax=sim.ymax, zmax=sim.xmax)
 dist = 30*wavelength # distance to the initial location of the pulse (can be beyond the box)
@@ -31,7 +31,7 @@ def pulse_shape(par): # initial field amplitude (at point r) as a function of th
     # par[0] = dist - abs(r), longitudinal coordinate relative to dist (\in [-l_size/2, l_size/2])
     # par[1] is the angle between r and -path, theta angle in polar coordinates (\in [0, pi))
     # par[2] is the angle between e_axis and r in the plane perpendicular to path (\in [0, 2*pi))
-    # par[3] is the angle between r and e_axis (\in [0, pi)) 
+    # par[3] is the angle between r and e_axis (\in [0, pi))
     return math.sin(2*np.pi*par[0]/wavelength)*math.sin(par[3])*10*wavelength/dist
 focused_pulse.set_shape(pulse_shape.address)
 # now we do divergence cleaning and advance the field state to bring the pulse to the initial state of a simulation
@@ -99,4 +99,3 @@ for i in range(frames):
 # time_start = time.time()
 # sim.field_loop(handler=setField_cb.address)
 # print('focused_pulse py took', time.time() - time_start, 's.')
-

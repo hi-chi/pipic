@@ -17,8 +17,8 @@ Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 // Description: This extension is for setting initial tightly focused pulses with arbitrary angle of
-// focusing, transverse and longitudinal shapes, as well as phase front imperfections. The method 
-// is a development of an approach described in Ref. 
+// focusing, transverse and longitudinal shapes, as well as phase front imperfections. The method
+// is a development of an approach described in Ref.
 // [E. Panova et al. Appl. Sci., 11(3), 956 (2021); https://doi.org/10.3390/app11030956].
 
 #include "interfaces.h"
@@ -55,7 +55,7 @@ struct pulse{
         double3 b0 = cross(r0, e_axis);
         b0.normalize();
         double3 e0 = cross(r0, b0);
-    
+
         double par[4]; // relative distance, theta, alpha, beta = acos(dot(e_axis, r0))
         par[0] = rd;
         double r0npath_dot = dot(r0, npath);
@@ -66,23 +66,23 @@ struct pulse{
         double r1e0_dot = dot(r1, e0);
         if(1 - abs(r1e0_dot) > 1e-10) par[2] = acos(r1e0_dot); else par[1] = pi*(r1e0_dot < 0);
         if(dot(cross(e_axis, npath), r0) < 0) par[2] = 2*pi - par[2];
-        
+
         double e_axis_r0_dot = dot(e_axis, r0);
         if(1 - abs(e_axis_r0_dot) > 1e-10) par[3] = acos(e_axis_r0_dot); else par[3] = pi*(e_axis_r0_dot < 0);
-        
+
         double f = shape(&par[0]) * (dist/R);
 
         E[0] += f*e0.x;
         E[1] += f*e0.y;
         E[2] += f*e0.z;
-        
+
         B[0] += f*b0.x;
         B[1] += f*b0.y;
         B[2] += f*b0.z;
     }
     void setField(int *i, double *E, double *B){
         if(!readyToGo){ // check if all the required parameters are set
-            for(int i = 0; i < 9; i++) if(!checklist[i]){ 
+            for(int i = 0; i < 9; i++) if(!checklist[i]){
                 cout << "pipic::focused_pulse: Error: Not all required parameters are provided." << endl;
                 cout << "check list: "; for(int j = 0; j < 9; j++) cout << checklist[j] << ":";
                 exit(0);
@@ -91,7 +91,7 @@ struct pulse{
         }
         //int3 ind(i[0], i[1], i[2]);
         //singlePointSet(ind, E, B);
-        
+
         int3 hi_min, hi_max; // limits for hyper index
         hi_min.x = floor((center.x - dist - 0.5*l_size - min.x)*size_.x);
         hi_min.y = floor((center.y - dist - 0.5*l_size - min.y)*size_.y);
@@ -99,7 +99,7 @@ struct pulse{
         hi_max.x = floor((center.x + dist + 0.5*l_size - min.x)*size_.x) + 1;
         hi_max.y = floor((center.y + dist + 0.5*l_size - min.y)*size_.y) + 1;
         hi_max.z = floor((center.z + dist + 0.5*l_size - min.z)*size_.z) + 1;
-        
+
         //full loop over all hypercells (~(dist/l_size)^3):
         //for(int hix = hi_min.x; hix <= hi_max.x; hix += 1)
         //for(int hiy = hi_min.y; hiy <= hi_max.y; hiy += 1)
@@ -120,9 +120,9 @@ struct pulse{
             double rmax2 = sqr(dist + 0.5*l_size);
             int hiMin, hiMax;
 
-            double rxmin = -1, rxmax = -1; 
+            double rxmin = -1, rxmax = -1;
 
-            if(rt2 >= rmin2) hiMin = (rsx <= 0); 
+            if(rt2 >= rmin2) hiMin = (rsx <= 0);
             else {
                 rxmin = sqrt(rmin2 - rt2);
                 hiMin = floor((rxmin - rsx)*size_.x) + 1;
@@ -141,7 +141,7 @@ struct pulse{
             else hiMax = floor((rxmax + rsx)*size_.x);
 
             for(int hix = hiMin; hix <= hiMax; hix += 1)
-                singlePointSet({-hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);   
+                singlePointSet({-hix*n.x + i[0], hiy*n.y + i[1], hiz*n.z + i[2]}, E, B);
         }
     }
 };
