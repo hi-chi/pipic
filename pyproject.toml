@@ -102,8 +102,8 @@ select = "*-musllinux*"
 before-all = "apk add fftw-dev"
 
 # Install system library
-# [tool.cibuildwheel.macos]
-# before-all = "brew install fftw libomp"
+[tool.cibuildwheel.macos]
+before-all = "brew install fftw libomp"
 # environment = {LDFLAGS="-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib", CPPFLAGS="-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"}
 
 [tool.cibuildwheel.macos.environment]
