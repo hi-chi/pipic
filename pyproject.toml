@@ -104,11 +104,9 @@ before-all = "apk add fftw-dev"
 # Install system library
 [tool.cibuildwheel.macos]
 before-all = "brew install fftw libomp"
-# environment = {LDFLAGS="-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib", CPPFLAGS="-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"}
 
 [tool.cibuildwheel.macos.environment]
 CC = "/usr/bin/clang"
 CXX = "/usr/bin/clang++"
-# CFLAGS = "-Wno-implicit-function-declaration -I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
-CPPFLAGS = "-Wno-implicit-function-declaration -I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
-LDFLAGS = "-Wl,-S,-rpath,$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
+CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
