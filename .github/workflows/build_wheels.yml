@@ -10,7 +10,7 @@ on:
       - cibuildwheel
 
 env:
-FORCE_COLOR: 3
+  FORCE_COLOR: 3
 
 jobs:
   build_wheels:
