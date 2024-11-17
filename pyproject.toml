@@ -90,4 +90,4 @@ extend-select = [
 
 # Install system library
 [tool.cibuildwheel.linux]
-before-all = "yum install -y libfftw3-dev"
+before-all = "apt-get install -y libfftw3-dev"
