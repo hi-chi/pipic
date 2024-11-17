@@ -90,8 +90,8 @@ extend-select = [
 
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
-# skip = "pp*"
-build = "*-musllinux*"
+skip = "pp*"
+# build = "*-musllinux*"
 
 # Install system library
 [tool.cibuildwheel.linux]
