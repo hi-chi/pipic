@@ -28,7 +28,7 @@ classifiers = [
     'Topic :: Scientific/Engineering :: Physics'
 ]
 
-requires-python = '>=3.9'
+requires-python = '>=3.8'
 dependencies = [
     'numpy>=1.19; python_version~="3.8"',
     'numpy>=1.20; python_version~="3.9"',
@@ -91,3 +91,6 @@ extend-select = [
 # Install system library
 [tool.cibuildwheel.linux]
 before-all = "yum install -y fftw3-devel"
+
+# Disable building PyPy wheels on all platforms
+skip = "pp*"
