@@ -32,14 +32,17 @@ jobs:
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               && cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-latest"}'
+              | jq -nRc '{"only": inputs, "os": "macos-13"}' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-14"}'
             } | jq -sc
           )
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
     env:
-      CIBW_ARCHS_LINUX: x86_64
-      CIBW_ARCHS_MACOS: universal2
-      CIBW_ARCHS_WINDOWS: x86 AMD64
+      # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
+      # Note that macos-13 is an Intel runner, macos-14 is Apple Silicon
+      CIBW_ARCHS_LINUX: x86_64 i686
+      CIBW_ARCHS_MACOS: native
 
   build_wheels:
     # name: Build wheels on ${{ matrix.os }}
