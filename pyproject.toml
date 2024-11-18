@@ -90,19 +90,21 @@ extend-select = [
 
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
+# See: https://github.com/pypa/distutils/issues/283
 skip = "pp*"
-# build = "*-musllinux*"
 
 # Install system library
 [tool.cibuildwheel.linux]
+# Use yum when building on linux
 before-all = "yum install -y fftw3-devel"
 
 [[tool.cibuildwheel.overrides]]
+# Use apk instead of yum when building on Alpine Linux
 select = "*-musllinux*"
 before-all = "apk add fftw-dev"
 
-# Install system library
 [tool.cibuildwheel.macos]
+# Use brew when building on macOS
 before-all = "brew install fftw libomp"
 
 [tool.cibuildwheel.macos.environment]

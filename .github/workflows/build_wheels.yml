@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
+        # macos-13 is an intel runner, macos-14 is Apple Silicon
         os: [ubuntu-latest, macos-13, macos-14]
 
     steps:
@@ -28,6 +28,12 @@ jobs:
 
       - name: Set MACOSX_DEPLOYMENT_TARGET to the current macOS version
         if: ${{ runner.os == 'macOS' }}
+        # Needs to be set or delocate will not work.
+        # This is due to FFTW being installed through homebrew
+        # See:
+        # https://cibuildwheel.pypa.io/en/stable/faq/#missing-dependencies
+        # https://github.com/pypa/cibuildwheel/discussions/1926
+        # https://github.com/pypa/cibuildwheel/issues/563
         run: |
           export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | awk -F '.' '{print $1"."0}')
           echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
