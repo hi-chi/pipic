@@ -12,14 +12,47 @@ on:
 env:
   FORCE_COLOR: 3
 
+
 jobs:
+  generate-wheels-matrix:
+    # Used for running all wheels in the matrix in parallel.
+    # See: https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+    name: Generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install cibuildwheel
+        run: pipx install cibuildwheel==2.11.2
+      - id: set-matrix
+        run: |
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows \
+              | jq -nRc '{"only": inputs, "os": "windows-latest"}'
+            } | jq -sc
+          )
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+    env:
+      CIBW_ARCHS_LINUX: x86_64
+      CIBW_ARCHS_MACOS: universal2
+      CIBW_ARCHS_WINDOWS: x86 AMD64
+
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    # name: Build wheels on ${{ matrix.os }}
+    name: Build ${{ matrix.only }}
+    needs: generate-wheels-matrix
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is Apple Silicon
-        os: [ubuntu-latest, macos-13, macos-14]
+        include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
+        # # macos-13 is an intel runner, macos-14 is Apple Silicon
+        # os: [ubuntu-latest, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +73,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
+        with:
+            only: ${{ matrix.only }}
 
       - uses: actions/upload-artifact@v4
         with:
