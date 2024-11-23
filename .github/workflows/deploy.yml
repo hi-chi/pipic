@@ -133,10 +133,13 @@ jobs:
       - name: Download wheel and sdist artifacts
         uses: actions/download-artifact@v4
         with:
-          # unpacks all CIBW artifacts into dist/ folder
+          # Unpacks all cibuildwheel artifacts into dist/ folder
           pattern: cibw-*
           path: dist
           merge-multiple: true
+
+      - name: Check the wheel and sdist metadata
+        run: pipx run twine check --strict dist/*
 
       - name: Publish package distributions to PyPI
         # uses: pypa/gh-action-pypi-publish@release/v1
