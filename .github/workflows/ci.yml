@@ -82,7 +82,7 @@ jobs:
       - name: Test package
         run: python -m unittest
 
-  dist:
+  dist-checks:
     name: Build and inspect distribution
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -101,7 +101,7 @@ jobs:
 
   pass:
     if: always()
-    needs: [checks, dist]
+    needs: [checks, dist-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
