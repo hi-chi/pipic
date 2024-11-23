@@ -19,9 +19,15 @@ env:
   FORCE_COLOR: 3
 
 jobs:
-  # Used for running all wheels in the matrix in parallel.
-  # See: https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+  ci:
+    # Runs the CI workflow.
+    name: Run CI workflow
+    uses: ./.github/workflows/ci.yml
+
+
   generate-wheels-matrix:
+    # Used for running all wheels in the matrix in parallel.
+    # See: https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
     name: Generate wheels matrix
     runs-on: ubuntu-latest
     outputs:
@@ -117,7 +123,7 @@ jobs:
 
   upload-to-pypi:
     # Merges the wheels and sdist and uploads them to PyPI.
-    needs: [build-wheels, build-sdist]
+    needs: [ci, build-wheels, build-sdist]
     runs-on: ubuntu-latest
     # environment:
     #   name: pypi

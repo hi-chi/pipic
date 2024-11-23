@@ -38,7 +38,10 @@ exclude MANIFEST.in .*ignore
 ```
 
 ### Deployment
-To build the project for deployment requires the python package `build` (`pip install build`). To build, simply write:
+The publishing process can be automated using [cibuildwheel](https://cibuildwheel.pypa.io), in order to build wheels for multiple platforms, architectures and python versions automatically. This is done in the `deploy.yml` workflow, which is automatically triggered when a new version tag ([see below](#Versioning)) is pushed to the main branch.
+
+#### Manually
+To build the project for manual deployment requires the python package `build` (`pip install build`). To build, simply write:
 ```
 python -m build
 ```
@@ -68,8 +71,23 @@ twine upload dist/*.tar.gz
 Versioning is done automatically using [`setuptools-scm`](https://setuptools-scm.readthedocs.io/en/latest/config/#api-reference). When building the project, a version file `_version.py` containing the version number is created, based on the latest `git` tag. This file should not be tracked by git, but must be shipped with source distribution (this is already done automatically). All versioning should rely on this file.
 
 To check the presumptive version, simply write
-```
+```bash
 python setup.py --version
+```
+
+To bump the version, create a `git` tag beginning with `v` and following the [_SemVer_](https://semver.org/) scheme. Although not enforced, it is strongly encouraged to use an annotated tag (with the `-a` flag) as this creates a record of when the tag was created, by whom, and allow for attaching a comment.
+
+For example:
+```bash
+git tag -a v1.3 -m "pi-PIC v1.3"
+```
+will create the tag `v1.3`, which can then be pushed to the remote repo using:
+```bash
+git push origin --follow-tags
+```
+or
+```bash
+git push origin v1.3
 ```
 
 
