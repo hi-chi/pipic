@@ -1,5 +1,5 @@
 # This workflow is used for automated building of wheels
-# and source distributions, and deploys these automatically
+# and source distributions, and deploying these automatically
 # to PyPI.
 
 name: Deploy to PyPI
@@ -9,9 +9,8 @@ on:
   push:
     branches:
       - main
-      - cibuildwheel
-    # tags:
-    #   - "v*"
+    tags:
+      - "v*"
   # release:
   #   types:
   #     - published
