@@ -87,3 +87,28 @@ extend-select = [
 "**/__init__.py" = ["F401", "F403"]
 "**/__init__.pyi" = ["F401"]
 "pipic/tools.py" = ["F403"]
+
+[tool.cibuildwheel]
+# Disable building PyPy wheels on all platforms
+# See: https://github.com/pypa/distutils/issues/283
+skip = "pp*"
+
+# Install system library
+[tool.cibuildwheel.linux]
+# Use yum when building on linux
+before-all = "yum install -y fftw3-devel"
+
+[[tool.cibuildwheel.overrides]]
+# Use apk instead of yum when building on Alpine Linux
+select = "*-musllinux*"
+before-all = "apk add fftw-dev"
+
+[tool.cibuildwheel.macos]
+# Use brew when building on macOS
+before-all = "brew install fftw libomp"
+
+[tool.cibuildwheel.macos.environment]
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
