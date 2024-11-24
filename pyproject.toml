@@ -91,7 +91,13 @@ extend-select = [
 [tool.cibuildwheel]
 # Disable building PyPy wheels on all platforms
 # See: https://github.com/pypa/distutils/issues/283
-skip = "pp*"
+# Disable building musllinux due to: "Failed to build numba llvmlite"
+# Disable building wheels on Python 3.13 due to current numba restrictions.
+skip = "pp* *-musllinux* cp313*"
+
+# Run basic_example.py for each wheel
+test-requires = "numpy"
+test-command = "python -c 'import pipic;print(pipic.light_velocity)'"
 
 # Install system library
 [tool.cibuildwheel.linux]
@@ -102,6 +108,9 @@ before-all = "yum install -y fftw3-devel"
 # Use apk instead of yum when building on Alpine Linux
 select = "*-musllinux*"
 before-all = "apk add fftw-dev"
+# The following was just a test, but does not work.
+# musllinux is instead disabled above.
+test-requires = "numpy llvmlite numba"
 
 [tool.cibuildwheel.macos]
 # Use brew when building on macOS

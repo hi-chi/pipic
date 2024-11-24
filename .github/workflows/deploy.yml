@@ -34,32 +34,35 @@ jobs:
       - name: Install cibuildwheel
         run: pipx install cibuildwheel==2.21.3
       - id: set-matrix
+        # macos-14 is disabled as it doesn't recognize itself as arm64.
+        # Should probably change to use the scikit-build-core backend.
+        # See: https://github.com/pypa/cibuildwheel/issues/1989
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               && cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-13"}' \
-              && cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-14"}'
+              | jq -nRc '{"only": inputs, "os": "macos-13"}'
             } | jq -sc
           )
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
     env:
       # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
       # Note that macos-13 is an Intel runner, macos-14 is Apple Silicon
-      CIBW_ARCHS_LINUX: x86_64 i686
+      CIBW_ARCHS_LINUX: x86_64
       CIBW_ARCHS_MACOS: native
 
 
   build-wheels:
     # Builds all wheels for the supported python versions, architectures and platforms,
     # creating one artifact for each.
-    name: Build wheels 📦🛞 on ${{ matrix.only }}
+    name: Build wheel 🛞 on ${{ matrix.only }}
     needs: generate-wheels-matrix
     runs-on: ${{ matrix.os }}
     strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
         # Essentially contains
@@ -83,7 +86,7 @@ jobs:
           export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | awk -F '.' '{print $1"."0}')
           echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
 
-      - name: Build wheels
+      - name: Build wheel
         uses: pypa/cibuildwheel@v2.21.3
         with:
             only: ${{ matrix.only }}
@@ -117,10 +120,16 @@ jobs:
           name: cibw-sdist
           path: dist/*.tar.gz
 
+
   publish-to-testpypi:
     # Merges the wheels and sdist and uploads them to TestPyPI.
     name: Publish Python 🐍 distribution 📦 to TestPyPI
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    # upload to PyPI on every tag starting with 'v'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    # alternatively, to publish when a GitHub Release is created, use the following rule:
+    # if: github.event_name == 'release' && github.event.action == 'published'
+
     needs: [ci, build-wheels, build-sdist]
     runs-on: ubuntu-latest
     environment:
