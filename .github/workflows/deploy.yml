@@ -62,6 +62,8 @@ jobs:
     needs: generate-wheels-matrix
     runs-on: ${{ matrix.os }}
     strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
         # Essentially contains

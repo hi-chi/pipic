@@ -106,6 +106,7 @@ before-all = "yum install -y fftw3-devel"
 # Use apk instead of yum when building on Alpine Linux
 select = "*-musllinux*"
 before-all = "apk add fftw-dev"
+test-requires = "numpy llvmlite numba"
 
 [tool.cibuildwheel.macos]
 # Use brew when building on macOS
