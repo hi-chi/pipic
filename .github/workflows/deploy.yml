@@ -7,8 +7,6 @@ name: Deploy to TestPyPI
 on:
   workflow_dispatch:
   push:
-    branches:
-      fix-macos-wheels
     # branches:
     #   main
     tags:
