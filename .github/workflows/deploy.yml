@@ -51,7 +51,7 @@ jobs:
     env:
       # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
       # Note that macos-13 is an Intel runner, macos-14 is Apple Silicon
-      CIBW_ARCHS_LINUX: x86_64 i686
+      CIBW_ARCHS_LINUX: x86_64
       CIBW_ARCHS_MACOS: native
 
 
