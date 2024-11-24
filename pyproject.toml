@@ -94,6 +94,7 @@ extend-select = [
 skip = "pp*"
 
 # Run basic_example.py for each wheel
+test-requires = "numpy"
 test-command = "python {project}/examples/basic_example.py"
 
 # Install system library
