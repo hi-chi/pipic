@@ -108,7 +108,7 @@ before-all = "apk add fftw-dev"
 before-all = "brew install fftw"
 
 [tool.cibuildwheel.macos.environment]
-CC = "/usr/bin/gcc-13"
-CXX = "/usr/bin/g++-13"
+CC = "gcc-13"
+CXX = "g++-13"
 CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include"
 LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib"
