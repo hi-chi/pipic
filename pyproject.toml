@@ -92,7 +92,8 @@ extend-select = [
 # Disable building PyPy wheels on all platforms
 # See: https://github.com/pypa/distutils/issues/283
 # Disable building musllinux due to: "Failed to build numba llvmlite"
-skip = "pp* *-musllinux*"
+# Disable building wheels on Python 3.13 due to current numba restrictions.
+skip = "pp* *-musllinux* cp313*"
 
 # Run basic_example.py for each wheel
 test-requires = "numpy"
