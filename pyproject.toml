@@ -93,6 +93,9 @@ extend-select = [
 # See: https://github.com/pypa/distutils/issues/283
 skip = "pp*"
 
+# Run basic_example.py for each wheel
+test-command = "python {project}/examples/basic_example.py"
+
 # Install system library
 [tool.cibuildwheel.linux]
 # Use yum when building on linux
@@ -105,10 +108,10 @@ before-all = "apk add fftw-dev"
 
 [tool.cibuildwheel.macos]
 # Use brew when building on macOS
-before-all = "brew install fftw"
+before-all = "brew install fftw libomp"
 
 [tool.cibuildwheel.macos.environment]
-CC = "gcc-13"
-CXX = "g++-13"
-CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include"
-LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib"
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
