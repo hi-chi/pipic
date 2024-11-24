@@ -92,10 +92,7 @@ jobs:
 
       - name: Test wheel
         run: |
-          ls .
-          ls ./wheelhouse
-          ls ./wheelhouse/*.whl
-          pip install "$(./wheelhouse/*.whl)"[test]
+          pip install ./wheelhouse/*.whl
           python examples/basic_example.py
 
       - uses: actions/upload-artifact@v4
