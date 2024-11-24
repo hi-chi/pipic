@@ -7,6 +7,8 @@ name: Deploy to TestPyPI
 on:
   workflow_dispatch:
   push:
+    branches:
+      fix-macos-wheels
     # branches:
     #   main
     tags:
@@ -56,7 +58,7 @@ jobs:
   build-wheels:
     # Builds all wheels for the supported python versions, architectures and platforms,
     # creating one artifact for each.
-    name: Build wheels 📦🛞 on ${{ matrix.only }}
+    name: Build wheel 🛞 on ${{ matrix.only }}
     needs: generate-wheels-matrix
     runs-on: ${{ matrix.os }}
     strategy:
@@ -83,10 +85,15 @@ jobs:
           export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | awk -F '.' '{print $1"."0}')
           echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
 
-      - name: Build wheels
+      - name: Build wheel
         uses: pypa/cibuildwheel@v2.21.3
         with:
             only: ${{ matrix.only }}
+
+      - name: Test wheel
+        run: |
+          pip install ./wheelhouse/*.whl[test]
+          python examples/basic_example.py
 
       - uses: actions/upload-artifact@v4
         with:
