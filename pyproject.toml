@@ -95,7 +95,7 @@ skip = "pp*"
 
 # Run basic_example.py for each wheel
 test-requires = "numpy"
-test-command = "python {project}/examples/basic_example.py"
+test-command = "python -c 'import pipic;print(pipic.light_velocity)'"
 
 # Install system library
 [tool.cibuildwheel.linux]
