@@ -95,7 +95,7 @@ jobs:
           ls .
           ls ./wheelhouse
           ls ./wheelhouse/*.whl
-          pip install "./wheelhouse/*.whl"[test]
+          pip install "$(./wheelhouse/*.whl)"[test]
           python examples/basic_example.py
 
       - uses: actions/upload-artifact@v4
