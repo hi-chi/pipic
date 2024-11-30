@@ -112,8 +112,14 @@ jobs:
         with:
           fetch-depth: 0  # This is needed in order to fetch version tags from git
 
-      - name: Build sdist
-        run: pipx run build --sdist
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.5"
+          enable-cache: true
+
+      - name: Build sdistb
+        run: uv build --sdist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -147,8 +153,14 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.5"
+          enable-cache: true
+
       - name: Inspect the wheel and sdist metadata
-        run: pipx run twine check --strict dist/*
+        run: uvx twine check --strict dist/*
 
       - name: Publish package distribution 📦 to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
