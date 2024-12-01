@@ -117,6 +117,7 @@ jobs:
         with:
           version: "0.5.5"
           enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Build sdistb
         run: uv build --sdist
@@ -158,6 +159,7 @@ jobs:
         with:
           version: "0.5.5"
           enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Inspect the wheel and sdist metadata
         run: uvx twine check --strict dist/*
