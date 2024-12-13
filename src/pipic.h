@@ -24,6 +24,7 @@ Contact: arkady.gonoskov@gu.se.
 #include "fourier_boris_solver.h"
 #include "ec_solver.h"
 #include "ec2_solver.h"
+#include "emc2_solver.h"
 
 struct pipic
 {
@@ -42,6 +43,7 @@ struct pipic
         if(solverName == "fourier_boris") Solver = new fourier_boris_solver(box);
         if(solverName == "ec") Solver = new ec_solver(box);
         if(solverName == "ec2") Solver = new ec2_solver(box);
+        if(solverName == "emc2") Solver = new emc2_solver(box);
         if(Solver == nullptr){ pipic_log.message("pi-PIC init() error: unknown solver '" + solverName + "'.", true); exit(0);}
         Field = Solver->Field;
         Ensemble = Solver->Ensemble;
