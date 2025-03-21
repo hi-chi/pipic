@@ -12,7 +12,7 @@ $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collectio
 - absence of numerical dispersion.
 
 The solvers provide a way to either suppress or eliminate numerical artefacts (instabilities, heating, numerical Cherenkov radiation, etc.) permitting larger space and time steps, as well as lower number of particles per cell.
-Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [Reference](#Reference).
+Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [Reference](#Reference) or a [presentation at PIF24](https://plymouth.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=86a17791-6db2-4009-be2f-b1dc00c846d0).
 
 ---
 
@@ -32,6 +32,10 @@ The basic layout of a simulation includes five elements:
 - advance and read the state of the defined physical system
 
 We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].
+
+# New in $\pi$-PIC v1.2
+- options for energy correction routine in `ec` and `ec2` (see `docs/guides/INTERFACES.md`)
+- [`extension`][extensions] for initializing arbitrary tightly focused pulses, e.g. dipole waves (`focused_pulse`)
 
 # New in $\pi$-PIC v1.1
 - [`extensions`][extensions] for QED-PIC simulations (`qed_volokitin2023`, `qed_gonoskov2015`)

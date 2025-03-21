@@ -87,3 +87,37 @@ extend-select = [
 "**/__init__.py" = ["F401", "F403"]
 "**/__init__.pyi" = ["F401"]
 "pipic/tools.py" = ["F403"]
+
+[tool.cibuildwheel]
+# Disable building PyPy wheels on all platforms
+# See: https://github.com/pypa/distutils/issues/283
+# Disable building musllinux due to: "Failed to build numba llvmlite"
+# Disable building wheels on Python 3.13 due to current numba restrictions.
+skip = "pp* *-musllinux* cp313*"
+
+# Run basic_example.py for each wheel
+test-requires = "numpy"
+test-command = "python -c 'import pipic;print(pipic.light_velocity)'"
+
+# Install system library
+[tool.cibuildwheel.linux]
+# Use yum when building on linux
+before-all = "yum install -y fftw3-devel"
+
+[[tool.cibuildwheel.overrides]]
+# Use apk instead of yum when building on Alpine Linux
+select = "*-musllinux*"
+before-all = "apk add fftw-dev"
+# The following was just a test, but does not work.
+# musllinux is instead disabled above.
+test-requires = "numpy llvmlite numba"
+
+[tool.cibuildwheel.macos]
+# Use brew when building on macOS
+before-all = "brew install fftw libomp"
+
+[tool.cibuildwheel.macos.environment]
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"

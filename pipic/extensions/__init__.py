@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import _downsampler_gonoskov2022 as downsampler_gonoskov2022
+from . import _focused_pulse as focused_pulse
 from . import _landau_lifshitz as landau_lifshitz
 from . import _qed_gonoskov2015 as qed_gonoskov2015
 from . import _qed_volokitin2023 as qed_volokitin2023
@@ -17,6 +18,5 @@ __all__ = ['x_converter_c',
            'qed_gonoskov2015',
            'qed_volokitin2023',
            'downsampler_gonoskov2022',
-           'moving_window']
-
-
+           'moving_window'
+           'focused_pulse',]

@@ -1,5 +1,9 @@
 # Releases
 
+## $\pi$-PIC v1.2
+- options for energy correction routine in `ec` and `ec2` (see `docs/guides/INTERFACES.md`)
+- [`extension`][extensions] for initializing arbitrary tightly focused pulses, e.g. dipole waves (`focused_pulse`)
+
 ## $\pi$-PIC v1.1
 - [`extensions`](https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md) for QED-PIC simulations (`qed_volokitin2023`, `qed_gonoskov2015`)
 - [`extension`](https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md) for ensemble down-sampling (`downsampler_gonoskov2022`)
