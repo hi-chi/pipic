@@ -8,24 +8,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numba import cfunc, carray, types as nbt
-import h5py
-
-
-def create_hdf5(fp, shape, dsets=['Ex','Ez','Ey','Bx','Bz','By','rho'],mode="w"):
-
-    # Create a new HDF5 file
-    file = h5py.File(fp, mode)
-
-    # Create a dataset
-    for d in dsets:
-        file.create_dataset(d, shape=shape, dtype=np.double)
-    
-    file.close()
 
 
 if __name__ == '__main__':
-    s = 100 
-    checkpoint = 10   
+    s = 400 
+    checkpoint = 16
 
     #===========================SIMULATION INITIALIZATION===========================
     # Electron number density
@@ -36,17 +23,15 @@ if __name__ == '__main__':
     wp = 2*np.pi*consts.light_velocity/omega_p # [cm]
     # laser wavelength
     wl = 1e-4 # [cm]
-    # laser pulse width (spatial in x and radially in focus)
-    pulseDuration_FWHM = 16e-15
 
-    pulseWidth_x = (pulseDuration_FWHM/2.355)*consts.light_velocity # [cm]
-    spotsize = 2*pulseWidth_x
-    nx, xmin, xmax = 2**7, -5*spotsize, 5*spotsize 
-    ny, ymin, ymax = 2**7, -5*spotsize, 5*spotsize
-    nz, zmin, zmax = 2**7, -5*pulseWidth_x, 5*pulseWidth_x
+    pulseWidth_x = 2*wl # [cm] (radial size of the laser focus)
+    spotsize = 100*wl # [cm] (radial size of the laser focus)
+    nx, xmin, xmax = 2**1, -5*wl, 5*wl 
+    ny, ymin, ymax = 2**1, -5*wl, 5*wl
+    nz, zmin, zmax = 2**8, -10*wl, 10*wl
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
-    timestep = 0.1/(2*np.pi*consts.light_velocity/wl) #0.5*dx_/consts.light_velocity
+    timestep = dz/consts.light_velocity/2
     thickness = 10 # thickness (in dz) of the area where the density and field is restored/removed 
 
 
@@ -116,7 +101,7 @@ if __name__ == '__main__':
             return n0*(R/upramp)
         elif R > upramp and R < density_drop:
             return n0
-        elif R > density_drop and R < end_of_plasma:
+        elif R >= density_drop and R < end_of_plasma:
             return n0*0.5
         else:
             return 0 
@@ -197,18 +182,9 @@ if __name__ == '__main__':
         sim.field_loop(handler=get_field_Ez.address, data_double=pipic.addressof(Ez))
 
     #===============================SIMULATION======================================
-
     data_int = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
-    window_speed = consts.light_velocity #speed of moving window
-
-    #-----------------------adding the handler of extension-------------------------
-
-    # variable for passing density to the handler  
-    data_double = np.zeros((1, ), dtype=np.double)
-    data_double[0] = n0*1e-10 # initiate with something low
 
     #-----------------------initiate field and plasma-------------------------
-
     
     sim.fourier_solver_settings(divergence_cleaning=1, sin2_kfilter=-1)
     sim.advance(time_step=0, number_of_iterations=1,use_omp=True)
@@ -216,66 +192,43 @@ if __name__ == '__main__':
                     use_omp=True)
     sim.advance(time_step=0, number_of_iterations=1,use_omp=True)
     sim.fourier_solver_settings(divergence_cleaning=0, sin2_kfilter=-1)
-
-    # This part is just for initiating the electron species, 
-    # so that the algorithm knows that there is a species called electron
-    # it is therefore not important where the electrons are or what density they have
-    sim.add_particles(name='electron', number=1,#particles_per_cell),
-                    charge=consts.electron_charge, mass=consts.electron_mass,
-                    temperature=temperature, density=density_profile.address,
-                    data_int=pipic.addressof(data_int))
     
-    density_handler_adress = moving_window.handler(sim.ensemble_data(),
-                                                   thickness=thickness,
-                                                   particles_per_cell=particles_per_cell,
-                                                   temperature=temperature,
-                                                   density=density_profile.address,)
-    sim.add_handler(name=moving_window.name, 
-                    subject='electron,cells',
-                    handler=density_handler_adress,
-                    data_int=pipic.addressof(data_int),
-                    data_double=pipic.addressof(data_double))
-    
-    #-----------------------run simulation-------------------------
-    
-    dsets = ['Ex','Ey','Ez','rho','ps']
-    fields = [Ex,Ey,Ez,rho,ps]
-    ncp = s//checkpoint
-
-    hdf5_fp = 'junk.h5'
-    create_hdf5(hdf5_fp, shape=(ncp,nx,ny,nz),dsets=dsets[:-1])
-    create_hdf5(hdf5_fp, shape=(ncp,nps,nz),dsets=['ps'],mode="r+")
-
-    create_hdf5(hdf5_fp,shape=(nx,),dsets=['x_axis',],mode="r+")
-    create_hdf5(hdf5_fp,shape=(ny,),dsets=['y_axis',],mode="r+")
-    create_hdf5(hdf5_fp,shape=(nz,),dsets=['z_axis',],mode="r+")
-    create_hdf5(hdf5_fp,shape=(nps,),dsets=['p_axis',],mode="r+")
 
     x_axis = np.linspace(xmin, xmax, nx)
     y_axis = np.linspace(ymin, ymax, ny)
     z_axis = np.linspace(zmin, zmax, nz)
     p_axis = np.linspace(pmin, pmax, nps)
+    # This part is just for initiating the electron species, 
+    # so that the algorithm knows that there is a species called electron
+    # it is therefore not important where the electrons are or what density they have
+    sim.add_particles(name='electron', number=1,#particles_per_cell),
+                    charge=consts.electron_charge, mass=consts.electron_mass,
+                    temperature=temperature, density=density_profile.address,)
 
-    with h5py.File(hdf5_fp,"r+") as file:
-        file['x_axis'][:] = x_axis
-        file['y_axis'][:] = y_axis
-        file['z_axis'][:] = z_axis
-        file['p_axis'][:] = p_axis
-
+    #-----------------------adding the handler of extension-------------------------
+    data_double = np.zeros((1, ), dtype=np.double) # data for passing some other data
+    window_speed = consts.light_velocity #speed of moving window
+    density_handler_adress = moving_window.handler(sim.ensemble_data(),
+                                                   thickness=thickness,
+                                                   particles_per_cell=particles_per_cell,
+                                                   temperature=temperature,
+                                                   density=density_profile.address,
+                                                   velocity=window_speed,)
+    sim.add_handler(name=moving_window.name, 
+                    subject='electron,cells',
+                    handler=density_handler_adress,
+                    data_int=pipic.addressof(data_int),)
     
+    #-----------------------run simulation-------------------------
+    fig, ax = plt.subplots(2, 1, figsize=(15, 5))
     for i in range(s):
-        
         data_int[0] = i 
-
-        sim.advance(time_step=timestep, number_of_iterations=1,use_omp=True)
-        
+        sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
         sim.field_loop(handler=remove_field.address, data_int=pipic.addressof(data_int),
                     use_omp=True)
-        
-        
 
         if i%checkpoint==0:
-            print(i)
+            print(f'Iteration {i}')
             rho.fill(0)
             ps.fill(0)
             # load fields and densities            
@@ -287,14 +240,10 @@ if __name__ == '__main__':
             load_fields()
             
             roll_back = np.round((i*timestep*window_speed)/dz,decimals=0).astype(int)
-            
-            try:
-                with h5py.File(hdf5_fp,"r+") as file:
-                    for j,f in enumerate(dsets):
-                        file[f][i//checkpoint] = np.roll(fields[j],-roll_back,axis=-1) 
-            except IOError:
-                input('Another process is accessing the hdf5 file. Close the file and press enter.')
-                with h5py.File(hdf5_fp,"r+") as file:
-                    for j,f in enumerate(dsets):
-                        file[f][i//checkpoint] = np.roll(fields[j],-roll_back,axis=-1)    
+
+            im = ax[0].imshow(rho[nx//2, :, :], origin='lower', aspect='auto',
+                        extent=[ymin, ymax, zmin, zmax], cmap='jet')
+            ax[1].imshow(Ex[nx//2, :, :], origin='lower', aspect='auto',
+                        extent=[ymin, ymax, zmin, zmax], cmap='seismic')
+            plt.savefig(f'./rho_{i:04d}.png')
 

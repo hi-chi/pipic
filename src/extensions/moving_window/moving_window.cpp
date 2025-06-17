@@ -9,6 +9,8 @@ static double _temperature;
 static int _thickness; 
 static int ppc;
 static int64_t _density_profile;
+static double _velocity; // velocity of the moving window
+static double _angle; // angle of the moving window
 
 
 struct cellContainer
@@ -43,44 +45,45 @@ static vector<threadHandler> Thread;
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
 
-    //moved this to the place below, where we need random number generation
-    //threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
-    //cthread.rng.seed(CI.rngSeed);
-
-    int rollback = floor(dataInt[0]*CI.timeStep*lightVelocity/CI.step.z);
-    if(rollback%(_thickness/2)==0){        
-        int rollback_prev = floor((dataInt[0]-1)*CI.timeStep*lightVelocity/CI.step.z);
+    int rollback = floor(dataInt[0]*CI.timeStep*_velocity/CI.step.z);
+    if(rollback%(_thickness/2)==0 && rollback > 0){ 
+        int rollback_prev = floor((dataInt[0]-1)*CI.timeStep*_velocity/CI.step.z);
         if(rollback_prev!=rollback){
 
             // initial r_rel is at the end of the cell and marks the end of the cleaning region 
             double r_rel = CI.globalMin.z + CI.step.z*(rollback%CI.n.z); 
             // r_min marks the beggining of the cleaning region
             double r_min = r_rel - _thickness*CI.step.z;
+
             double3 cell_min = CI.cellMin();
             double3 cell_max = CI.cellMax();
+
+            r_rel -= (-CI.globalMin.x + cell_min.x)*tan(_angle); // + CI.step.z;
+            r_min -= (-CI.globalMin.x + cell_min.x)*tan(_angle); //- CI.step.z;
+
+            // if r_min or r_rel is smaller than z_min we move it to the other side of the window
+            if (r_min < CI.globalMin.z) r_min = CI.globalMax.z - (CI.globalMin.z - r_min);
+            if (r_rel < CI.globalMin.z) r_rel = CI.globalMax.z - (CI.globalMin.z - r_rel);
+
             double eps = CI.step.z/10;
             
             int ig, ix = CI.i.x, iy = CI.i.y, iz = CI.i.z; 
             ig = ix + (iy + iz*CI.n.y)*CI.n.x; 
-
-            if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) || 
-                (cell_max.z+eps >= CI.globalMax.z - (CI.globalMin.z - r_min)) || 
-                (cell_min.z-eps <= CI.globalMin.z + (r_rel - CI.globalMax.z))){
+            if ((cell_min.z+eps >= r_min and cell_max.z-eps <= r_rel) ||
+                ( (r_min > r_rel) and ((cell_min.z + eps >= r_min) || (cell_max.z - eps <= r_rel)))){ 
 
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
-                    // removing particles
+                    // removing particles 
                     if(cell[ig] != nullptr){
                         int it = 0;
                         if(cell[ig][it] != nullptr){
                             cellContainer *C = cell[ig][it];
                             if(C->endShift > 0) memcpy(&C->P[0], &C->P[C->P.size() - cell[ig][it]->endShift], sizeof(particle)*C->endShift);
                             C->P.resize(C->endShift);
-                            };
+                        };
                     };
-                }
-                
+                };
                 if (CI.particleTypeIndex==-1){
-
                     threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
                     cthread.rng.seed(CI.rngSeed);
                     
@@ -91,7 +94,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                     R[1] = r.y;
                     
                     // The position of the front of the window in 'real' coordinates
-                    double z_real = dataInt[0]*CI.timeStep*lightVelocity + CI.globalMax.z;
+                    double z_real = dataInt[0]*CI.timeStep*_velocity + CI.globalMax.z - (-CI.globalMin.x + cell_min.x)*tan(_angle);
                     if (r.z > r_rel){
                         R[2] = z_real - (r_rel - CI.globalMin.z) - (CI.globalMax.z - r.z);
                     } else {
@@ -100,7 +103,6 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                                     
                     double(*density_profile)(double*, double*, int*) = (double(*)(double*, double*, int*))_density_profile;
                     double _density = density_profile(R, dataDouble, dataInt);
-
                     double nb_particles = _density*CI.step.x*CI.step.y*CI.step.z;
                     double weight = nb_particles/(double)ppc;   
                     //double expectedNumber = nb_particles/weight;
@@ -116,7 +118,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                             // generate momentum
                             double3 p = {cthread.nrandom(), cthread.nrandom(), cthread.nrandom()};
                             p = sqrt(electronMass*_temperature)*p;
-                            p = sqrt(1 + 0.25*p.norm2()/sqr(electronMass*lightVelocity))*p;
+                            p = sqrt(1 + 0.25*p.norm2()/sqr(electronMass*_velocity))*p;
                             P.p = p;
                             
                             P.w = weight;
@@ -131,12 +133,14 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int thickness, int particles_per_cell, double temperature, int64_t density){
+int64_t handler(int64_t ensembleData, int thickness, int particles_per_cell, double temperature, int64_t density,double velocity, double angle){ 
     cell = (cellContainer***)ensembleData;
     _thickness = thickness;
     ppc = particles_per_cell;
     _temperature = temperature;
     _density_profile = density;
+    _velocity = velocity;
+    _angle = angle;
     Thread.resize(omp_get_max_threads());
     return (int64_t)Handler;
 };
@@ -145,6 +149,6 @@ int64_t handler(int64_t ensembleData, int thickness, int particles_per_cell, dou
 namespace py = pybind11;
 PYBIND11_MODULE(_moving_window, object) {
     object.attr("name") = name;
-    object.def("handler", &handler,py::arg("ensemble"), py::arg("thickness"), py::arg("particles_per_cell"), py::arg("temperature"),py::arg("density"));
+    object.def("handler", &handler,py::arg("ensemble"), py::arg("thickness"), py::arg("particles_per_cell"), py::arg("temperature"),py::arg("density"), py::arg("velocity")=lightVelocity,py::arg("angle")=0.0);
 }
 
