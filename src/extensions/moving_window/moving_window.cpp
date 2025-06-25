@@ -11,7 +11,8 @@ static int ppc;
 static int64_t _density_profile;
 static double _velocity; // velocity of the moving window
 static double _angle; // angle of the moving window
-
+static double _timeStep; // time step of the simulation
+simulationBox* _simbox; // cell interface for manipulating with the content of a cell
 
 struct cellContainer
 {
@@ -40,6 +41,40 @@ struct threadHandler{
 };
 
 static vector<threadHandler> Thread;
+
+
+// add angle dependence
+void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
+    int rollback = floor(dataInt[0]*_timeStep*_velocity/_simbox->step.z);
+    if(rollback%(_thickness/2)==0 && rollback > 0){ 
+        int rollback_prev = floor((dataInt[0]-1)*_timeStep*_velocity/_simbox->step.z);
+        if(rollback_prev!=rollback){
+            // initial r_rel is at the end of the cell and marks the end of the cleaning region 
+            double r_rel = _simbox->min.z + _simbox->step.z*(rollback%_simbox->n.z); 
+            // r_min marks the beggining of the cleaning region
+            double r_min = r_rel - _thickness*_simbox->step.z;
+
+            r_rel -= (-_simbox->min.x + r[0])*tan(_angle); // + CI.step.z;
+            r_min -= (-_simbox->min.x + r[0])*tan(_angle); //- CI.step.z;
+
+            // if r_min or r_rel is smaller than z_min we move it to the other side of the window
+            if (r_min < _simbox->min.z) r_min = _simbox->max.z - (_simbox->min.z - r_min);
+            if (r_rel < _simbox->min.z) r_rel = _simbox->max.z - (_simbox->min.z - r_rel);
+
+            double eps = 0;
+            if ((r[2]+eps >= r_min and r[2]-eps <= r_rel) ||
+                ( (r_min > r_rel) and ((r[2] + eps >= r_min) || (r[2] - eps <= r_rel)))){ 
+                E[0] = 0;
+                E[1] = 0;
+                E[2] = 0;
+                B[0] = 0;
+                B[1] = 0;
+                B[2] = 0;
+            }
+        }
+    }
+}
+
 
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
@@ -118,6 +153,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                             // generate momentum
                             double3 p = {cthread.nrandom(), cthread.nrandom(), cthread.nrandom()};
                             p = sqrt(electronMass*_temperature)*p;
+                            
                             p = sqrt(1 + 0.25*p.norm2()/sqr(electronMass*_velocity))*p;
                             P.p = p;
                             
@@ -146,9 +182,17 @@ int64_t handler(int64_t ensembleData, int thickness, int particles_per_cell, dou
 };
 
 
+// extension initialization
+int64_t field_handler(int64_t simbox, double timestep){ 
+    _timeStep = timestep;
+    _simbox = (simulationBox*)simbox; 
+    return (int64_t)fieldHandler;
+};
+
 namespace py = pybind11;
 PYBIND11_MODULE(_moving_window, object) {
     object.attr("name") = name;
-    object.def("handler", &handler,py::arg("ensemble"), py::arg("thickness"), py::arg("particles_per_cell"), py::arg("temperature"),py::arg("density"), py::arg("velocity")=lightVelocity,py::arg("angle")=0.0);
+    object.def("handler", &handler, py::arg("ensemble"), py::arg("thickness"), py::arg("particles_per_cell"), py::arg("temperature"),py::arg("density"), py::arg("velocity")=lightVelocity,py::arg("angle")=0.0);
+    object.def("field_handler", &field_handler, py::arg("simulation_box"), py::arg("timestep"));
 }
 

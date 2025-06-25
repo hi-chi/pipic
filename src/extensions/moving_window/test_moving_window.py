@@ -11,8 +11,8 @@ from numba import cfunc, carray, types as nbt
 
 
 if __name__ == '__main__':
-    s = 400 
-    checkpoint = 16
+    s = 1500 
+    checkpoint = 100
 
     #===========================SIMULATION INITIALIZATION===========================
     # Electron number density
@@ -26,13 +26,13 @@ if __name__ == '__main__':
 
     pulseWidth_x = 2*wl # [cm] (radial size of the laser focus)
     spotsize = 100*wl # [cm] (radial size of the laser focus)
-    nx, xmin, xmax = 2**1, -5*wl, 5*wl 
-    ny, ymin, ymax = 2**1, -5*wl, 5*wl
+    nx, xmin, xmax = 2**4, -5*wl, 5*wl 
+    ny, ymin, ymax = 2**4, -5*wl, 5*wl
     nz, zmin, zmax = 2**8, -10*wl, 10*wl
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
     timestep = dz/consts.light_velocity/2
-    thickness = 10 # thickness (in dz) of the area where the density and field is restored/removed 
+    thickness = 2**5 # thickness (in dz) of the area where the density and field is restored/removed 
 
 
     #---------------------setting solver and simulation region----------------------
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     simulation_length = s*timestep*consts.light_velocity
     upramp = 0.5*simulation_length
     density_drop = 0.5*simulation_length
-    end_of_plasma = 0.8*simulation_length 
+    end_of_plasma = 0.9*simulation_length 
 
     @cfunc(types.add_particles_callback)
     def density_profile(r, data_double, data_int):
@@ -204,7 +204,6 @@ if __name__ == '__main__':
     sim.add_particles(name='electron', number=1,#particles_per_cell),
                     charge=consts.electron_charge, mass=consts.electron_mass,
                     temperature=temperature, density=density_profile.address,)
-
     #-----------------------adding the handler of extension-------------------------
     data_double = np.zeros((1, ), dtype=np.double) # data for passing some other data
     window_speed = consts.light_velocity #speed of moving window
@@ -214,9 +213,11 @@ if __name__ == '__main__':
                                                    temperature=temperature,
                                                    density=density_profile.address,
                                                    velocity=window_speed,)
+    field_handler_adress = moving_window.field_handler(sim.simulation_box(),timestep)
     sim.add_handler(name=moving_window.name, 
                     subject='electron,cells',
                     handler=density_handler_adress,
+                    field_handler=field_handler_adress,
                     data_int=pipic.addressof(data_int),)
     
     #-----------------------run simulation-------------------------
@@ -224,8 +225,6 @@ if __name__ == '__main__':
     for i in range(s):
         data_int[0] = i 
         sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
-        sim.field_loop(handler=remove_field.address, data_int=pipic.addressof(data_int),
-                    use_omp=True)
 
         if i%checkpoint==0:
             print(f'Iteration {i}')
@@ -242,7 +241,7 @@ if __name__ == '__main__':
             roll_back = np.round((i*timestep*window_speed)/dz,decimals=0).astype(int)
 
             im = ax[0].imshow(rho[nx//2, :, :], origin='lower', aspect='auto',
-                        extent=[ymin, ymax, zmin, zmax], cmap='jet')
+                        extent=[ymin, ymax, zmin, zmax], cmap='Reds',vmin=0,vmax=n0)
             ax[1].imshow(Ex[nx//2, :, :], origin='lower', aspect='auto',
                         extent=[ymin, ymax, zmin, zmax], cmap='seismic')
             plt.savefig(f'./rho_{i:04d}.png')

@@ -296,6 +296,13 @@ struct ensemble
             if(activeThread.CI->particleSubsetSize == 0) break;
         }
     }
+    template<typename field_solver>
+    void apply_fieldHandlers(field_solver *Field){
+        for(int ih = 0; ih < int(Manager.FieldHandler.size()); ih++){
+            Manager.FieldHandler[ih]->handle(Field, advanceWithOmp);
+        }
+    }
+
     void processCharglessParticle(double mass, double timeStep, particle &P){
         if(mass == 0){ // photon
             double pNorm = P.p.norm();
@@ -306,6 +313,7 @@ struct ensemble
     template<typename pic_solver, typename field_solver>
     void advance_singleLoop(pic_solver *Solver, double timeStep){
         chronometer chronometerCells;
+        apply_fieldHandlers<field_solver>((field_solver*)(Solver->Field));
         chronometerCells.start();
         Solver->preLoop();
         chronometerCells.stop();
@@ -418,6 +426,7 @@ struct ensemble
     void advance_doubleLoop(pic_solver *Solver, double timeStep)
     {
         chronometer chronometerCells;
+        apply_fieldHandlers<field_solver>((field_solver*)(Solver->Field));
         chronometerCells.start();
         Solver->preLoop(0);
         chronometerCells.stop();

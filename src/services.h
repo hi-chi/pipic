@@ -233,21 +233,44 @@ struct cellHandler
 };
 
 
+struct fieldHandler
+{
+    string name;
+    string subject;
+    int64_t dataDouble; 
+    int64_t dataInt;
+    int64_t handler;
+
+    fieldHandler(string name, string subject, int64_t handler, int64_t dataDouble, int64_t dataInt):
+    name(name), subject(subject), dataDouble(dataDouble), dataInt(dataInt), handler(handler)
+    {}
+
+    template <typename fieldSolver>
+    void handle(fieldSolver field, bool useOmp){// must be thread-safe
+        field -> fieldLoop(handler, dataDouble, dataInt, useOmp); // use OMP for field handlers
+    }
+};
+
+
+
 struct handlerManager
 {
     vector<cellHandler*> Handler;
+    vector<fieldHandler*> FieldHandler;
     bool reportPerformance;
     // all times are in seconds, unless suffix "_ns" is explicitly added to the name of variable
     double latestEnsembleTime, totalEnsembleTime, latestParticleUpdates, totalParticleUpdates;
     double latestFieldTime, totalFieldTime, totalCellUpdates, numberOfCells;
     double latest_av_ppc, latest_av_cmr; // average number of particles per cell and average inter-cell migration rate
     double best_cellUpdateTime_ns, best_particleUpdateTime_ns;
+
     handlerManager(double numberOfCells): reportPerformance(true),
     totalEnsembleTime(0), totalParticleUpdates(0),
     totalFieldTime(0), totalCellUpdates(0), numberOfCells(numberOfCells),
     best_cellUpdateTime_ns(numeric_limits<double>::max()),
     best_particleUpdateTime_ns(numeric_limits<double>::max())
     {}
+    
     void iterationEnd(intg ng){
         for(int ih = 0; ih < int(Handler.size()); ih++) Handler[ih]->postLoop(ng);
 
@@ -298,6 +321,10 @@ struct handlerManager
     void addCellHandler(string name, string subject, int64_t handler, double* dataDouble, int* dataInt){
         Handler.push_back(new cellHandler(name, subject, handler, dataDouble, dataInt));
     }
+    void addFieldHandler(string name, string subject, int64_t handler, int64_t dataDouble, int64_t dataInt){
+        FieldHandler.push_back(new fieldHandler(name, subject, handler, dataDouble, dataInt));
+    }
+
     void preLoop(vector<particleType> types, bool &fieldHandlerExists){
         vector<string> particleNames;
         for(int it = 0; it < int(types.size()); it++) particleNames.push_back(types[it].name);
