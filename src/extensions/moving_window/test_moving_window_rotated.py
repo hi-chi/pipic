@@ -21,10 +21,11 @@ if __name__ == '__main__':
     # laser wavelength
     wl = 1e-4 # [cm]
 
-    pulseWidth_x = 2*wl # [cm] (radial size of the laser focus)
-    nx, xmin, xmax = 2**4, -5*wl, 5*wl 
+    pulseWidth_x = 1*wl # [cm] (radial size of the laser focus)
+    pulseWidth_z = 1*wl # [cm] (axial size of the laser focus)
+    nx, xmin, xmax = 2**7, -40*wl, 40*wl 
     ny, ymin, ymax = 2**4, -5*wl, 5*wl
-    nz, zmin, zmax = 2**9, -10*wl, 10*wl
+    nz, zmin, zmax = 2**7, -10*wl, 10*wl
     dx, dy, dz = (xmax - xmin)/nx, (ymax - ymin)/ny, (zmax - zmin)/nz
     # 10 timesteps per laser cycle
     timestep = dz/consts.light_velocity/2
@@ -39,25 +40,22 @@ if __name__ == '__main__':
     a0 = 5 # [unitless]
     # Field amplitude
     E0 = -a0 * consts.electron_mass * consts.light_velocity * omega / consts.electron_charge #[statV/cm] 
-
+    angle = np.pi/20 
 
     @cfunc(types.field_loop_callback)
     def initiate_field_callback(ind, r, E, B, data_double, data_int):
 
         if data_int[0] == 0:       
-            x = r[2]
-            x = r[2]
-            rho2 = r[1]**2 + r[0]**2
-            
-            x = r[2]            
-            rho2 = r[1]**2 + r[0]**2
-            
-            k = 2*np.pi/wl
-            gp = np.real(E0*np.exp(-1j*(k*x))*np.exp(-x**2/(2*pulseWidth_x**2)))
+            x = r[2]*np.cos(angle) + r[0]*np.sin(angle)
+            z = -r[2]*np.sin(angle) + r[0]*np.cos(angle) 
 
-            # x-polarized 
-            E[0] = gp       
-            B[1] = gp        
+            k = 2*np.pi/wl
+            gp = np.real(E0*np.exp(-1j*(k*x))*np.exp(-x**2/(2*pulseWidth_x**2))*np.exp(-z**2/(2*pulseWidth_z**2)))
+
+            # y-polarized 
+            E[1] = gp
+            B[0] = -gp*np.sin(angle) - gp*np.cos(angle) # Bx
+            B[2] = -gp*np.cos(angle) + gp*np.sin(angle) # Bz     
 
     #=================================PLASMA PROFILE========================================
     # plasma profile
@@ -154,7 +152,8 @@ if __name__ == '__main__':
                                                    temperature=temperature,
                                                    density=density_profile.address,
                                                    velocity=window_speed,
-                                                   direction='z',)
+                                                   direction='z',
+                                                   angle=angle)
     field_handler_adress = moving_window.field_handler(sim.simulation_box(),timestep)
 
     sim.add_handler(name=moving_window.name, 
@@ -167,7 +166,7 @@ if __name__ == '__main__':
     s = int((end_of_plasma+zmax)/consts.light_velocity/timestep) # number of steps in the simulation 
     checkpoint = 10
 
-    fig, ax = plt.subplots(2, 1, figsize=(15, 5))
+    fig, ax = plt.subplots(2, 1, figsize=(5, 5))
     for i in range(s):
         data_int[0] = i 
         sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
@@ -180,11 +179,14 @@ if __name__ == '__main__':
             sim.particle_loop(name='electron', handler=get_density.address,
                         data_double=pipic.addressof(rho))
             load_fields()
-
+            rollback = i*timestep*consts.light_velocity*np.cos(angle)//dz
+            rollback_x = i*timestep*consts.light_velocity*np.sin(angle)//dx
+            rho = np.roll(rho, -int(rollback), axis=2)
+            Ey = np.roll(Ey, -int(rollback), axis=2)
             # plot fields and densities
             im = ax[0].imshow(rho[:, ny//2, :], origin='lower', aspect='auto',
                         extent=[ymin, ymax, zmin, zmax], cmap='Reds',vmin=0, vmax=n0)
-            ax[1].imshow(Ex[:, ny//2, :], origin='lower', aspect='auto',
+            ax[1].imshow(Ey[:, ny//2, :], origin='lower', aspect='auto',
                         extent=[ymin, ymax, zmin, zmax], cmap='seismic')
             plt.savefig(f'./rho_{i:04d}.png')
 
