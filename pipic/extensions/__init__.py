@@ -9,7 +9,7 @@ from . import _x_converter_c as x_converter_c
 from . import _x_reflector_c as x_reflector_c
 from . import x_reflector_py
 from . import _moving_window as moving_window
-
+from . import _absorbing_boundaries as absorbing_boundaries
 
 __all__ = ['x_converter_c',
            'x_reflector_c',
@@ -19,4 +19,5 @@ __all__ = ['x_converter_c',
            'qed_volokitin2023',
            'downsampler_gonoskov2022',
            'moving_window'
-           'focused_pulse',]
+           'focused_pulse',
+           'absorbing_boundaries',]

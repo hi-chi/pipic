@@ -150,7 +150,7 @@ if __name__ == '__main__':
                                                    thickness=thickness,
                                                    particles_per_cell=particles_per_cell,
                                                    temperature=temperature,
-                                                   density=density_profile.address,
+                                                   density_profile=density_profile.address,
                                                    velocity=window_speed,
                                                    direction='z',
                                                    angle=angle)

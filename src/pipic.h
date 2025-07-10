@@ -100,7 +100,7 @@ struct pipic
     int getTypeIndex(string typeName){
         return Ensemble->getTypeIndex(typeName);
     }
-    void addHandler(string name, string subject, int64_t handler = 0, int64_t field_handler = 0, int64_t dataDouble = 0, int64_t dataInt = 0){
+    void addHandler(string name, string subject = "", int64_t handler = 0, int64_t field_handler = 0, int64_t dataDouble = 0, int64_t dataInt = 0){
         double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
         int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
 
@@ -108,8 +108,8 @@ struct pipic
             Ensemble->Manager.addFieldHandler(name, "fields", field_handler, dataDouble, dataInt); 
         }
         if (handler != 0){
-            Ensemble->Manager.addCellHandler(name, subject, handler, dataDouble_, dataInt_);        
-        }
+                Ensemble->Manager.addCellHandler(name, subject, handler, dataDouble_, dataInt_);    
+        }    
     }
     int64_t ensembleData(){
         return int64_t(Ensemble->cell);

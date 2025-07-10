@@ -68,7 +68,7 @@ PYBIND11_MODULE(_pipic, object) {
         .def("log_policy", &pipic::pyLogPolicy, py::arg("log_to_file") = true, py::arg("log_to_screen") = false)
         .def("set_rng_seed", &pipic::setRngGenSeed, py::arg("seed"))
         .def("get_type_index", &pipic::getTypeIndex, py::arg("type_name"))
-        .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject"), py::arg("handler")=0, py::arg("field_handler")=0, py::arg("data_double") = 0, py::arg("data_int") = 0)
+        .def("add_handler", &pipic::addHandler, py::arg("name"), py::arg("subject")="", py::arg("handler")=0, py::arg("field_handler")=0, py::arg("data_double") = 0, py::arg("data_int") = 0)
         .def("ensemble_data", &pipic::ensembleData)
         .def("simulation_box", &pipic::simulationBoxAddress)
         .def("en_corr_type", &pipic::en_corr_type, py::arg("correction_type") = 2)

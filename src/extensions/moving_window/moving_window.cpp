@@ -101,9 +101,6 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             // r_min marks the beggining of the cleaning region
             double r_min = r_rel - _thickness*step[dir];
 
-            //double3 cell_min = CI.cellMin();
-            //double3 cell_max = CI.cellMax();
-
             r_rel -= ( cell_min[ndir])*tan(_angle); 
             r_min -= ( cell_min[ndir])*tan(_angle); 
 
@@ -169,8 +166,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                             // generate momentum
                             double3 p = {cthread.nrandom(), cthread.nrandom(), cthread.nrandom()};
                             p = sqrt(electronMass*_temperature)*p;
-                            
-                            p = sqrt(1 + 0.25*p.norm2()/sqr(electronMass*_velocity))*p;
+                            p = sqrt(1 + 0.25*p.norm2()/sqr(electronMass*lightVelocity))*p;
                             P.p = p;
                             
                             P.w = weight;
@@ -185,7 +181,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 
-void set_statics(int64_t simbox, double velocity, double angle, char direction){
+void set_statics(int64_t simbox, int thickness, double velocity, double angle, char direction){
     _simbox = (simulationBox*)simbox;
     _angle = angle;
     _velocity = velocity/cos(angle); // adjust velocity according to the angle
@@ -216,24 +212,31 @@ void set_statics(int64_t simbox, double velocity, double angle, char direction){
 
     if (dir==2){
         ndir=0;
-    }else{ ndir = dir+1; }
-}
+    }else{ ndir = dir+1; };
+
+    if (thickness == -1){
+        _thickness = int(n[dir]/8); // default thickness is equal to the cell size in the principal direction
+        pipic_log.message("pi-PIC warning: moving_window handler(): thickness is not set, using default value of n/8.", false);
+    }else{
+        _thickness = thickness;
+    };
+};
 
 
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int64_t simbox, int thickness, double particles_per_cell, double temperature, int64_t density, double velocity, double angle, char direction){ 
+int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, double angle, char direction){ 
     cell = (cellContainer***)ensembleData;
-    _thickness = thickness;
     ppc = particles_per_cell;
     _temperature = temperature;
-    _density_profile = density;
+    _density_profile = density_profile;
     if(!staticsHasBeenSet){
-        set_statics(simbox, velocity, angle, direction);
+        set_statics(simulation_box, thickness, velocity, angle, direction);
         staticsHasBeenSet = true;
-    };
-    if (thickness <= 0){
-        pipic_log.message("pi-PIC error: moving_window handler(): thickness must be positive.", true);
+    }else{
+        pipic_log.message("pi-PIC warning: moving_window handler(): "
+        "static variables have already been set, using values for simulation_box, thickness, "
+        "velocity, angle and direction set in field_handler (or defaults).", false);
     };
     Thread.resize(omp_get_max_threads());
     return (int64_t)Handler;
@@ -241,11 +244,15 @@ int64_t handler(int64_t ensembleData, int64_t simbox, int thickness, double part
 
 
 // extension initialization
-int64_t field_handler(int64_t simbox, double timestep, double velocity, double angle, char direction){ 
+int64_t field_handler(int64_t simulation_box, double timestep, int thickness, double velocity, double angle, char direction){ 
     _timeStep = timestep;
     if(!staticsHasBeenSet){
-        set_statics(simbox, velocity, angle, direction);
+        set_statics(simulation_box, thickness, velocity, angle, direction);
         staticsHasBeenSet = true;
+    }else{
+        pipic_log.message("pi-PIC warning: moving_window field_handler(): "
+        "static variables have already been set, using values for simulation_box, thickness," 
+        "velocity, angle and direction set in handler (or defaults).", false);
     };
     if (timestep > step[dir]/lightVelocity){
         pipic_log.message("pi-PIC error: moving_window field_handler(): time step must be smaller than the cell size divided by the light velocity.", true);
@@ -258,11 +265,11 @@ PYBIND11_MODULE(_moving_window, object) {
     object.attr("name") = name;
     object.def("handler", &handler, 
                py::arg("ensemble"), 
-               py::arg("simbox"), 
-               py::arg("thickness"), 
+               py::arg("simulation_box"), 
                py::arg("particles_per_cell"), 
                py::arg("temperature"),
-               py::arg("density"), 
+               py::arg("density_profile"), 
+               py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
                py::arg("angle")=0,
                py::arg("direction")='x');
@@ -270,7 +277,8 @@ PYBIND11_MODULE(_moving_window, object) {
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
                py::arg("timestep"),
+               py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
                py::arg("angle")=0,
                py::arg("direction")='x');
-}
+};
