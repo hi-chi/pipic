@@ -20,7 +20,7 @@ sim = pipic.init(solver='ec',
 from pipic.extensions import focused_pulse
 focused_pulse.set_box(nx=sim.nx, ny=sim.ny, nz=sim.nz,
                       xmin=sim.xmin, ymin=sim.ymin, zmin=sim.zmin,
-                      xmax=sim.xmax, ymax=sim.ymax, zmax=sim.xmax)
+                      xmax=sim.xmax, ymax=sim.ymax, zmax=sim.zmax)
 dist = 30*wavelength # distance to the initial location of the pulse (can be beyond the box)
 starting_dist = 6*wavelength # the distance, which the pulse is brought to
 focused_pulse.set_path(-dist/np.sqrt(2.0), -dist/np.sqrt(2.0), 0) # the path to go (defines the axis)
