@@ -148,10 +148,15 @@ struct pic_solver
 {
     field_solver *Field;
     ensemble *Ensemble;
+
+    // advance call from 
     virtual void advance(double timeStep) = 0;
     //optional functions:
-    void preLoop(){};
-    void postLoop(){};
+    virtual void preLoop(){};
+    virtual void postLoop(){};
+    virtual void startSubLoop(int3 i3, double charge, double mass, double timeStep){};
+    virtual void processParticle(particle &P, double charge, double mass, double timeStep){};
+    virtual void endSubLoop(){};
     virtual ~pic_solver(){}
     string name;
 };

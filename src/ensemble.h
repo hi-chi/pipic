@@ -23,7 +23,7 @@ Contact: arkady.gonoskov@gu.se.
 
 #include "primitives.h"
 #include "services.h"
-#include "fourier_solver.h"
+//#include "fourier_solver.h"
 
 struct cellContainer
 {
@@ -283,6 +283,7 @@ struct ensemble
             accommodateNPfromCI(ig, Manager.Handler[ih]->name, directOrder);
         }
     }
+
     template<typename pic_solver, typename field_solver>
     void apply_particleHandlers(int it, pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
         for(int ih = 0; ih < int(Manager.Handler.size()); ih++)
@@ -418,7 +419,6 @@ struct ensemble
         Manager.latest_av_cmr = migrationCounter/double(totalNumberOfParticles);
         chronometerCells.start();
         Solver->postLoop();
-        Solver->Field->advance(timeStep);
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
     }

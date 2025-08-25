@@ -23,6 +23,7 @@ Contact: arkady.gonoskov@gu.se.
 
 struct ec_solver: public pic_solver //energy-conserving solver
 {
+    double timeStep;
     fourierSolver *field;
     vector<unsigned long long int> overStepMove; // counter of overStepMigrations
     // auxiliary variables for optimization:
@@ -60,6 +61,7 @@ struct ec_solver: public pic_solver //energy-conserving solver
             warning += "Consider reducing time step.";
             pipic_log.message(warning);
         }
+        field->advance(timeStep);
     }
     inline void moveCap(double3 &dr, double3 step){
         if(unlikely(abs(dr.x) > step.x)){dr = (step.x/abs(dr.x))*dr; overStepMove[omp_get_thread_num()]++;}
@@ -215,7 +217,8 @@ struct ec_solver: public pic_solver //energy-conserving solver
         }
         P.r += dr;
     }
-    void advance(double timeStep){
+    void advance(double _timeStep){
+        timeStep = _timeStep;
         Ensemble->advance_singleLoop<ec_solver, fourierSolver>(this, timeStep);
     }
 };

@@ -18,13 +18,13 @@ nx = 128
 time_step = plasma_period / 64
 
 # ---------------------setting solver and simulation region----------------------
-sim = pipic.init(solver="ec", nx=nx, xmin=xmin, xmax=xmax)
+sim = pipic.init(solver="electrostatic_1d", nx=nx, xmin=xmin, xmax=xmax)
 
 
 # ------------------------------adding electrons---------------------------------
 @cfunc(types.add_particles_callback)
 def density_callback(r, data_double, data_int):
-    return density * (abs(r[0]) < l / 4)
+    return density #* (abs(r[0]) < l / 4)
 
 
 sim.add_particles(
@@ -40,7 +40,7 @@ sim.add_particles(
 # ---------------------------setting initial field-------------------------------
 @cfunc(types.field_loop_callback)
 def setField_callback(ind, r, E, B, data_double, data_int):
-    E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin)) * (abs(r[0]) < l / 4)
+    E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin)) #* (abs(r[0]) < l / 4)
 
 
 sim.field_loop(handler=setField_callback.address)
@@ -63,6 +63,10 @@ def xpx_callback(r, p, w, id, data_double, data_int):
     if iy >= 0 and iy < xpx_dist.shape[0]:
         data[iy, ix] += w[0] * inv_dx_dpx / (3 * density / pxLim)
 
+
+@cfunc(types.field_loop_callback)
+def setField_callback(ind, r, E, B, data_double, data_int):
+    E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin)) * (abs(r[0]) < l / 4)
 
 axs[0].set_title("$\partial N / \partial x \partial p_x$ (s g$^{-1}$cm$^{-2}$)")
 axs[0].set(ylabel="$p_x$ (cm g/s)")
@@ -88,7 +92,7 @@ def plot_xpx():
 
 
 # -------------------------preparing output of Ex(x)-----------------------------
-Ex = np.zeros((32,), dtype=np.double)
+Ex = np.zeros((32,1), dtype=np.double)
 
 
 @cfunc(types.it2r_callback)
@@ -96,26 +100,28 @@ def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(types.field2data_callback)
-def get_Ex(it, r, E, B, data_double, data_int):
-    data_double[it[0]] = E[0]
+@cfunc(types.field_loop_callback)
+def get_Ex(ind, r, E, B, data_double, data_int):
+    data = carray(data_double, Ex.shape, dtype=np.double)
+    if ind[0] < 32:
+        data[ind[0],0] = E[0]
 
 
 axs[1].set_xlim([xmin, xmax])
-axs[1].set_ylim([-field_amplitude, field_amplitude])
+#axs[1].set_ylim([-field_amplitude, field_amplitude])
+#axs[1].set_ylim(-100,100)
 axs[1].set(xlabel="$x$ (cm)", ylabel="$E_x$ (cgs units)")
 x_axis = np.linspace(xmin, xmax, Ex.shape[0])
-(plot_Ex_,) = axs[1].plot(x_axis, Ex)
+(plot_Ex_,) = axs[1].plot(x_axis, Ex[:])
 
 
 def plot_Ex():
-    sim.custom_field_loop(
-        number_of_iterations=Ex.shape[0],
-        it2r=Ex_it2r.address,
-        field2data=get_Ex.address,
+    sim.field_loop(
+        handler=get_Ex.address,
         data_double=pipic.addressof(Ex),
     )
-    plot_Ex_.set_ydata(Ex)
+    axs[1].plot(x_axis, Ex[:], color="C1")
+    #plot_Ex_.set_ydata(Ex[:])
 
 
 # ===============================SIMULATION======================================
@@ -124,8 +130,8 @@ if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 time_start = time.time()
 for i in range(32):
-    sim.advance(time_step=time_step, number_of_iterations=8)
     plot_xpx()
     plot_Ex()
     fig.savefig(output_folder + "/im" + str(i) + ".png")
+    sim.advance(time_step=time_step, number_of_iterations=1)
     print(i, "/", 32)

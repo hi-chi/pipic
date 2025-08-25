@@ -19,10 +19,12 @@ Contact: arkady.gonoskov@gu.se.
 // Description: Implementation of Boris pusher with Fourier solver.
 
 #include "ensemble.h"
+#include "fourier_solver.h"
 
 struct fourier_boris_solver: public pic_solver
 {
     int3 n;
+    double timeStep;
     fourierSolver *field;
     bool overStepMigration;
     double3 *dtJ; // array for storing the cumulative current multiplied by timeStep
@@ -59,11 +61,11 @@ struct fourier_boris_solver: public pic_solver
             field->Ey(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].y;
             field->Ez(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].z;
         }
-        memset((void*)&dtJ[0], 0, sizeof(double3)*intg(n.x)*n.y*n.z); // set cuttent to zero everywhere
+        memset((void*)&dtJ[0], 0, sizeof(double3)*intg(n.x)*n.y*n.z); // set current to zero everywhere
         if(field->divergenceCleaning) field->setRhoToZero();
         overStepMigration = false;
     }
-    void postLoop() // here we deposits the second half of the current, i.e. E -= 2*pi*timeStep*J
+    void postLoop() // here we deposits the second half of the current, i.e. E -= 2*pi*timeStep*J and advance the field
     {
         if(overStepMigration){
             pipic_log.message("fourier_boris_solver warning: restricting move by more than one space step. Consider reducing the time step.");
@@ -78,6 +80,8 @@ struct fourier_boris_solver: public pic_solver
             field->Ey(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].y;
             field->Ez(field->box.ig({ix, iy, iz})) -= 2*pi*dtJ[field->box.ig({ix, iy, iz})].z;
         }
+
+        field->advance(timeStep);
     }
     void startSubLoop(int3 i3, double charge, double mass, double timeStep){
         inv_mc_[omp_get_thread_num()] = 1/(mass*lightVelocity);
@@ -87,6 +91,7 @@ struct fourier_boris_solver: public pic_solver
     void endSubLoop(){
         subField[omp_get_thread_num()].uploadField(*field);
     }
+
     void CIC(double3 r, double *c, int *cil, double3 &E, double3 &B){
         subField[omp_get_thread_num()].CIC_c(r, c, cil);
         subField[omp_get_thread_num()].CIC(c, cil, E, B);
@@ -195,7 +200,8 @@ struct fourier_boris_solver: public pic_solver
             for(int i = 0; i < (1 << box.dim); i++) dtJ[cig[i]] += c[i]*P.w*charge*invCellVolume*dtv;
         }
     }
-    void advance(double timeStep){
+    void advance(double _timeStep){
+        timeStep = _timeStep;
         Ensemble->advance_singleLoop<fourier_boris_solver, fourierSolver>(this, timeStep);
     }
 };
