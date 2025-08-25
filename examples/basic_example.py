@@ -18,7 +18,7 @@ nx = 128
 time_step = plasma_period / 64
 
 # ---------------------setting solver and simulation region----------------------
-sim = pipic.init(solver="electrostatic_1d", nx=nx, xmin=xmin, xmax=xmax)
+sim = pipic.init(solver="fourier_boris", nx=nx, xmin=xmin, xmax=xmax)
 
 
 # ------------------------------adding electrons---------------------------------

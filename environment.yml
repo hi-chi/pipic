@@ -1,32 +1,31 @@
-name: pipic_tutorial
+name: test_env
 channels:
-  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
   - aom=3.6.0=h6a678d5_0
-  - blas=1.0=openblas
-  - brotli-python=1.0.9=py312h6a678d5_9
+  - blas=1.0=mkl
+  - brotli-python=1.0.9=py313h6a678d5_9
   - bzip2=1.0.8=h5eee18b_6
   - c-ares=1.19.1=h5eee18b_0
   - ca-certificates=2025.7.15=h06a4308_0
   - cairo=1.16.0=h44eff21_7
-  - contourpy=1.3.1=py312hdb19cb5_0
+  - contourpy=1.3.1=py313hdb19cb5_0
   - cycler=0.11.0=pyhd3eb1b0_0
   - cyrus-sasl=2.1.28=h1110e0f_3
   - dav1d=1.2.1=h5eee18b_0
   - expat=2.7.1=h6a678d5_0
-  - fftw=3.3.10=nompi_hf1063bd_110
   - fontconfig=2.14.1=h55d465d_3
-  - fonttools=4.55.3=py312h5eee18b_0
+  - fonttools=4.55.3=py313h5eee18b_0
   - freetype=2.13.3=h4a9f257_0
   - fribidi=1.0.10=h7b6447c_0
   - graphite2=1.3.14=h295c915_1
   - harfbuzz=10.2.0=hdfddeaa_1
   - icu=73.1=h6a678d5_0
+  - intel-openmp=2025.0.0=h06a4308_1171
   - jpeg=9e=h5eee18b_3
-  - kiwisolver=1.4.8=py312h6a678d5_0
+  - kiwisolver=1.4.8=py313h6a678d5_0
   - lcms2=2.16=h92b89f2_1
   - ld_impl_linux-64=2.40=h12ee557_0
   - lerc=4.0.0=h6a678d5_0
@@ -41,28 +40,24 @@ dependencies:
   - libev=4.33=h7f8727e_1
   - libevent=2.1.12=hdbd6064_1
   - libffi=3.4.4=h6a678d5_1
-  - libgcc=15.1.0=h767d61c_4
-  - libgcc-ng=15.1.0=h69a702a_4
-  - libgfortran-ng=8.2.0=hdf63c60_1
-  - libgfortran5=15.1.0=hcea5267_4
+  - libgcc-ng=11.2.0=h1234567_1
   - libgl=1.7.0=h5eee18b_2
   - libglib=2.84.2=h37c7471_0
   - libglvnd=1.7.0=h5eee18b_2
   - libglx=1.7.0=h5eee18b_2
-  - libgomp=15.1.0=h767d61c_4
+  - libgomp=11.2.0=h1234567_1
   - libiconv=1.16=h5eee18b_3
   - libkrb5=1.21.3=h520c7b4_4
   - libllvm15=15.0.7=he89c38a_4
+  - libmpdec=4.0.0=h5eee18b_0
   - libnghttp2=1.57.0=h2d74bed_0
-  - libopenblas=0.3.29=ha39b09d_0
   - libpciaccess=0.18=h5eee18b_0
   - libpng=1.6.39=h5eee18b_0
   - libpq=17.4=h02b6914_2
   - libprotobuf=5.29.3=h3cdef7c_1
   - libsodium=1.0.18=h7b6447c_0
   - libssh2=1.11.1=h251f7ec_0
-  - libstdcxx=15.1.0=h8f9b012_4
-  - libstdcxx-ng=15.1.0=h4852527_4
+  - libstdcxx-ng=11.2.0=h1234567_1
   - libtiff=4.7.0=hde9077f_0
   - libuuid=1.41.5=h5eee18b_0
   - libwebp-base=1.3.2=h5eee18b_1
@@ -71,27 +66,31 @@ dependencies:
   - libxml2=2.13.8=hfdd30dd_0
   - lmdb=0.9.31=hb25bd0a_0
   - lz4-c=1.9.4=h6a678d5_1
-  - matplotlib=3.10.0=py312h06a4308_0
-  - matplotlib-base=3.10.0=py312hbfdbfaf_0
+  - matplotlib=3.10.0=py313h06a4308_1
+  - matplotlib-base=3.10.0=py313h68cf311_1
   - mesalib=25.1.5=h31e3550_0
+  - mkl=2025.0.0=hacee8c2_941
+  - mkl-service=2.4.0=py313h5eee18b_3
+  - mkl_fft=1.3.11=py313hacdc0fc_1
+  - mkl_random=1.2.8=py313h8928b4f_1
   - mysql=8.4.0=h721767e_2
   - ncurses=6.5=h7934f7d_0
-  - numpy=2.0.1=py312h2809609_1
-  - numpy-base=2.0.1=py312he1a6c75_1
+  - numpy-base=2.2.5=py313h0b9dd14_1
   - openjpeg=2.5.2=h0d4d230_1
   - openldap=2.6.10=h8e75217_0
   - openssl=3.0.17=h5eee18b_0
-  - packaging=25.0=py312h06a4308_0
+  - packaging=25.0=py313h06a4308_0
   - pcre2=10.42=hebb0a14_1
-  - pillow=11.3.0=py312hb1c3d2d_0
+  - pillow=11.3.0=py313hb1c3d2d_0
   - pip=25.1=pyhc872135_2
   - pixman=0.46.4=h7934f7d_0
   - pthread-stubs=0.3=h0ce48e5_1
-  - pyparsing=3.2.0=py312h06a4308_0
-  - pyqt=6.7.1=py312h8dad735_2
-  - pyqt6-sip=13.9.1=py312h6ce4db3_2
-  - python=3.12.11=h22baa00_0
-  - python-dateutil=2.9.0post0=py312h06a4308_2
+  - pyparsing=3.2.0=py313h06a4308_0
+  - pyqt=6.7.1=py313h8dad735_2
+  - pyqt6-sip=13.9.1=py313h6ce4db3_2
+  - python=3.13.5=h4612cfd_100_cp313
+  - python-dateutil=2.9.0post0=py313h06a4308_2
+  - python_abi=3.13=0_cp313
   - qtbase=6.7.3=h10a5587_4
   - qtdeclarative=6.7.3=h7934f7d_1
   - qtsvg=6.7.3=he4bddd1_1
@@ -99,16 +98,17 @@ dependencies:
   - qtwebchannel=6.7.3=h7934f7d_1
   - qtwebsockets=6.7.3=h7934f7d_1
   - readline=8.3=hc2a1206_0
-  - setuptools=78.1.1=py312h06a4308_0
-  - sip=6.10.0=py312h6a678d5_0
-  - six=1.17.0=py312h06a4308_0
+  - setuptools=72.1.0=py313h06a4308_0
+  - sip=6.10.0=py313h6a678d5_0
+  - six=1.17.0=py313h06a4308_0
   - spirv-tools=2025.1=hdb19cb5_0
   - sqlite=3.50.2=hb25bd0a_1
+  - tbb=2022.0.0=hdb19cb5_0
+  - tbb-devel=2022.0.0=hdb19cb5_0
   - tk=8.6.15=h54e0aa7_0
-  - tornado=6.5.1=py312h5eee18b_0
+  - tornado=6.5.1=py313h5eee18b_0
   - tzdata=2025b=h04d1e81_0
-  - unicodedata2=15.1.0=py312h5eee18b_1
-  - wheel=0.45.1=py312h06a4308_0
+  - wheel=0.45.1=py313h06a4308_0
   - xcb-util=0.4.1=h5eee18b_2
   - xcb-util-cursor=0.1.5=h5eee18b_0
   - xcb-util-image=0.4.0=h5eee18b_2
@@ -131,4 +131,9 @@ dependencies:
   - xz=5.6.4=h5eee18b_1
   - zlib=1.2.13=h5eee18b_1
   - zstd=1.5.6=hc292b87_0
-prefix: /home/frida/anaconda3/envs/pipic_tutorial
+  - pip:
+      - llvmlite==0.44.0
+      - numba==0.61.2
+      - numpy==2.2.6
+      - pipic==1.2
+prefix: /home/frida/anaconda3/envs/test_env
