@@ -131,8 +131,4 @@ dependencies:
   - xz=5.6.4=h5eee18b_1
   - zlib=1.2.13=h5eee18b_1
   - zstd=1.5.6=hc292b87_0
-  - pip:
-      - llvmlite==0.44.0
-      - numba==0.61.2
-      - pipic==1.3rc3.dev45
 prefix: /home/frida/anaconda3/envs/pipic_tutorial
