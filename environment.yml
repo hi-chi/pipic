@@ -1,5 +1,6 @@
 name: test_env
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -16,6 +17,7 @@ dependencies:
   - cyrus-sasl=2.1.28=h1110e0f_3
   - dav1d=1.2.1=h5eee18b_0
   - expat=2.7.1=h6a678d5_0
+  - fftw=3.3.10=nompi_hf1063bd_110
   - fontconfig=2.14.1=h55d465d_3
   - fonttools=4.55.3=py312h5eee18b_0
   - freetype=2.13.3=h4a9f257_0
@@ -40,12 +42,15 @@ dependencies:
   - libev=4.33=h7f8727e_1
   - libevent=2.1.12=hdbd6064_1
   - libffi=3.4.4=h6a678d5_1
-  - libgcc-ng=11.2.0=h1234567_1
+  - libgcc=15.1.0=h767d61c_4
+  - libgcc-ng=15.1.0=h69a702a_4
+  - libgfortran-ng=8.2.0=hdf63c60_1
+  - libgfortran5=15.1.0=hcea5267_4
   - libgl=1.7.0=h5eee18b_2
   - libglib=2.84.2=h37c7471_0
   - libglvnd=1.7.0=h5eee18b_2
   - libglx=1.7.0=h5eee18b_2
-  - libgomp=11.2.0=h1234567_1
+  - libgomp=15.1.0=h767d61c_4
   - libiconv=1.16=h5eee18b_3
   - libkrb5=1.21.3=h520c7b4_4
   - libllvm15=15.0.7=he89c38a_4
@@ -56,7 +61,8 @@ dependencies:
   - libprotobuf=5.29.3=h3cdef7c_1
   - libsodium=1.0.18=h7b6447c_0
   - libssh2=1.11.1=h251f7ec_0
-  - libstdcxx-ng=11.2.0=h1234567_1
+  - libstdcxx=15.1.0=h8f9b012_4
+  - libstdcxx-ng=15.1.0=h4852527_4
   - libtiff=4.7.0=hde9077f_0
   - libuuid=1.41.5=h5eee18b_0
   - libwebp-base=1.3.2=h5eee18b_1
