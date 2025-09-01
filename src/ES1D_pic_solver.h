@@ -40,11 +40,9 @@ struct ES1DPicSolver: public pic_solver
     void preLoop()
     {
         field->advance(timeStep);
-        cout << "Jx before reset " << field->Jx[0] << endl;
         for(size_t ix = 0; ix < field->Jx.size(); ix++){
             field->Jx[ix] = 0;
         }
-        cout << "Jx after reset " << field->Jx[0] << endl;
     }
 
     void postLoop(){}
@@ -60,7 +58,8 @@ struct ES1DPicSolver: public pic_solver
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
 
         // deposit current
-        int indx = int(P.r.x*box.step.x + 0.5);
+        int indx = int(P.r.x/box.step.x) % box.n.x; // index of the nearest node
+        //if (indx >= box.n.x) indx = 0;
         field->Jx[indx] += P.w*electronCharge*(P.p.x/electronMass)/box.step.x; 
     }
 
