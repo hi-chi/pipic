@@ -45,7 +45,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
     {
         // get electric field at the point r
         int ix = int((r.x - box.min.x)/box.step.x + 0.5);
-        if(ix < 0 || ix >= box.n.x) {E = {0, 0, 0}; B = {0, 0, 0}; return;} // out of bounds
+        if(ix >= box.n.x) {ix -= box.n.x;}; // out of bounds
         E.x = Ex[ix];
         E.y = 0; 
         E.z = 0;

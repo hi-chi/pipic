@@ -58,8 +58,9 @@ struct ES1DPicSolver: public pic_solver
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
 
         // deposit current
-        int indx = int(P.r.x/box.step.x) % box.n.x; // index of the nearest node
-        //if (indx >= box.n.x) indx = 0;
+        int indx = int((P.r.x - box.min.x)/box.step.x + 0.5);
+        if(indx >= box.n.x) {indx -= box.n.x;}; // out of bounds
+
         field->Jx[indx] += P.w*electronCharge*(P.p.x/electronMass)/box.step.x; 
     }
 
