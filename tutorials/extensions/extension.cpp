@@ -13,7 +13,7 @@ const string name = "extension";
 static double boundarySize;
 static double density; // density of the particles
 static int particleTypeIndex = 0; // type of particles to be removed 
-static double fall = 1e-2; // shape parameter for the boundary
+static double fall = 1e-1; // shape parameter for the boundary
 static int ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 - z
 static double gmin;
 static double gmax;
@@ -187,7 +187,7 @@ int64_t handler(int64_t ensembleData, // adress of the ensemble data
     temperature = _temperature; // temperature of the particles
     gmin = ((simulationBox*)simbox)->min.z; // minimum z coordinate of the simulation box
     gmax = ((simulationBox*)simbox)->max.z; // maximum z coordinate of the simulation box
-    ax = 0; // axis along which the boundary is applied, 0 - x, 1 - y, 2 - z
+    ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 - z
     Thread.resize(omp_get_max_threads());
     return (int64_t)Handler;
 };
@@ -197,7 +197,7 @@ int64_t field_handler(int64_t simbox,
                       double boundary_size){ 
     gmin = ((simulationBox*)simbox)->min.z; // minimum z coordinate of the simulation box
     gmax = ((simulationBox*)simbox)->max.z; // maximum z coordinate of the simulation box
-    ax = 0; // axis along which the boundary is applied, 0 - x, 1 - y, 2 - z
+    ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 - z
     boundarySize = boundary_size; // size of the boundary region
     return (int64_t)fieldHandler;
 };
