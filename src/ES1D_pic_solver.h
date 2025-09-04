@@ -56,11 +56,13 @@ struct ES1DPicSolver: public pic_solver
         field->getEB(P.r, E, B); // get electric field at the particle position
         P.p.x += timeStep*charge*E.x; // advance particle momentum
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
+        if (P.r.x < box.min.x) P.r.x += box.max.x - box.min.x; // periodic boundary conditions
+        else if (P.r.x > box.max.x) P.r.x += -box.max.x + box.min.x; // periodic boundary conditions
+        
 
         // deposit current
         int indx = int((P.r.x - box.min.x)/box.step.x + 0.5);
         if(indx >= box.n.x) {indx -= box.n.x;}; // out of bounds
-
         field->Jx[indx] += P.w*electronCharge*(P.p.x/electronMass)/box.step.x; 
     }
 

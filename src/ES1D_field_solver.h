@@ -35,9 +35,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
     void advance(double timeStep){
         //advance Ex
         for(size_t ix = 0; ix < Ex.size(); ix++){
-            Ex[ix] -= timeStep*4*M_PI*Jx[ix];
-            cout << "advance "<< Ex[ix] << endl;
-            // here we need to do one step for Ex[ix] to advance its state in time
+            Ex[ix] += -timeStep*4*M_PI*Jx[ix];
         }
     }
 
@@ -118,17 +116,6 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
 
         for(int j = 0; j < (1 << box.dim); j++){
             F_data[6*j  ] = Ex[cig[j]];
-            //F_data[6*j+3] = Bx[cig[j]];
         }
-        /*
-        for(int j = 0; j < (1 << box.dim); j++){
-            F_data[6*j  +1] = Ey[cig[j]];
-            F_data[6*j+3+1] = By[cig[j]];
-        }
-        for(int j = 0; j < (1 << box.dim); j++){
-            F_data[6*j  +2] = Ez[cig[j]];
-            F_data[6*j+3+2] = Bz[cig[j]];
-        }
-        */
     }
 };

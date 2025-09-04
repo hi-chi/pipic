@@ -18,19 +18,19 @@ nx = 128
 time_step = plasma_period / 64
 
 # ---------------------setting solver and simulation region----------------------
-sim = pipic.init(solver="fourier_boris", nx=nx, xmin=xmin, xmax=xmax)
-
+sim = pipic.init(solver="electrostatic_1d", nx=nx, xmin=xmin, xmax=xmax)
 
 # ------------------------------adding electrons---------------------------------
 @cfunc(types.add_particles_callback)
 def density_callback(r, data_double, data_int):
     return density #* (abs(r[0]) < l / 4)
 
+print(consts.electron_charge)
 
 sim.add_particles(
     name="electron",
     number=500 * nx,
-    charge=-consts.electron_charge,
+    charge=consts.electron_charge,
     mass=consts.electron_mass,
     temperature=temperature,
     density=density_callback.address,
@@ -92,7 +92,7 @@ def plot_xpx():
 
 
 # -------------------------preparing output of Ex(x)-----------------------------
-Ex = np.zeros((32,1), dtype=np.double)
+Ex = np.zeros((nx,1), dtype=np.double)
 
 
 @cfunc(types.it2r_callback)
@@ -103,13 +103,12 @@ def Ex_it2r(it, r, data_double, data_int):
 @cfunc(types.field_loop_callback)
 def get_Ex(ind, r, E, B, data_double, data_int):
     data = carray(data_double, Ex.shape, dtype=np.double)
-    if ind[0] < 32:
+    if ind[0] < nx:
         data[ind[0],0] = E[0]
 
 
 axs[1].set_xlim([xmin, xmax])
-#axs[1].set_ylim([-field_amplitude, field_amplitude])
-#axs[1].set_ylim(-100,100)
+axs[1].set_ylim([-field_amplitude, field_amplitude])
 axs[1].set(xlabel="$x$ (cm)", ylabel="$E_x$ (cgs units)")
 x_axis = np.linspace(xmin, xmax, Ex.shape[0])
 (plot_Ex_,) = axs[1].plot(x_axis, Ex[:])
@@ -120,18 +119,18 @@ def plot_Ex():
         handler=get_Ex.address,
         data_double=pipic.addressof(Ex),
     )
-    axs[1].plot(x_axis, Ex[:], color="C1")
-    #plot_Ex_.set_ydata(Ex[:])
-
+    #axs[1].plot(x_axis, Ex[:], color="C1")
+    plot_Ex_.set_ydata(Ex[:])
 
 # ===============================SIMULATION======================================
 output_folder = "basic_example_output"
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 time_start = time.time()
-for i in range(32):
+s = 64
+for i in range(s):
     plot_xpx()
     plot_Ex()
     fig.savefig(output_folder + "/im" + str(i) + ".png")
     sim.advance(time_step=time_step, number_of_iterations=1)
-    print(i, "/", 32)
+    print(i, "/", s)
