@@ -157,7 +157,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(2, 1, figsize=(15, 5))
     for i in range(s):
         data_int[0] = i 
-        sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
+        sim.advance(time_step=timestep, number_of_iterations=1,use_omp=True)
 
         if i%checkpoint==0:
             print(f'Iteration {i}/{s}')
@@ -173,6 +173,6 @@ if __name__ == '__main__':
             ax[1].cla()
             im = ax[0].plot(rho, label='rho')
             ax[0].set_ylim(0,n0)
-            ax[1].plot(Ez, label='Ex')
+            ax[1].plot(Ez, label='Ez')
             plt.savefig(f'./rho_{i:04d}.png')
 
