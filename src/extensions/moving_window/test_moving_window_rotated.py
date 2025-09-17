@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                                    temperature=temperature,
                                                    density_profile=density_profile.address,
                                                    velocity=window_speed,
-                                                   direction='z',
+                                                   axis='z',
                                                    angle=angle)
     field_handler_adress = moving_window.field_handler(sim.simulation_box(),timestep)
 

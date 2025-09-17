@@ -36,6 +36,22 @@ struct ES1DPicSolver: public pic_solver
         delete Ensemble;
         delete field;
     }
+
+    void initalizeParticles(particle &P, double charge, double mass, double timeStep){
+        double3 E;
+        double3 B;
+        field->getEB(P.r, E, B); // get electric field at the particle position
+        P.p.x -= timeStep*charge*E.x/2; // pull back -1/2 timestep to initalize leapfrog scheme
+    }
+
+    void initialize(double timeStep){
+        for (int it = 0; it < int(Ensemble->type.size()); it++){
+            for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
+                particle *P = &*iP;
+                initalizeParticles(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);;
+            }
+        }
+    }
     
     void preLoop()
     {
@@ -48,6 +64,8 @@ struct ES1DPicSolver: public pic_solver
     void postLoop(){}
     void startSubLoop(int3 i3, double charge, double mass, double timeStep){}
     void endSubLoop(){}
+
+
     
     void processParticle(particle &P, double charge, double mass, double timeStep){
         simulationBox &box(field->box);
@@ -56,14 +74,18 @@ struct ES1DPicSolver: public pic_solver
         field->getEB(P.r, E, B); // get electric field at the particle position
         P.p.x += timeStep*charge*E.x; // advance particle momentum
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
-        if (P.r.x < box.min.x) P.r.x += box.max.x - box.min.x; // periodic boundary conditions
-        else if (P.r.x > box.max.x) P.r.x += -box.max.x + box.min.x; // periodic boundary conditions
-        
+        double l = box.max.x - box.min.x;
+        if (P.r.x < box.min.x) P.r.x += (box.max.x - box.min.x); // periodic boundary conditions
+        else if (P.r.x > box.max.x) P.r.x += (-box.max.x + box.min.x); // periodic boundary conditions
+        // note that the momentum is defined as momentum per particle not per macroparticle
 
         // deposit current
-        int indx = int((P.r.x - box.min.x)/box.step.x + 0.5);
-        if(indx >= box.n.x) {indx -= box.n.x;}; // out of bounds
-        field->Jx[indx] += P.w*electronCharge*(P.p.x/electronMass)/box.step.x; 
+        int indx = int((P.r.x - box.min.x)/box.step.x);
+        double w_left = field->CIC(P.r.x, indx, box.step.x, box.min.x);
+        double w_right = 1 - w_left;
+        
+        field->Jx[indx] += w_left*P.w*charge*(P.p.x/mass)/box.step.x; 
+        field->Jx[(indx + 1) % box.n.x] += w_right*P.w*charge*(P.p.x/mass)/box.step.x;
     }
 
     void advance(double _timeStep){

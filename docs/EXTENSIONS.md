@@ -46,3 +46,144 @@ Here we list extensions with short descriptions, references and contacts of deve
       return "any function of par"
       ```
       The use of the extension is examplified with the case of setting electric dipole wave in 'examples/focused_pulse_test.py'.
+
+- **absorbing_boundaries** is an extension for applying absorbing boundaries to a simulation box. Fields and density modulations are damped according to the smooth function $f(r(x))=exp(-sr(x)\Delta t/T),\,\,r(x) = cos(\pi x/2) - \frac{1}{cos(\pi x/2)}$ where $x$ is normalized between the edge of the boundary and the simulation box, $s$ is a shape parameter and $\Delta t$ is the timestep. For optimal damping it is recommended that $s\Delta t\approx1$ and the boundary is $\approx4\lambda$ where $\lambda$ is the wavelength of the electromagnetic signal being absorbed.<br>
+*implemented by Frida Brogren* (frida.brogren@gu.se) *and Arkady Gonoskov* </br>
+
+  Usage:  
+  ```python
+  sim.add_handler(name=absorbing_boundaries.name,
+                  subject="particle_name,cells",  # apply to both particles and cells
+                  handler=absorbing_boundaries.handler(sim.ensemble_data(),
+                                                       sim.simulation_box(),
+                                                       ...),
+                  field_handler=absorbing_boundaries.field_handler(sim.simulation_box(),
+                                                                   timestep=timestep,
+                                                                   ...),
+                  data_int=pipic.addressof(data_int),)
+  ```
+  - **Handler variables:**
+      
+    - **ensemble** (`C++ object address`)  
+      The particle ensemble data from the simulation.
+
+    - **simulation_box** (`C++ object address`)  
+      Geometry of the simulation box.
+
+    - **density_profile** (`address to callable` | optional, default = `-1`)  
+      Address to callback function (`@cfunc(types.add_particles_callback)`) for retrieving the particle density profile.  
+      If `-1`, no density profile is used and the density is 0 at the boundary.
+
+    - **boundary_size** (`float`, optional, default = `l/8`)  
+      Size of the absorbing boundary region (in cm).  
+      Defaults to simulation box size in the direction of the boundary divided by 8.
+
+    - **axis** (`str`, optional, default = `'x'`)  
+      Axis along which the absorbing boundary is applied. Must be `'x'`, `'y'`,     or `'z'`.
+
+    - **fall** (`float`, optional, default = `0.01`)  
+      Shape parameter ($s$) for the damping function. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectivly end of the boundary.
+
+    - **temperature** (`float`, optional, default = `0.0`)  
+      Temperature for injecting replacement particles in the absorbing region.
+
+    - **particles_per_cell** (`float`, optional, default = `1.0`)  
+      Number of particles per cell used for particle re-injection.
+
+    - **remove_particles_every** (`int`, optional, default = `10`)  
+      Number of iterations between particle removals in the absorbing region.
+
+    - **moving_window_velocity** (`float`, optional, default = `0.0`)  
+      Velocity of a moving simulation window (if used).
+
+    - **moving_window_direction** (`str`, optional, default = `'x'`)  
+      Direction of the moving window.
+
+  - **Field handler variables:**
+    - **simulation_box** (`C++ object address`)  
+      Geometry of the simulation box.
+
+    - **timestep** (`float`)  
+      Simulation timestep.
+
+    - **boundary_size** (`float`, optional, default = `-1.0`)  
+      Size (in cm) of the absorbing boundary region for fields.
+
+    - **axis** (`str`, optional, default = `'x'`)  
+      Axis along which the field absorbing layer is applied. Must be `'x'`, `'y'` or `'z'`.
+
+    - **fall** (`float`, optional, default = `0.01`)  
+      Shape parameter ($s$) for the damping function. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectivly end of the boundary.
+
+
+
+- **moving_window** is an extension for following a region of interest (e.g. laser pulse or particle bunch) as it propagates, reducing computational cost while keeping the relevant physics inside the simulation box.  
+*implemented by Frida Brogren* (frida.brogren@gu.se) *and Arkady Gonoskov* </br>
+
+  **Usage:**  
+  ```python
+  sim.add_handler(name=moving_window.name,
+                  subject="particle_name,cells",  # apply to both particles and fields
+                  handler=moving_window.handler(sim.ensemble_data(),
+                                                sim.simulation_box(),
+                                                particles_per_cell,
+                                                temperature,
+                                                density_profile,
+                                                ...),
+                  field_handler=moving_window.field_handler(sim.simulation_box(),
+                                                            timestep,
+                                                            ...),)
+  ```
+
+  - **Handler variables:**
+    - **ensemble** (`C++ object address`)  
+      The particle ensemble data from the simulation.
+
+    - **simulation_box** (`C++ object address`)  
+      Geometry of the simulation box.
+
+    - **particles_per_cell** (`float`)  
+      Number of particles per cell used for particle re-injection in the moving window.
+
+    - **temperature** (`float`)  
+      Temperature of injected particles.
+
+    - **density_profile** (`address to callable`)  
+      Callback function (`@cfunc(types.add_particles_callback)`) for retrieving the particle density profile.  
+
+    - **thickness** (`float`, optional, default = `n//8`)  
+      Thickness of the moving window re-injection region in space steps.  
+      Defaults to the number of space steps in the direction of the moving window divided by 8.
+
+    - **velocity** (`float`, optional, default = `lightVelocity`)  
+      Velocity of the moving window. 
+
+    - **axis** (`str`, optional, default = `'x'`)  
+      Axis along which the moving window is applied (direction of motion). Must be `'x'`, `'y'`, or `'z'`.
+
+    - **angle** (`float`, optional, default = `0`)  
+      Angle (in radians) of the moving window defined as the angle between **axis** and the next axis as `'x'`->`'y'`, `'y'`->`'z'`and `'z'`->`'x'`.
+ 
+
+
+  - **Field handler variables:**
+    - **simulation_box** (`C++ object address`)  
+      Geometry of the simulation box.
+
+    - **timestep** (`float`)  
+      Simulation timestep.
+
+    - **thickness** (`float`, optional, default = `-1`)  
+      Thickness of the field absorbing/moving boundary region.
+
+    - **velocity** (`float`, optional, default = `lightVelocity`)  
+      Velocity of the moving window.
+
+    - **axis** (`str`, optional, default = `'x'`)  
+      Axis along which the moving window is applied (direction of motion). Must be `'x'`, `'y'`, or `'z'`.
+
+    - **angle** (`float`, optional, default = `0`)  
+      Angle (in radians) of the moving window defined as the angle between **axis** and the next axis as `'x'`->`'y'`, `'y'`->`'z'`and `'z'`->`'x'`.
+ 
+
+

@@ -4,6 +4,7 @@ the mask function. The main purpose of this script is to show how to build exten
 version of the absorbing boundaries that comes with piPIC. */
 
 #include "interfaces.h"
+#include "ensemble.h"
 #include "services.h"
 #include <pybind11/pybind11.h>
 #include "pybind11/stl.h"
@@ -18,17 +19,7 @@ static int ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 
 static double gmin;
 static double gmax;
 static double temperature;
-
 // Struct to hold the cell interface data.
-struct cellContainer
-{
-    vector<particle> P;
-    // endShift is used to mark the end of the particles in the cell that has 
-    // been processed. These particles can have been moved from other cells
-    // during the current advancement and should thus not be processed again.
-    int endShift; 
-    cellContainer(): endShift(0) {}
-};
 static cellContainer ***cell;
 
 
@@ -57,27 +48,14 @@ void addParticle(cellInterface &CI, particle &P){
 // Function for removing particles according to some probability rate.
 void removeParticles(cellContainer* C, threadHandler &cthread, double rate){ 
     
-    int particlesToRemove = 0;
     int particles = int(C->P.size());
-    // iterate over particles in cell
-    for (int ip = 0; ip < (particles - C->endShift - particlesToRemove); ip++){
+    // iterate over particles in cell. The C->endShift particles from the end of the list 
+    // came from other cells during the paricle push and should thus not be processed again.
+    for (int ip = 0; ip < (particles - C->endShift); ip++){
         if (cthread.random() > rate) {
-            // move particle in the back of the list (just before processed particles and those that should be removed) to the place of this particle
-            C->P[ip] = C->P[particles - C->endShift - 1 - particlesToRemove]; 
-            ip--; // adjust index 
-            particlesToRemove += 1; // increment the counter of particles to remove
-        };
-    };
-    // move processed particles to the positions of the particles to be removed
-    for (int ip = 0; ip < particlesToRemove; ip++){
-        if (C->endShift > ip){
-            C->P[particles - C->endShift - particlesToRemove + ip] = C->P[C->P.size()- 1 - ip]; // move last particle to current position
-        } else { 
-        break; 
-        };
-    };
-    // remove last particles
-    C->P.resize(C->P.size() - particlesToRemove); 
+            C->P[ip].w = 0.; // set particle weight to zero to mark it for removal
+        }
+    }
 };
 
 

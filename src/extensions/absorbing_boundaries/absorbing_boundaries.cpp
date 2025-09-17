@@ -1,4 +1,5 @@
 #include "interfaces.h"
+#include "ensemble.h"
 #include "services.h"
 #include <pybind11/pybind11.h>
 #include "pybind11/stl.h"
@@ -21,14 +22,7 @@ static double _fall; // fall rate for the field
 static int pmf = 10; // particle removal frequency, every pmf-th time step particles are removed and replenished
 bool staticsHasBeenSet = false; // flag to check if static variables have been set
 simulationBox* _simbox; // cell interface for manipulating with the content of a cell
-
-struct cellContainer
-{
-    vector<particle> P;
-    int endShift; 
-    cellContainer(): endShift(0) {}
-};
-static cellContainer ***cell;
+static cellContainer ***cell; // cellContainer is defined in ensemble.h, it contains particles of all types in a given cell
 
 void addParticle(cellInterface &CI, particle &P){
     if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
@@ -123,7 +117,6 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                         int particles = int(C->P.size());
                         // iterate over particles in cell
                         for (int ip = 0; ip < (particles - cell[ig][it]->endShift - particlesToRemove); ip++){
-                            //double p_pos[3] = {C->P[ip].r.x, C->P[ip].r.y, C->P[ip].r.z};
                             if (cthread.random() > rate) {
                                 // move particle in the back of the list (just before processed particles and those that should be removed) to the place of this particle
                                 C->P[ip] = C->P[particles - cell[ig][it]->endShift - 1 - particlesToRemove]; 
@@ -274,6 +267,9 @@ int64_t field_handler(int64_t simbox, double timestep, double boundary_size, cha
         set_statics(simbox,boundary_size, axis, fall);
         staticsHasBeenSet = true;
     };
+    if (boundarySize <= 0){
+        pipic_log.message("pi-PIC error: absorbing_boundaries handler(): boundary_size must larger than 0.", true);
+    };
     return (int64_t)fieldHandler;
 };
 
@@ -285,7 +281,7 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
                py::arg("simulation_box"), 
                py::arg("density_profile")=-1,
                py::arg("boundary_size")=-1.0,
-               py::arg("axis")='y',
+               py::arg("axis")='x',
                py::arg("fall")=0.01,
                py::arg("temperature") = 0.0,
                py::arg("particles_per_cell") = 1.0,
@@ -297,6 +293,6 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
                py::arg("simulation_box"), 
                py::arg("timestep"),
                py::arg("boundary_size")=-1.0,
-               py::arg("axis")='y',
+               py::arg("axis")='x',
                py::arg("fall")=0.01);
 }

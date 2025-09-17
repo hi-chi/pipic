@@ -90,6 +90,7 @@ struct ensemble
     handlerManager Manager;
     rndGen RndGen;
     bool advanceWithOmp;
+    int iterationNumber = 0;
 
     ensemble(simulationBox box, int stride = 4): box(box), thread(omp_get_max_threads()),
     fieldHandlerExists(false), shuffle(true), Manager(box.ng), RndGen(box.n.x)
@@ -311,6 +312,18 @@ struct ensemble
         } else
             P.r += (timeStep*lightVelocity/sqrt(sqr(mass*lightVelocity) + P.p.norm()))*P.p;
     }
+
+    void singleThreadParticleLoop(int64_t handler, string typeName, int64_t dataDouble = 0, int64_t dataInt = 0) {
+        void(*handler_)(double*, double*, double*, unsigned long long int*, double*, int*) = (void(*)(double*, double*, double*, unsigned long long int*, double*, int*))handler;
+        double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
+        int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
+        int typeIndex = getTypeIndex(typeName);
+        for(ensemble::nonOmpIterator iP = begin(typeIndex); iP < end(); iP++){
+            particle *P = &*iP;
+            handler_(&(P->r.x), &(P->p.x), &(P->w), &(P->id), dataDouble_, dataInt_);
+        }
+    }
+
     template<typename pic_solver, typename field_solver>
     void advance_singleLoop(pic_solver *Solver, double timeStep){
         chronometer chronometerCells;
@@ -421,6 +434,7 @@ struct ensemble
         Solver->postLoop();
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
+        iterationNumber++;
     }
     template<typename pic_solver, typename field_solver>
     void advance_doubleLoop(pic_solver *Solver, double timeStep)
@@ -580,6 +594,7 @@ struct ensemble
         Solver->Field->advance(timeStep);
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
+        iterationNumber++;
     }
     inline void compresList(vector<particle> &P, threadData &thread, intg ig, int it)
     {
@@ -635,7 +650,7 @@ struct ensemble
     void addParticle_general(particle &P, int it, bool migrated = false) //nonOMP
     {
         if(unlikely((P.r.x < box.min.x)||(P.r.x >= box.max.x)||(P.r.y < box.min.y)||(P.r.y >= box.max.y)||(P.r.z < box.min.z)||(P.r.z >= box.max.z))){
-            pipic_log.message("pi-PIC error: addParticle_general() ingnors an attempt to add a particle that is outside computation region.", true);
+            pipic_log.message("pi-PIC error: addParticle_general() ignors an attempt to add a particle that is outside computation region.", true);
             return;
         }
         int ix = floor((P.r.x - box.min.x)*box.invStep.x);

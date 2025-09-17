@@ -60,15 +60,7 @@ struct pipic
     }
     void pyParticleLoop(string typeName, int64_t handler, int64_t dataDouble, int64_t dataInt)
     {
-        void(*handler_)(double*, double*, double*, unsigned long long int*, double*, int*) = (void(*)(double*, double*, double*, unsigned long long int*, double*, int*))handler;
-        double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
-        int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
-
-        int typeIndex = Ensemble->getTypeIndex(typeName);
-        for(ensemble::nonOmpIterator iP = Ensemble->begin(typeIndex); iP < Ensemble->end(); iP++){
-            particle *P = &*iP;
-            handler_(&(P->r.x), &(P->p.x), &(P->w), &(P->id), dataDouble_, dataInt_);
-        }
+        Ensemble->singleThreadParticleLoop(handler, typeName, dataDouble, dataInt);
     }
     void pyFieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false){
         Field->fieldLoop(handler, dataDouble, dataInt, useOmp);
@@ -77,6 +69,9 @@ struct pipic
         Field->customFieldLoop(numberOfIterations, it2coord, field2data, dataDouble, dataInt);
     }
     void pyAdvance(double timeStep, int numberOfIterations = 1, bool useOmp = true){
+        if(Ensemble -> iterationNumber == 0){
+            Solver->initialize(timeStep);   
+        }
         for(int iIt = 0; iIt < numberOfIterations; iIt++) {
             Ensemble->advanceWithOmp = useOmp;
             Solver->advance(timeStep);

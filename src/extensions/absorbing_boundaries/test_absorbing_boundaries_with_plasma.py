@@ -240,7 +240,7 @@ load_fields()
 rho_plot = axs[0].imshow(rho.T,vmin=0, vmax=1.5*density, 
         extent=[XMin,XMax,YMin,YMax], interpolation='none', \
         aspect='auto', cmap='inferno_r', origin='lower')
-phase_plot = axs[2].imshow(np.log(np.abs(Ez.T)), vmin = 0, vmax=np.log(E0),
+phase_plot = axs[2].imshow(np.log(np.abs(Ez.T)), vmin = 0, vmax=E0,
         extent=[XMin,XMax,YMin,YMax], interpolation='none', \
         aspect='auto', cmap='inferno', origin='lower')
 Ex_plot = axs[3].imshow(Ex.T, vmin = -E0/1e2, vmax=E0/1e2,

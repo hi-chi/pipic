@@ -225,13 +225,13 @@ void set_statics(int64_t simbox, int thickness, double velocity, double angle, c
 
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, double angle, char direction){ 
+int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, char axis, double angle){ 
     cell = (cellContainer***)ensembleData;
     ppc = particles_per_cell;
     _temperature = temperature;
     _density_profile = density_profile;
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, thickness, velocity, angle, direction);
+        set_statics(simulation_box, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window handler(): "
@@ -244,10 +244,10 @@ int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_p
 
 
 // extension initialization
-int64_t field_handler(int64_t simulation_box, double timestep, int thickness, double velocity, double angle, char direction){ 
+int64_t field_handler(int64_t simulation_box, double timestep, int thickness, double velocity, char axis, double angle){ 
     _timeStep = timestep;
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, thickness, velocity, angle, direction);
+        set_statics(simulation_box, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window field_handler(): "
@@ -271,14 +271,14 @@ PYBIND11_MODULE(_moving_window, object) {
                py::arg("density_profile"), 
                py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
-               py::arg("angle")=0,
-               py::arg("direction")='x');
+               py::arg("axis")='x',
+               py::arg("angle")=0);
 
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
                py::arg("timestep"),
                py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
-               py::arg("angle")=0,
-               py::arg("direction")='x');
+               py::arg("axis")='x',
+               py::arg("angle")=0);
 };

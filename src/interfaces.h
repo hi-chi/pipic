@@ -126,6 +126,7 @@ struct field_solver
     simulationBox box;
     field_solver(simulationBox box): box(box){}
 
+    // field advance
     virtual void advance(double timeStep) = 0;
 
     // interface for setting/modifying field state:
@@ -149,9 +150,10 @@ struct pic_solver
     field_solver *Field;
     ensemble *Ensemble;
 
-    // advance call from 
+    // advance call linking from python interface  
     virtual void advance(double timeStep) = 0;
     //optional functions:
+    virtual void initialize(double timeStep){}; // to be called once before the first advance step
     virtual void preLoop(){};
     virtual void postLoop(){};
     virtual void startSubLoop(int3 i3, double charge, double mass, double timeStep){};

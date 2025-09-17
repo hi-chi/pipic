@@ -39,12 +39,20 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         }
     }
 
+    // CIC weighting function (not mandatory method for field solver interface)
+    double CIC(double x, int i, double dx, double xmin){
+        return ((i + 0.5)*dx + xmin - (x - dx/2))/dx;
+    }
+
     void getEB(double3 r, double3 &E, double3 &B)
     {
         // get electric field at the point r
-        int ix = int((r.x - box.min.x)/box.step.x + 0.5);
-        if(ix >= box.n.x) {ix -= box.n.x;}; // out of bounds
-        E.x = Ex[ix];
+        int ix = int((r.x - box.min.x)/box.step.x);
+        double w_left = CIC(r.x, ix, box.step.x, box.min.x);
+        double w_right = 1 - w_left;
+
+        E.x = w_left * Ex[ix];
+        E.x += w_right * Ex[(ix + 1)%box.n.x];
         E.y = 0; 
         E.z = 0;
         B = {0, 0, 0}; // magnetic field is zero in this solver
@@ -76,7 +84,6 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
     }
 
     void fieldLoopBody(int3 i, void(*handler_)(int*, double*, double*, double*, double*, int*), double* dataDouble_, int* dataInt_){
-        intg ig = box.ig({i.x, i.y, i.z});
         double3 r3 = box.min;
         r3.x += i.x*box.step.x;
         r3.y += i.y*box.step.y;
