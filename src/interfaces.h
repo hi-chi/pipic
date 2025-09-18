@@ -104,6 +104,7 @@ struct simulationBox
     intg ng; // total number of cells
     double3 min, max, size, invStep, invSize, step; // physical limits of the computational region, auxiliary vectors
     int dim; // problem dimensionality
+    double time = 0; // time (s) since the start of simulation 
     simulationBox(int3 n, double3 min, double3 max): n(n), ng(((intg)n.x)*n.y*n.z), min(min), max(max),
     size(max.x - min.x, max.y - min.y, max.z - min.z),
     invStep(n.x/(max.x - min.x), n.y/(max.y - min.y), n.z/(max.z - min.z)),
@@ -150,15 +151,42 @@ struct pic_solver
     field_solver *Field;
     ensemble *Ensemble;
 
-    // advance call linking from python interface  
+    // advance call (it is recommended to use predefined advance_singleLoop of ensemble.h)
+    // to ensure compatibility with extensions)
     virtual void advance(double timeStep) = 0;
-    //optional functions:
-    virtual void initialize(double timeStep){}; // to be called once before the first advance step
+
+    /* The following functions  and are used to implement new solvers. 
+       If the predefined function advance_singleLoop (of ensemble.h) is used for advancing the simulation state
+       (which is recommended), then the functions are called by the following order:
+
+        preStep() 
+        for time step in numberOfIterations:
+            apply_fieldHandlers()
+            preLoop() 
+            for cell in CellInterface:
+                 apply_actOnCellHandlers()
+                 for particle type in cell:
+                     startSubLoop()
+                     apply_particleHandlers()
+                     for particles of this type in cell:
+                         processParticle()
+                     endSubLoop())
+            postLoop()
+        postStep()
+
+       where apply_fieldHandlers() applies all field extensions, apply_actOnCellHandlers() applies all cell extensions 
+       (activated if particleType = -1) and apply_particleHandlers() applies all particle extensions.
+    */
+
+    virtual void preStep(double timeStep){}; // can be used to implement staggered schemes
     virtual void preLoop(){};
-    virtual void postLoop(){};
     virtual void startSubLoop(int3 i3, double charge, double mass, double timeStep){};
     virtual void processParticle(particle &P, double charge, double mass, double timeStep){};
     virtual void endSubLoop(){};
+    virtual void postLoop(){};
+    virtual void postStep(double timestep){}; // can be used to move sync the schemes if staggered schemes are used
+    
+    // destructor
     virtual ~pic_solver(){}
     string name;
 };

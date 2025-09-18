@@ -169,7 +169,6 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots(2, 1, figsize=(15, 5))
     for i in range(s):
-        data_int[0] = i 
         sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
 
         if i%checkpoint==0:

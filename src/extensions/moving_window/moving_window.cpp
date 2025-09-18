@@ -20,6 +20,7 @@ static double gmin[3]; // minimum coordinate in each direction
 static double gmax[3]; // maximum coordinate in each direction
 bool staticsHasBeenSet = false; // flag to check if static variables have been set
 simulationBox* _simbox; // cell interface for manipulating with the content of a cell
+double *_time; // current simulation time
 
 struct cellContainer
 {
@@ -52,9 +53,9 @@ static vector<threadHandler> Thread;
 
 // add angle dependence
 void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
-    int rollback = floor(dataInt[0]*_timeStep*_velocity/step[dir]);
+    int rollback = floor(_time[0] *_velocity/step[dir]);
     if(rollback%(_thickness/2)==0 && rollback > 0){ 
-        int rollback_prev = floor((dataInt[0]-1)*_timeStep*_velocity/step[dir]);
+        int rollback_prev = floor((_time[0] - _timeStep)*_velocity/step[dir]);
         if(rollback_prev!=rollback){
             // initial r_rel is at the end of the cell and marks the end of the cleaning region 
             double r_rel = gmin[dir] + step[dir]*(rollback%n[dir]); 
@@ -86,11 +87,9 @@ void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble,
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
-
-
-    int rollback = floor(dataInt[0]*CI.timeStep*_velocity/step[dir]);
+    int rollback = floor(_time[0] * _velocity/step[dir]);
     if(rollback%(_thickness/2)==0 && rollback > 0){ 
-        int rollback_prev = floor((dataInt[0]-1)*CI.timeStep*_velocity/step[dir]);
+        int rollback_prev = floor((_time[0]-_timeStep)*_velocity/step[dir]);
         if(rollback_prev!=rollback){
             double cell_min[3] = {CI.cellMin().x, CI.cellMin().y, CI.cellMin().z};
             double cell_max[3] = {CI.cellMax().x, CI.cellMax().y, CI.cellMax().z};
@@ -142,7 +141,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                     R[2] = r.z;
                     
                     // The position of the front of the window in 'real' coordinates
-                    double z_real = dataInt[0]*CI.timeStep*_velocity + gmax[dir];// - gmax[ndir]*tan(_angle);
+                    double z_real = _time[0]*_velocity + gmax[dir];// - gmax[ndir]*tan(_angle);
                     if (R[dir] > r_rel){
                         R[dir] = z_real - (r_rel - gmin[dir]) - (gmax[dir] - R[dir]);
                     } else {
@@ -209,6 +208,7 @@ void set_statics(int64_t simbox, int thickness, double velocity, double angle, c
     gmax[0] = _simbox->max.x;
     gmax[1] = _simbox->max.y;
     gmax[2] = _simbox->max.z;
+    _time = &_simbox->time;
 
     if (dir==2){
         ndir=0;

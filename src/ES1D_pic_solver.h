@@ -37,22 +37,33 @@ struct ES1DPicSolver: public pic_solver
         delete field;
     }
 
-    void initalizeParticles(particle &P, double charge, double mass, double timeStep){
+    void halfstep(particle &P, double charge, double mass, double timeStep){
         double3 E;
         double3 B;
         field->getEB(P.r, E, B); // get electric field at the particle position
-        P.p.x -= timeStep*charge*E.x/2; // pull back -1/2 timestep to initalize leapfrog scheme
+        P.p.x += timeStep*charge*E.x/2; // pull back/move forward 1/2 timestep to initalize/remove leapfrog scheme
     }
 
-    void initialize(double timeStep){
+    void preStep(double timeStep){
         for (int it = 0; it < int(Ensemble->type.size()); it++){
             for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
                 particle *P = &*iP;
-                initalizeParticles(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);;
+                // pull back momentum 1/2 timestep to initalize leapfrog scheme
+                halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, -timeStep);
             }
         }
     }
     
+    void postStep(double timeStep){
+        for (int it = 0; it < int(Ensemble->type.size()); it++){
+            for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
+                particle *P = &*iP;
+                // move forward momentum 1/2 timestep to remove leapfrog scheme
+                halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);
+            }
+        }
+    }
+
     void preLoop()
     {
         field->advance(timeStep);

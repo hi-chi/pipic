@@ -90,7 +90,6 @@ struct ensemble
     handlerManager Manager;
     rndGen RndGen;
     bool advanceWithOmp;
-    int iterationNumber = 0;
 
     ensemble(simulationBox box, int stride = 4): box(box), thread(omp_get_max_threads()),
     fieldHandlerExists(false), shuffle(true), Manager(box.ng), RndGen(box.n.x)
@@ -434,7 +433,7 @@ struct ensemble
         Solver->postLoop();
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
-        iterationNumber++;
+        box.time += timeStep;
     }
     template<typename pic_solver, typename field_solver>
     void advance_doubleLoop(pic_solver *Solver, double timeStep)
@@ -594,7 +593,7 @@ struct ensemble
         Solver->Field->advance(timeStep);
         chronometerCells.stop();
         Manager.latestFieldTime = chronometerCells.getTime_s();
-        iterationNumber++;
+        box.time += timeStep;
     }
     inline void compresList(vector<particle> &P, threadData &thread, intg ig, int it)
     {

@@ -69,15 +69,15 @@ struct pipic
         Field->customFieldLoop(numberOfIterations, it2coord, field2data, dataDouble, dataInt);
     }
     void pyAdvance(double timeStep, int numberOfIterations = 1, bool useOmp = true){
-        if(Ensemble -> iterationNumber == 0){
-            Solver->initialize(timeStep);   
-        }
+        Solver->preStep(timeStep);   
         for(int iIt = 0; iIt < numberOfIterations; iIt++) {
             Ensemble->advanceWithOmp = useOmp;
             Solver->advance(timeStep);
             Ensemble->Manager.iterationEnd(box.ng);
             pipic_log.saveBuffer();
         }
+        Solver->postStep(timeStep);   
+
     }
     void pyLogPolicy(bool logToFile = true, bool logToScreen = true){
         pipic_log.logToFile = logToFile;
@@ -112,7 +112,7 @@ struct pipic
         return int64_t(Ensemble->cell);
     }
     int64_t simulationBoxAddress(){
-        simulationBox *sbox = &box;
+        simulationBox *sbox = &Ensemble->box;
         return int64_t(sbox);
     }
     void en_corr_type(int correction_type){

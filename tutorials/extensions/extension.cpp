@@ -6,6 +6,7 @@ version of the absorbing boundaries that comes with piPIC. */
 #include "interfaces.h"
 #include "ensemble.h"
 #include "services.h"
+#include "extension.h"
 #include <pybind11/pybind11.h>
 #include "pybind11/stl.h"
 #include <pybind11/operators.h>
@@ -19,51 +20,17 @@ static int ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 
 static double gmin;
 static double gmax;
 static double temperature;
-// Struct to hold the cell interface data.
+// Struct to hold the cell interface data (see definition in ensemble.h)
 static cellContainer ***cell;
-
-
-// struct for managing the thread-specific data.
-struct threadHandler{
-    mt19937 rng;
-    std::uniform_real_distribution<double> U1;
-    std::normal_distribution<double> N1;
-    threadHandler(): U1(0, 1.0), N1(0, 1.0) {}
-    double random() {return U1(rng);} // returns a random number from [0, 1)
-    double nrandom() {return N1(rng);} // returns a normal random number from [0, 1)
-};
+// Struct for managing the thread-specific data (see definition in extension.h)
+// It contains a random number generator and distributions for uniform and normal random numbers
+// to make the particle generation thread-safe and deterministic.
 static vector<threadHandler> Thread;
-
-
-// Function for adding new particles to the cell interface.
-void addParticle(cellInterface &CI, particle &P){
-    if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
-        *CI.newParticle(CI.particleBufferSize) = P; // copy particle to a new particle (buffer)
-        CI.particleBufferSize++;
-    } else {
-        pipic_log.message("pi-PIC error: particle buffer overflow.", true);
-    };
-};
-
-// Function for removing particles according to some probability rate.
-void removeParticles(cellContainer* C, threadHandler &cthread, double rate){ 
-    
-    int particles = int(C->P.size());
-    // iterate over particles in cell. The C->endShift particles from the end of the list 
-    // came from other cells during the paricle push and should thus not be processed again.
-    for (int ip = 0; ip < (particles - C->endShift); ip++){
-        if (cthread.random() > rate) {
-            C->P[ip].w = 0.; // set particle weight to zero to mark it for removal
-        }
-    }
-};
-
 
 // absorbing boundary
 double mask(double x, double fall){
     return exp(fall*(cos(x*pi/2) - 1/cos(x*pi/2)));
 };
-
 
 // Field handler which is applied to each field grid node in the simulation box.
 void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
@@ -135,6 +102,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
                 P.w = weight;
                 P.id = particleTypeIndex; // set particle type index
+                // see definition of addParticle in extension.h
                 addParticle(CI, P);
             };
 
@@ -145,6 +113,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             if(cell[ig] != nullptr){
                 // check if the cell contains particles of the type to be removed
                 if(cell[ig][particleTypeIndex] != nullptr){
+                    // see definition of removeParticles in extension.h
                     removeParticles(cell[ig][particleTypeIndex], cthread, rate); // remove particles according to the rate
                 };
             };
