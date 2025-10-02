@@ -9,7 +9,7 @@ const string name = "absorbing_boundaries";
 static double boundarySize; 
 static double _timeStep; // time step of the simulation
 static double _temperature; // temperature of the particles
-static double velocity; // velocity of the particles
+static double velocity; // velocity of the moving window
 static int64_t densityProfile; // density of the particles
 static double ppc; // particles per cell
 static int ax;

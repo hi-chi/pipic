@@ -128,7 +128,7 @@ struct field_solver
     field_solver(simulationBox box): box(box){}
 
     // field advance
-    virtual void advance(double timeStep) = 0;
+    virtual void advance(double timeStep) = {};
 
     // interface for setting/modifying field state:
     // makes a loop over all nodes and calls a function handler(ind, r, E, B, dataDouble_, dataInt_), which takes:
@@ -151,9 +151,14 @@ struct pic_solver
     field_solver *Field;
     ensemble *Ensemble;
 
-    // advance call (it is recommended to use predefined advance_singleLoop of ensemble.h)
-    // to ensure compatibility with extensions)
+    // Advance call (executed by sim.advance() in Python Interface)
+    // To ensure compatibility with extension it is recommended to use the 
+    // predefined advance_singleLoop of ensemble.h as
+    // void advance(double timeStep){
+    //    Ensemble->advance_singleLoop<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
+    // }
     virtual void advance(double timeStep) = 0;
+
 
     /* The following functions  and are used to implement new solvers. 
        If the predefined function advance_singleLoop (of ensemble.h) is used for advancing the simulation state

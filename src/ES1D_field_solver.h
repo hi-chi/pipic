@@ -122,7 +122,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         if (cig[1] > box.n.x){cig[1] = 0;}
 
         for(int j = 0; j < (1 << box.dim); j++){
-            F_data[6*j  ] = Ex[cig[j]];
+            F_data[6*j] = Ex[cig[j]];
         }
     }
 };

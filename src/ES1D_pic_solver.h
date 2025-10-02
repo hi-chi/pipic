@@ -37,6 +37,11 @@ struct ES1DPicSolver: public pic_solver
         delete field;
     }
 
+    void advance(double _timeStep){
+        timeStep = _timeStep;
+        Ensemble->advance_singleLoop<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
+    }
+
     void halfstep(particle &P, double charge, double mass, double timeStep){
         double3 E;
         double3 B;
@@ -53,16 +58,6 @@ struct ES1DPicSolver: public pic_solver
             }
         }
     }
-    
-    void postStep(double timeStep){
-        for (int it = 0; it < int(Ensemble->type.size()); it++){
-            for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
-                particle *P = &*iP;
-                // move forward momentum 1/2 timestep to remove leapfrog scheme
-                halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);
-            }
-        }
-    }
 
     void preLoop()
     {
@@ -72,12 +67,6 @@ struct ES1DPicSolver: public pic_solver
         }
     }
 
-    void postLoop(){}
-    void startSubLoop(int3 i3, double charge, double mass, double timeStep){}
-    void endSubLoop(){}
-
-
-    
     void processParticle(particle &P, double charge, double mass, double timeStep){
         simulationBox &box(field->box);
         double3 E;
@@ -99,10 +88,24 @@ struct ES1DPicSolver: public pic_solver
         field->Jx[(indx + 1) % box.n.x] += w_right*P.w*charge*(P.p.x/mass)/box.step.x;
     }
 
-    void advance(double _timeStep){
-        timeStep = _timeStep;
-        Ensemble->advance_singleLoop<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
+    void postStep(double timeStep){
+        for (int it = 0; it < int(Ensemble->type.size()); it++){
+            for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
+                particle *P = &*iP;
+                // move forward momentum 1/2 timestep to remove leapfrog scheme
+                halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);
+            }
+        }
     }
+
+
+
+    // empty methods
+    void postLoop(){}
+    void startSubLoop(int3 i3, double charge, double mass, double timeStep){}
+    void endSubLoop(){}
+    
+
 };
 
 
