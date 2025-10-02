@@ -13,7 +13,7 @@ static double _velocity; // velocity of the moving window
 static double _angle; // angle of the moving window
 static double _timeStep; // time step of the simulation
 static int dir; // principal direction of the moving window
-static int ndir;
+static int ndir; // next direction (used for angle)
 static int n[3]; // number of cells in each direction
 static double step[3]; // step in each direction
 static double gmin[3]; // minimum coordinate in each direction
@@ -112,12 +112,10 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             if (r_rel > gmax[dir]) r_rel = gmin[dir] + (r_rel - gmax[dir]);
 
             double eps = step[dir]/10;
-            
             int ig, ix = CI.i.x, iy = CI.i.y, iz = CI.i.z; 
             ig = ix + (iy + iz*CI.n.y)*CI.n.x; 
             if ((cell_min[dir]+eps >= r_min and cell_max[dir]-eps <= r_rel) ||
                 ( (r_min > r_rel) and ((cell_min[dir] + eps >= r_min) || (cell_max[dir] - eps <= r_rel)))){ 
-
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
                     // removing particles 
                     if(cell[ig] != nullptr){
@@ -151,7 +149,6 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                     double(*density_profile)(double*, double*, int*) = (double(*)(double*, double*, int*))_density_profile;
                     double _density = density_profile(R, dataDouble, dataInt);
                     double nb_particles = _density*CI.step.x*CI.step.y*CI.step.z; // number of particles to be generated in the cell
-                    
                     int _ppc = int(ppc) + (cthread.random() < (ppc - int(ppc))); // particles per cell, it can be fractional
                     double weight = nb_particles/double(_ppc);   
                     if(_ppc > 0){
@@ -180,7 +177,8 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 
-void set_statics(int64_t simbox, int thickness, double velocity, double angle, char direction){
+void set_statics(int64_t simbox, double timeStep, int thickness, double velocity, double angle, char direction){
+    _timeStep = timeStep;
     _simbox = (simulationBox*)simbox;
     _angle = angle;
     _velocity = velocity/cos(angle); // adjust velocity according to the angle
@@ -220,18 +218,22 @@ void set_statics(int64_t simbox, int thickness, double velocity, double angle, c
     }else{
         _thickness = thickness;
     };
+
+    if (_timeStep > step[dir]/lightVelocity){
+        pipic_log.message("pi-PIC error: moving_window field_handler(): time step must be smaller than the cell size divided by the light velocity.", true);
+    };
 };
 
 
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, char axis, double angle){ 
+int64_t handler(int64_t ensembleData, int64_t simulation_box, double timeStep, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, char axis, double angle){ 
     cell = (cellContainer***)ensembleData;
     ppc = particles_per_cell;
     _temperature = temperature;
     _density_profile = density_profile;
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, thickness, velocity, angle, axis);
+        set_statics(simulation_box, timeStep, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window handler(): "
@@ -244,19 +246,16 @@ int64_t handler(int64_t ensembleData, int64_t simulation_box, double particles_p
 
 
 // extension initialization
-int64_t field_handler(int64_t simulation_box, double timestep, int thickness, double velocity, char axis, double angle){ 
-    _timeStep = timestep;
+int64_t field_handler(int64_t simulation_box, double timeStep, int thickness, double velocity, char axis, double angle){ 
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, thickness, velocity, angle, axis);
+        set_statics(simulation_box, timeStep, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window field_handler(): "
         "static variables have already been set, using values for simulation_box, thickness," 
         "velocity, angle and direction set in handler (or defaults).", false);
     };
-    if (timestep > step[dir]/lightVelocity){
-        pipic_log.message("pi-PIC error: moving_window field_handler(): time step must be smaller than the cell size divided by the light velocity.", true);
-    };
+
     return (int64_t)fieldHandler;
 };
 
@@ -266,6 +265,7 @@ PYBIND11_MODULE(_moving_window, object) {
     object.def("handler", &handler, 
                py::arg("ensemble"), 
                py::arg("simulation_box"), 
+               py::arg("time_step"),
                py::arg("particles_per_cell"), 
                py::arg("temperature"),
                py::arg("density_profile"), 
@@ -276,7 +276,7 @@ PYBIND11_MODULE(_moving_window, object) {
 
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
-               py::arg("timestep"),
+               py::arg("time_step"),
                py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
                py::arg("axis")='x',
