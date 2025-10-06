@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description: Implementation of Boris pusher with Fourier solver.
+// Description: Implementation of an electrostatic 1D solver.
 
 #include "ensemble.h"
 #include "ES1D_field_solver.h"

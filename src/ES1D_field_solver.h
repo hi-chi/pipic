@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description of the file: File introduces structures for simulation region and spectral field solver.
+// Description of the file: Implementation of an electrostatic 1D solver.
 
 
 #include "interfaces.h"

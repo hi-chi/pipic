@@ -128,7 +128,7 @@ struct field_solver
     field_solver(simulationBox box): box(box){}
 
     // field advance
-    virtual void advance(double timeStep) = {};
+    virtual void advance(double timeStep){};
 
     // interface for setting/modifying field state:
     // makes a loop over all nodes and calls a function handler(ind, r, E, B, dataDouble_, dataInt_), which takes:
