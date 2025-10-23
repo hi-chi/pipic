@@ -31,7 +31,9 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed and exemplified [here][extension_development].
+We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed [here][extension_development] and exemplified [here][extension_development_notebook].
+
+The implementation of new solvers is exemplified [here][solver_development_notebook].
 
 # New in $\pi$-PIC v1.2
 - options for energy correction routine in `ec` and `ec2` (see `docs/guides/INTERFACES.md`)
@@ -61,6 +63,8 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
 [extensions]: https://github.com/hi-chi/pipic/blob/pipic_tutorial/docs/EXTENSIONS.md
 [extension_development]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSION_DEVELOPMENT.md
+[extension_development_notebook]: https://github.com/hi-chi/pipic/tree/pipic_tutorial/tutorials/extensions
+[solver_development_notebook]: https://github.com/hi-chi/pipic/tree/pipic_tutorial/tutorials/solver
 [releases]: https://github.com/hi-chi/pipic/blob/main/docs/RELEASES.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
 <!-- prettier-ignore-end -->
