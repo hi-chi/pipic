@@ -33,7 +33,7 @@ The basic layout of a simulation includes five elements:
 
 We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed [here][extension_development] and exemplified [here][extension_development_notebook].
 
-The usage of solvers and instructions for implementing new solvers is exemplified [here][solver_development_notebook].
+The implementation of new solvers is exemplified [here][solver_development_notebook].
 
 # New in $\pi$-PIC v1.2
 - options for energy correction routine in `ec` and `ec2` (see `docs/guides/INTERFACES.md`)
