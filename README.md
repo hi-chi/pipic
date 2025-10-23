@@ -59,7 +59,7 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [installation]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INSTALLATION.md
 [tutorial]: https://github.com/hi-chi/pipic/blob/main/docs/guides/TUTORIAL.md
 [interfaces]: https://github.com/hi-chi/pipic/blob/main/docs/guides/INTERFACES.md
-[extensions]: https://github.com/hi-chi/pipic/blob/main/docs/EXTENSIONS.md
+[extensions]: https://github.com/hi-chi/pipic/blob/pipic_tutorial/docs/EXTENSIONS.md
 [extension_development]: https://github.com/hi-chi/pipic/blob/main/docs/guides/EXTENSION_DEVELOPMENT.md
 [releases]: https://github.com/hi-chi/pipic/blob/main/docs/RELEASES.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
