@@ -23,6 +23,11 @@ If using a non-standard compiler (for example using `gcc` installed through [`ho
 CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
 
+## Conda
+Follow the instructions at: https://github.com/hi-chi/pipic/blob/pipic_tutorial/tutorials/installation.ipynb
+```
+
+
 ### macOS
 Installation on macOS depends on which compiler is being used.
 
