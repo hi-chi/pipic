@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0  # This is needed in order to fetch version tags from git
 
       - name: Build and check sdist + wheel
-        uses: hynek/build-and-inspect-python-package@v1
+        uses: hynek/build-and-inspect-python-package@v2
 
   pass:
     if: always()
