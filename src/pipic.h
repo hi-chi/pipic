@@ -69,6 +69,7 @@ struct pipic
         Field->customFieldLoop(numberOfIterations, it2coord, field2data, dataDouble, dataInt);
     }
     void pyAdvance(double timeStep, int numberOfIterations = 1, bool useOmp = true){
+        Ensemble -> box.timeStep = timeStep;
         Solver->preStep(timeStep);   
         for(int iIt = 0; iIt < numberOfIterations; iIt++) {
             Ensemble->advanceWithOmp = useOmp;

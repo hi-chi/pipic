@@ -8,6 +8,7 @@
 const string name = "absorbing_boundaries";
 static double boundarySize; 
 static double _timeStep; // time step of the simulation
+double* timeStepPtr;
 static double _temperature; // temperature of the particles
 static double velocity; // velocity of the moving window
 static int64_t densityProfile; // density of the particles
@@ -45,11 +46,18 @@ struct threadHandler{
 static vector<threadHandler> Thread;
 
 double mask(double x, double fall, double timeStep){
-    return exp(fall*(cos(x*pi/2) - 1/cos(x*pi/2))*timeStep*1e16);
+    return exp(fall*(cos(x*pi/2) - 1/cos(x*pi/2))*timeStep); //*1e16);
 };
 
 // add angle dependence
 void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
+    
+    // needed for time step that varies between advance calls 
+    _timeStep = _simbox->timeStep;
+    if(unlikely(_fall<0)){
+        _fall = 0.01/_timeStep; // default fall rate
+    }
+
     if(r[ax] < gmin[ax] + boundarySize){
         double rate = mask((-r[ax] + gmin[ax] + boundarySize)/boundarySize, _fall, _timeStep);
         E[0] = rate*E[0];
@@ -87,6 +95,12 @@ void moving_r(double *r, int *dataInt, double timeStep){
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
 
+    // needed for time step that varies between advance calls 
+    _timeStep = _simbox->timeStep;
+    if(unlikely(_fall<0)){
+        _fall = 0.01/(_timeStep); // default fall rate
+    }
+
     if (dataInt[0]%pmf==0){
         double cell_min[3] = {CI.cellMin().x, CI.cellMin().y, CI.cellMin().z};
         double cell_max[3] = {CI.cellMax().x, CI.cellMax().y, CI.cellMax().z};
@@ -104,7 +118,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                 } else {
                     rate = mask((r[ax] - gmax[ax] + boundarySize)/boundarySize, _fall, CI.timeStep);
                 };                
-
+            
                 // removing particles randomly 
                 if(cell[ig] != nullptr){
                     int it = 0;
@@ -161,7 +175,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
                 double nb_particles = (1-rate)*density*step[0]*step[1]*step[2]; // number of particles to be generated in the cell
                 int _ppc = int(ppc) + (cthread.random() < (ppc - int(ppc))); // particles per cell, it can be fractional
-                double weight = nb_particles/double(_ppc); 
+                double weight = nb_particles/double(_ppc);
 
                 if(_ppc > 0){
                     for(int ip = 0; ip < _ppc; ip++){ 
@@ -218,6 +232,7 @@ void set_statics(int64_t simbox, double boundary_size, char axis, double fall){
     }else{
         boundarySize = boundary_size;
     }    
+
 }
 
 
@@ -261,8 +276,7 @@ int64_t handler(int64_t ensembleData,
 
 
 // extension initialization
-int64_t field_handler(int64_t simbox, double timestep, double boundary_size, char axis, double fall){ 
-    _timeStep = timestep;
+int64_t field_handler(int64_t simbox, double boundary_size, char axis, double fall){ 
     if(!staticsHasBeenSet){
         set_statics(simbox,boundary_size, axis, fall);
         staticsHasBeenSet = true;
@@ -282,7 +296,7 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
                py::arg("density_profile")=-1,
                py::arg("boundary_size")=-1.0,
                py::arg("axis")='x',
-               py::arg("fall")=0.01,
+               py::arg("fall")=-1.0,
                py::arg("temperature") = 0.0,
                py::arg("particles_per_cell") = 1.0,
                py::arg("remove_particles_every") = 10,
@@ -291,8 +305,7 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
 
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
-               py::arg("timestep"),
                py::arg("boundary_size")=-1.0,
                py::arg("axis")='x',
-               py::arg("fall")=0.01);
+               py::arg("fall")=-1.0);
 }

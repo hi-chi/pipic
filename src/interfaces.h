@@ -105,11 +105,14 @@ struct simulationBox
     double3 min, max, size, invStep, invSize, step; // physical limits of the computational region, auxiliary vectors
     int dim; // problem dimensionality
     double time = 0; // time (s) since the start of simulation 
+    double timeStep = 0; // time step (s) used to advance the simulation
+
     simulationBox(int3 n, double3 min, double3 max): n(n), ng(((intg)n.x)*n.y*n.z), min(min), max(max),
     size(max.x - min.x, max.y - min.y, max.z - min.z),
     invStep(n.x/(max.x - min.x), n.y/(max.y - min.y), n.z/(max.z - min.z)),
     invSize(1/(max.x - min.x), 1/(max.y - min.y), 1/(max.z - min.z)),
     step((max.x - min.x)/n.x, (max.y - min.y)/n.y, (max.z - min.z)/n.z)
+
     {
         dim = 3;
         if(n.z == 1) dim = 2;
@@ -127,7 +130,7 @@ struct field_solver
     simulationBox box;
     field_solver(simulationBox box): box(box){}
 
-    // field advance
+    // field advance (optional to implement in derived class)
     virtual void advance(double timeStep){};
 
     // interface for setting/modifying field state:
@@ -135,7 +138,8 @@ struct field_solver
     // three-index (ind[0], ind[1], ind[2]),
     // field component code: ind[4] = 0 for Ex, 1 for Ey, 2 for Ez, 3 for Bx, 4 for By, 5 for Bz, 6 for all)
     // coordinate of the node in question,
-    // field values (whatever is applicable according to ind[4]), and frefernces to data of double and int type.
+    // field values (whatever is applicable according to ind[4]), and refernces to data of double and int type.
+    // Note that the 2 following function must be implemented in the derived class.
     virtual void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) = 0;
     //read-only interface for accessing fields in a set of points:
     virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0) = 0;

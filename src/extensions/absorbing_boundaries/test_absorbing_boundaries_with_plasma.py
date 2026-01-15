@@ -196,32 +196,35 @@ use_omp=True)
 
 #------------------set absorbing boundaries-----------------------------------
 
-field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),timeStep,boundarySize,'y',fall)
+
+field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),boundarySize,'y',fall = fall/timeStep)
 particle_handler_adress = absorbing_boundaries.handler(sim.ensemble_data(), 
                                                        sim.simulation_box(), 
                                                        density_profile=density_callback_electron.address, 
                                                        boundary_size=boundarySize, 
                                                        axis='y', 
-                                                       fall=fall, 
+                                                       fall=fall/timeStep, 
                                                        temperature=1e-12, 
                                                        particles_per_cell=5,
                                                        moving_window_velocity=consts.light_velocity,
-                                                       moving_window_direction='x',)
+                                                       moving_window_direction='x',
+                                                       remove_particles_every=10,)
 dataInt = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
 
 sim.add_handler(name=absorbing_boundaries.name,
                 subject='cells,electron', 
                 field_handler=field_handler_adress,
-                #handler=particle_handler_adress,
+                handler=particle_handler_adress,
                 data_int=pipic.addressof(dataInt),)
 #-------------------moving_window--------------------------------------
 
 
 field_handler_adress = moving_window.field_handler(sim.simulation_box(),
-                                                   timestep = timeStep,
+                                                   time_step = timeStep,
                                                    thickness = 16)
 particle_handler_adress = moving_window.handler(sim.ensemble_data(),
                                                 sim.simulation_box(),
+                                                time_step = timeStep,
                                                 thickness=16,
                                                 particles_per_cell=5,
                                                 temperature=1e-12,
@@ -263,7 +266,6 @@ for i in range(s):
         rho.fill(0)
         ps.fill(0)
         load_fields()
-        print(rho.sum())
         rho_plot.set_data(rho.T)
         phase_plot.set_data(Ez.T)
         rho2_plot[0].set_ydata(rho[nx//2,:])

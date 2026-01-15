@@ -119,7 +119,7 @@ def get_energy():
     return (Ex**2 + Ey**2 + Ez**2 + Bx**2 + By**2 + Bz**2)/2
 
 #------------------set absorbing boundaries-----------------------------------
-field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),timeStep,boundarySize,'y',fall)
+field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),boundarySize,'y',fall/timeStep)
 
 sim.add_handler(name=absorbing_boundaries.name,
                 subject='fields', 
