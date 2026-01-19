@@ -32,7 +32,7 @@ PulseDuration = 5e-15
 k = 2*np.pi/wavelength
 
 boundarySize = (4)*wavelength
-fall = 0.01
+fall = 1
 #fp = f'data_ts_0,25_fall_{str(fall)}_bs_4.txt'
 fp = f'data_ts_0,25_fall_{str(fall)}_bs_{str(boundarySize/wavelength)}.txt'
 rot = -np.pi/4
@@ -119,7 +119,7 @@ def get_energy():
     return (Ex**2 + Ey**2 + Ez**2 + Bx**2 + By**2 + Bz**2)/2
 
 #------------------set absorbing boundaries-----------------------------------
-field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),boundarySize,'y',fall/timeStep)
+field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(), wavelength, boundarySize,'y',fall)
 
 sim.add_handler(name=absorbing_boundaries.name,
                 subject='fields', 

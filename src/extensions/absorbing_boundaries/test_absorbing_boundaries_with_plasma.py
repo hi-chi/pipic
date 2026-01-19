@@ -25,7 +25,7 @@ timeStep = dx/consts.light_velocity/4
 sim = pipic.init(solver='ec',nx=nx,ny=ny,xmin=XMin,xmax=XMax,ymin=YMin,ymax=YMax) 
 #---------------------------setting field of the pulse--------------------------
 boundarySize = (10)*wavelength
-fall = 0.01
+fall = 1.
 density = 1e18 # in cm^-3
 pmax = 1e-7 # in m_e*c
 pulseWidth_x = wavelength*2#*0.001 # [cm] (radial size of the laser focus)
@@ -54,19 +54,6 @@ def initiate_field_callback(ind, r, E, B, data_double, data_int):
         curvature = np.exp(1j*k*rho/(2*R))
         gp = np.real(amp*curvature*np.exp(-1j*(k*x + phase))*np.exp(-x**2/(2*pulseWidth_x**2)))
 
-
-        '''
-        Zr = wavelength/(np.pi*pulseWidth_x**2) # Rayleigh length
-        # curvature
-        curvature = 1/(1 + (x - focus_position)**2/Zr**2)
-        # phase shift
-        phase_shift = np.arctan((x - focus_position)/Zr)
-        
-        k = 2*np.pi/wavelength
-        # Gaussian beam profile
-        gp= np.exp(-rho**2/(2*pulseWidth_x**2)) * curvature * np.real(E0*np.exp(-1j*(k*x-phase_shift)))
-        #gp = np.real(E0*np.exp(-1j*(k*x))*np.exp(-rho**2/(2*pulseWidth_x**2)))
-        '''
         # z-polarized 
         E[2] = gp       
         B[1] = -gp   
@@ -89,17 +76,6 @@ def density_callback_electron_ba(r, data_double, data_int):  # callback function
         return 0
     else:
         return 0
-
-'''
-@cfunc(types.particle_loop_callback)
-def set_particle_velocity_electron(r, p, w, id, data_double, data_int): 
-    os = XMax/2
-    rho = np.sqrt((r[0]-os)**2 + r[1]**2)
-    sigma = wavelength/2
-    p[0] += -pmax*np.exp(-rho**2/(2*(sigma)**2))
-    rho = np.sqrt((r[0]+os)**2 + r[1]**2)
-    p[0] += pmax*np.exp(-rho**2/(2*(sigma)**2))
-''' 
 
 #=================================OUTPUT========================================
 
@@ -197,13 +173,14 @@ use_omp=True)
 #------------------set absorbing boundaries-----------------------------------
 
 
-field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(),boundarySize,'y',fall = fall/timeStep)
+field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(), wavelength, boundarySize,'y',fall = fall)
 particle_handler_adress = absorbing_boundaries.handler(sim.ensemble_data(), 
                                                        sim.simulation_box(), 
+                                                       wavelength,
                                                        density_profile=density_callback_electron.address, 
                                                        boundary_size=boundarySize, 
                                                        axis='y', 
-                                                       fall=fall/timeStep, 
+                                                       fall=fall, 
                                                        temperature=1e-12, 
                                                        particles_per_cell=5,
                                                        moving_window_velocity=consts.light_velocity,

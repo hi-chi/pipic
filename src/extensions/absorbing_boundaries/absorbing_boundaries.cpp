@@ -7,8 +7,6 @@
 
 const string name = "absorbing_boundaries";
 static double boundarySize; 
-static double _timeStep; // time step of the simulation
-double* timeStepPtr;
 static double _temperature; // temperature of the particles
 static double velocity; // velocity of the moving window
 static int64_t densityProfile; // density of the particles
@@ -51,15 +49,9 @@ double mask(double x, double fall, double timeStep){
 
 // add angle dependence
 void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
-    
-    // needed for time step that varies between advance calls 
-    _timeStep = _simbox->timeStep;
-    if(unlikely(_fall<0)){
-        _fall = 0.01/_timeStep; // default fall rate
-    }
 
     if(r[ax] < gmin[ax] + boundarySize){
-        double rate = mask((-r[ax] + gmin[ax] + boundarySize)/boundarySize, _fall, _timeStep);
+        double rate = mask((-r[ax] + gmin[ax] + boundarySize)/boundarySize, _fall, _simbox->timeStep);
         E[0] = rate*E[0];
         E[1] = rate*E[1];
         E[2] = rate*E[2];
@@ -67,7 +59,7 @@ void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble,
         B[1] = rate*B[1];
         B[2] = rate*B[2];
     } else if (r[ax] > gmax[ax] - boundarySize){ 
-        double rate = mask((r[ax] - gmax[ax] + boundarySize)/boundarySize, _fall, _timeStep);
+        double rate = mask((r[ax] - gmax[ax] + boundarySize)/boundarySize, _fall, _simbox->timeStep);
         E[0] = rate*E[0];
         E[1] = rate*E[1];
         E[2] = rate*E[2];
@@ -94,12 +86,6 @@ void moving_r(double *r, int *dataInt, double timeStep){
 // function that is called to process particles in a given cell
 void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDouble, int *dataInt){
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
-
-    // needed for time step that varies between advance calls 
-    _timeStep = _simbox->timeStep;
-    if(unlikely(_fall<0)){
-        _fall = 0.01/(_timeStep); // default fall rate
-    }
 
     if (dataInt[0]%pmf==0){
         double cell_min[3] = {CI.cellMin().x, CI.cellMin().y, CI.cellMin().z};
@@ -202,9 +188,8 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };  
 
 
-void set_statics(int64_t simbox, double boundary_size, char axis, double fall){
+void set_statics(int64_t simbox, double characteristic_wavelength, double boundary_size, char axis, double fall){
     _simbox = (simulationBox*)simbox;
-    _fall = fall;
 
     if (axis == 'x') ax = 0;
     else if (axis == 'y') ax = 1;
@@ -226,13 +211,18 @@ void set_statics(int64_t simbox, double boundary_size, char axis, double fall){
     gmax[1] = _simbox->max.y;
     gmax[2] = _simbox->max.z;
 
-    if (boundary_size == -1.){
-        boundarySize = (gmax[ax]-gmin[ax])/8; // default boundary size is equal to the cell size in x direction
-        pipic_log.message("pi-PIC warning: absorbing_boundaries set_statics(): boundary_size is not set, using default value of (max-min)/8.", false);
+    if (boundary_size < 0.){
+        boundarySize = characteristic_wavelength*8;
+        pipic_log.message("pi-PIC warning: absorbing_boundaries set_statics(): boundary_size is not set, using default value of characteristic_wavelength*8.", false);
     }else{
         boundarySize = boundary_size;
     }    
 
+    if (fall < 0.){
+        _fall = lightVelocity/characteristic_wavelength; // default fall rate
+    }else{
+        _fall = fall*lightVelocity/characteristic_wavelength;
+    }
 }
 
 
@@ -240,6 +230,7 @@ void set_statics(int64_t simbox, double boundary_size, char axis, double fall){
 // extension initialization
 int64_t handler(int64_t ensembleData, 
                 int64_t simbox,  
+                double characteristic_wavelength,
                 int64_t density_profile, 
                 double boundary_size, 
                 char axis, 
@@ -264,7 +255,7 @@ int64_t handler(int64_t ensembleData,
     };
 
     if(!staticsHasBeenSet){
-        set_statics(simbox,boundary_size, axis, fall);
+        set_statics(simbox, characteristic_wavelength, boundary_size, axis, fall);
         staticsHasBeenSet = true;
     };
     if (boundarySize <= 0){
@@ -276,9 +267,9 @@ int64_t handler(int64_t ensembleData,
 
 
 // extension initialization
-int64_t field_handler(int64_t simbox, double boundary_size, char axis, double fall){ 
+int64_t field_handler(int64_t simbox, double characteristic_wavelength, double boundary_size, char axis, double fall){ 
     if(!staticsHasBeenSet){
-        set_statics(simbox,boundary_size, axis, fall);
+        set_statics(simbox,characteristic_wavelength, boundary_size, axis, fall);
         staticsHasBeenSet = true;
     };
     if (boundarySize <= 0){
@@ -293,6 +284,7 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
     object.def("handler", &handler, 
                py::arg("ensemble"), 
                py::arg("simulation_box"), 
+               py::arg("characteristic_wavelength"),
                py::arg("density_profile")=-1,
                py::arg("boundary_size")=-1.0,
                py::arg("axis")='x',
@@ -305,6 +297,7 @@ PYBIND11_MODULE(_absorbing_boundaries, object) {
 
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
+               py::arg("characteristic_wavelength"),
                py::arg("boundary_size")=-1.0,
                py::arg("axis")='x',
                py::arg("fall")=-1.0);
