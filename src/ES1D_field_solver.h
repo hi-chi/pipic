@@ -97,17 +97,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         E[2] = 0; B[2] = 0;
         handler_(ind, r, E, B, dataDouble_, dataInt_);
         Ex[i.x] = E[0];
-    }
-
-    
-    //read-only interface for accessing fields in a set of points:
-    void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){
-        //customFieldLoop_via_getEB<fourierSolver>(this, numberOfIterations, it2coord, field2data, dataDouble, dataInt);
-    } 
-      
-    
-    ~ES1DFieldSolver(){}
-
+    }    
     
     inline void cellSetField(cellInterface &CI, int3 i){
         setGridType(CI, 0); 
@@ -125,4 +115,6 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
             F_data[6*j] = Ex[cig[j]];
         }
     }
+    
+    ~ES1DFieldSolver(){}
 };

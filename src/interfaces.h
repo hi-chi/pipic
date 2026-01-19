@@ -141,8 +141,9 @@ struct field_solver
     // field values (whatever is applicable according to ind[4]), and refernces to data of double and int type.
     // Note that the 2 following function must be implemented in the derived class.
     virtual void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) = 0;
-    //read-only interface for accessing fields in a set of points:
-    virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0) = 0;
+    
+    //read-only interface for accessing fields in a set of points (optional to implement in derived class)
+    virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){};
 
     //functions needed for cellInterface
     inline void setGridType(cellInterface &CI, int gridType){CI.I[12] = gridType;};
