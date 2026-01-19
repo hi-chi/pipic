@@ -139,8 +139,10 @@ struct field_solver
     // field component code: ind[4] = 0 for Ex, 1 for Ey, 2 for Ez, 3 for Bx, 4 for By, 5 for Bz, 6 for all)
     // coordinate of the node in question,
     // field values (whatever is applicable according to ind[4]), and refernces to data of double and int type.
-    // Note that the 2 following function must be implemented in the derived class.
+    // The function must be implemented in the derived class.
     virtual void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) = 0;
+    // Function used in ensemble to transfer EM-field data from field solver to cellInterface. Must be implemented in the derived class.
+    virtual void cellSetField(cellInterface &CI, int3 i) = 0;
     
     //read-only interface for accessing fields in a set of points (optional to implement in derived class)
     virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){};
