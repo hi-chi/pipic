@@ -40,7 +40,7 @@ Interfaces and functions of containers
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
     - `use_omp` defines whether to make parallel loop (via openMP), if `use_omp = True` the `handler` must be thread-safe
 
-- `custom_field_loop(number_of_iterations, it2r, field2data, data_double = 0, data_int = 0)` makes a loop over a subset of locations, at which electromagnetic field is interpolated and sent to callback `field2data` for output
+- `custom_field_loop(number_of_iterations, it2r, field2data, data_double = 0, data_int = 0)` makes a loop over a subset of locations, at which electromagnetic field is interpolated and sent to callback `field2data` for output. (Implemented for fourier_boris_solver.h, ec_solver.h, ec2_solver, emc2_solver.)
     - `number_of_iterations` defines the number of calls, i.e. the size of the subset
     - `it2r` is the address of a callback that defines the locations, at which the field interpolated is needed: `handler(it, r, data_double, data_int)` (decorator `@cfunc(types.it2r_callback)` must be placed before function definition)
         - `it[0]` is the index of the subset element (read only)
