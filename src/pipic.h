@@ -25,6 +25,8 @@ Contact: arkady.gonoskov@gu.se.
 #include "ec_solver.h"
 #include "ec2_solver.h"
 #include "ES1D_pic_solver.h"
+#include "emc2_solver.h"
+
 
 struct pipic
 {
@@ -44,6 +46,7 @@ struct pipic
         if(solverName == "ec") Solver = new ec_solver(box);
         if(solverName == "ec2") Solver = new ec2_solver(box);
         if(solverName == "electrostatic_1d") Solver = new ES1DPicSolver(box);
+        if(solverName == "emc2") Solver = new emc2_solver(box);
         if(Solver == nullptr){ pipic_log.message("pi-PIC init() error: unknown solver '" + solverName + "'.", true); exit(0);}
         Field = Solver->Field;
         Ensemble = Solver->Ensemble;
