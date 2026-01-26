@@ -31,7 +31,7 @@ The basic layout of a simulation includes five elements:
 - defining output (via loops over particles and grid values of field)
 - advance and read the state of the defined physical system
 
-We demonstrate the use of these elements in the [tutorial][]. A complete list of supported interfaces can be found [here][interfaces]. The development of extensions is detailed [here][extension_development] and exemplified [here][extension_development_notebook].
+We demonstrate the use of these elements in the [tutorial][]. A complete list of all implemented Python interfaces functions can be found [here][interfaces]. The development of extensions is detailed [here][extension_development] and exemplified [here][extension_development_notebook].
 
 The implementation of new solvers is exemplified [here][solver_development_notebook].
 
