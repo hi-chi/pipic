@@ -1,0 +1,353 @@
+Solver Reference
+=================
+
+This document describes the available PIC solvers in pi-PIC, their use cases, underlying algorithms, and implementation details.
+
+Overview
+--------
+
+Pi-PIC provides five built-in solvers:
+
+1. ``fourier_boris`` - Spectral electromagnetic solver with Boris particle pusher
+2. ``ec`` - First-order energy-conserving solver
+3. ``ec2`` - Second-order energy-conserving solver
+4. ``emc2`` - Electromagnetic energy-conserving solver
+5. ``electrostatic_1d`` - 1D electrostatic solver
+
+All solvers follow the same interface and can be selected via:
+
+.. code-block:: python
+
+    sim = pipic.init(solver='fourier_boris', nx=256, xmin=0, xmax=1e-3)
+
+Fourier-Boris Solver
+--------------------
+
+**Name:** ``fourier_boris``
+
+**Use Cases:**
+
+- General-purpose relativistic electromagnetic PIC simulations
+- Laser-plasma interactions
+- Beam dynamics
+- Multi-dimensional problems (1D, 2D, 3D)
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based) solution of Maxwell's equations in momentum space
+- **Particle pusher:** Boris algorithm for relativistic particle motion
+- **Current deposition:** Cloud-in-Cell (CIC) with half-step backward shift
+- **Boundary conditions:** Periodic
+
+**Key Features:**
+
+- Divergence cleaning (∇·E = 4πρ enforcement) - enabled by default
+- Optional high-frequency filter (sin² suppression near Nyquist frequency)
+- Optimized for FFTW with patient planning
+- Thread-local field sub-maps for efficient OpenMP parallelization
+
+**Implementation Details:**
+
+Field advance (spectral space):
+
+.. math::
+
+    \\mathbf{E}(\\mathbf{k}, t+\\Delta t) &= \\mathbf{E}(\\mathbf{k}, t) - 4\\pi \\Delta t \\mathbf{J}(\\mathbf{k}) \\\\
+    \\mathbf{B}(\\mathbf{k}, t+\\Delta t) &= \\text{advance via Maxwell in k-space}
+
+Boris pusher (per particle):
+
+1. Half electric impulse: :math:`\\mathbf{u}^0 = \\mathbf{p} + \\frac{q\\Delta t}{2}\\mathbf{E}`
+2. Magnetic rotation:
+
+   .. math::
+
+       \\mathbf{t} = \\frac{q\\Delta t}{2mc\\gamma}\\mathbf{B}, \\quad
+       \\mathbf{s} = \\frac{2\\mathbf{t}}{1 + |\\mathbf{t}|^2}
+   
+   .. math::
+
+       \\mathbf{u}^1 = \\mathbf{u}^0 + \\mathbf{u}^0 \\times \\mathbf{t}
+
+   .. math::
+
+       \\mathbf{p}' = \\mathbf{u}^0 + \\mathbf{u}^1 \\times \\mathbf{s} + \\frac{q\\Delta t}{2}\\mathbf{E}
+
+3. Position update:
+
+   .. math::
+
+       \\mathbf{r}(t+\\Delta t) = \\mathbf{r}(t) + \\frac{\\Delta t}{m\\gamma}\\mathbf{p}'
+
+**Configuration:**
+
+.. code-block:: python
+
+    # Enable/disable divergence cleaning and filtering
+    sim.fourier_solver_settings(divergence_cleaning=1, sin2_kfilter=0)
+
+**Performance Notes:**
+
+- Grid dimensions should be powers of 2 for optimal FFT performance
+- Shuffle disabled to preserve particle order within cells
+- Overstep migration warning if particles move > 0.99999 cells per step
+
+Energy-Conserving Solver (EC)
+------------------------------
+
+**Name:** ``ec``
+
+**Use Cases:**
+
+- Long-time simulations requiring strict energy conservation
+- Beam dynamics where numerical heating is problematic
+- Benchmarks and validation studies
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based) Maxwell solver
+- **Particle pusher:** First-order energy-conserving implicit scheme
+- **Current deposition:** Implicit coupling with field energy
+- **Boundary conditions:** Periodic
+
+**Key Features:**
+
+- Machine-precision energy conservation (with ``en_corr_type=1``)
+- Implicit field-particle coupling prevents numerical heating
+- Configurable energy correction types
+
+**Implementation Details:**
+
+The EC solver uses an implicit coupling between particle kinetic energy and field energy. For each particle:
+
+1. Half-step position estimate:
+
+   .. math::
+
+       \\mathbf{v}_{\\Delta t/2} = \\frac{\\Delta t}{2\\gamma}c\\frac{\\mathbf{p}}{mc}, \\quad
+       \\mathbf{r}_{mid} = \\mathbf{r} + \\mathbf{v}_{\\Delta t/2}
+
+2. Interpolate fields at mid-point
+3. Boris magnetic rotation
+4. Implicit E-p coupling:
+
+   .. math::
+
+       \\mathbf{p}' = (1+\\cos(b)-1)\\mathbf{p} + \\frac{1}{\\sqrt{\\kappa}}\\sin(b)\\frac{q}{mc}\\mathbf{E}
+
+   where :math:`\\kappa = \\frac{4\\pi q^2 w}{m V_g \\gamma}\\xi`, :math:`b = \\sqrt{\\kappa}\\Delta t`, and :math:`\\xi = \\sum_i c_i^2` (CIC weights squared).
+
+5. Energy correction (``en_corr_type=1``): multiply :math:`\\mathbf{p}` by correction factor to achieve machine-precision energy conservation
+6. Alternative correction (``en_corr_type=2``): adjust field energy instead
+
+**Configuration:**
+
+.. code-block:: python
+
+    sim = pipic.init(solver='ec', ...)
+    sim.en_corr_type(1)  # Type 1: momentum correction
+    sim.en_corr_type(2)  # Type 2: field correction (default)
+
+**Performance Notes:**
+
+- Particle shuffling enabled for better cache locality
+- Overstep move warnings if time step too large
+- Slightly slower than Boris due to implicit coupling
+
+Energy-Conserving Solver (EC2)
+-------------------------------
+
+**Name:** ``ec2``
+
+**Use Cases:**
+
+- Similar to EC, with second-order accuracy
+- Applications requiring both energy conservation and higher accuracy
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based)
+- **Particle pusher:** Second-order energy-conserving scheme
+- **Current deposition:** Second-order implicit coupling
+
+**Key Features:**
+
+- Second-order accurate in time
+- Machine-precision energy conservation
+- Similar interface to EC solver
+
+**Implementation Details:**
+
+Similar to EC but with second-order corrections in the implicit coupling. The mathematical formulation includes additional terms to achieve :math:`O(\\Delta t^2)` accuracy while maintaining energy conservation.
+
+**Configuration:**
+
+.. code-block:: python
+
+    sim = pipic.init(solver='ec2', ...)
+    sim.en_corr_type(2)  # Default
+
+Electromagnetic Energy-Conserving Solver (EMC2)
+-----------------------------------------------
+
+**Name:** ``emc2``
+
+**Use Cases:**
+
+- Full electromagnetic simulations with energy conservation
+- Multi-dimensional plasma dynamics
+
+**Algorithm:**
+
+- **Field solver:** Spectral electromagnetic
+- **Particle pusher:** Energy-conserving with full EM coupling
+- **Boundary conditions:** Periodic
+
+**Key Features:**
+
+- Combines energy conservation with full electromagnetic dynamics
+- Suitable for complex multi-species plasma simulations
+
+Electrostatic 1D Solver (ES1D)
+------------------------------
+
+**Name:** ``electrostatic_1d``
+
+**Use Cases:**
+
+- 1D plasma oscillations
+- Two-stream instabilities
+- Rapid prototyping and testing
+- Educational demonstrations
+
+**Algorithm:**
+
+- **Field solver:** Direct integration of Poisson equation
+- **Particle pusher:** Leapfrog with electrostatic force
+- **Current deposition:** CIC to node-centered current
+- **Boundary conditions:** Periodic
+
+**Key Features:**
+
+- Simple, efficient 1D implementation
+- Magnetic field :math:`\\mathbf{B} = 0` by definition
+- Reference implementation for solver development
+
+**Implementation Details:**
+
+Field update (per node):
+
+.. math::
+
+    E_x \\leftarrow E_x - 4\\pi J_x \\Delta t
+
+Particle push (leapfrog):
+
+1. ``preStep``: pull back momentum by half step:
+
+   .. math::
+
+       p_x \\leftarrow p_x - \\frac{q\\Delta t}{2}E_x
+
+2. Main loop per iteration:
+
+   a. Advance field
+   b. Zero current: :math:`J_x = 0`
+   c. For each particle:
+
+      - Interpolate :math:`E_x` at particle position (CIC)
+      - Update momentum: :math:`p_x \\leftarrow p_x + q\\Delta t E_x`
+      - Update position: :math:`x \\leftarrow x + \\Delta t p_x / m`
+      - Apply periodic BC
+      - Deposit current to neighbors (CIC)
+
+3. ``postStep``: push forward momentum by half step:
+
+   .. math::
+
+       p_x \\leftarrow p_x + \\frac{q\\Delta t}{2}E_x
+
+**Example Usage:**
+
+.. code-block:: python
+
+    # 1D plasma oscillation
+    sim = pipic.init(solver='electrostatic_1d', nx=64, xmin=-L/2, xmax=L/2)
+    
+    @cfunc(types.field_loop_callback)
+    def initial_field(ind, r, E, B, data_double, data_int):
+        E[0] = E0 * np.sin(2*np.pi*r[0]/L)
+    
+    sim.field_loop(handler=initial_field.address)
+    sim.add_particles(...)
+    sim.advance(time_step=dt, number_of_iterations=100)
+
+**Notes:**
+
+- Only :math:`E_x` component is active; :math:`E_y = E_z = B_x = B_y = B_z = 0`
+- Momentum stored as momentum per real particle (not per macroparticle)
+- Suitable only for 1D geometries (set ``ny=1, nz=1``)
+
+Solver Selection Guidelines
+----------------------------
+
+**Choose fourier_boris when:**
+
+- General-purpose EM simulations
+- Laser-plasma interactions
+- Multi-dimensional problems
+- Speed is priority
+
+**Choose ec or ec2 when:**
+
+- Energy conservation is critical
+- Long-time beam dynamics
+- Numerical heating must be minimized
+- Validation/benchmarking
+
+**Choose emc2 when:**
+
+- Energy conservation + full EM coupling needed
+- Multi-species plasma simulations
+
+**Choose electrostatic_1d when:**
+
+- 1D problems only
+- Rapid prototyping
+- Educational purposes
+- Benchmarking against analytical solutions
+
+Common Solver Parameters
+-------------------------
+
+**Time step selection:**
+
+- Courant condition: :math:`c\\Delta t < \\Delta x`
+- Typical choice: :math:`\\Delta t \\sim 0.1 \\Delta x / c`
+- Reduce if overstep warnings appear
+
+**Grid resolution:**
+
+- Resolve Debye length: :math:`\\Delta x < \\lambda_D`
+- Powers of 2 for FFT-based solvers
+- Typical: 10-100 cells per :math:`\\lambda_D`
+
+**Particle counts:**
+
+- 10-100 particles per cell recommended
+- Higher for better statistics
+- Use downsampling extensions if needed
+
+Implementation Architecture
+---------------------------
+
+All solvers implement:
+
+- ``advance(timeStep)``: Main time-stepping routine
+- ``preStep(timeStep)``: Initialize staggered schemes
+- ``preLoop()``: Per-iteration field preparation
+- ``processParticle(p, q, m, dt)``: Push individual particle
+- ``postLoop()``: Field advancement
+- ``postStep(timeStep)``: Finalize staggered schemes
+
+See ``SOLVER_DEPLOYMENT.rts`` for details on implementing new solvers.

@@ -1,0 +1,73 @@
+Deploying New Solvers
+======================
+
+This guide explains the required interfaces for any `field_solver` and `pic_solver` in pi-PIC, then shows the electrostatic 1D implementation in
+[src/ES1D_field_solver.h](../../src/ES1D_field_solver.h) and [src/ES1D_pic_solver.h](../../src/ES1D_pic_solver.h) as a concrete example.
+
+Required Interface: Field Solver
+--------------------------------
+- Derive from `field_solver` and keep the simulation box (`box`) with grid spacing and extents.
+- State: store fields and any source terms (e.g., Ex/Ey/Ez, Bx/By/Bz, Jx/Jy/Jz, rho).
+- `advance(double dt)`: update field state using accumulated sources; clear sources as needed.
+- `getEB(double3 r, double3 &E, double3 &B)`: interpolate fields to an arbitrary position (CIC, TSC, or your scheme).
+- `fieldLoop(int64_t handler, ...)`: iterate all grid nodes, letting user callbacks read/modify fields (initialization, diagnostics).
+- `cellSetField(cellInterface &CI, int3 i)`: pack surrounding node fields into `CI.F_data` for extensions/handlers (used by ensemble loops).
+
+Required Interface: PIC Solver
+------------------------------
+- Derive from `pic_solver` and construct:
+   - `Field` pointing to your field solver instance.
+   - `Ensemble` with `new ensemble(Field->box)` to manage particles.
+- `name`: string used by Python (`pipic.init(solver="name")`).
+- `advance(double dt)`: usually delegates to `Ensemble->advance_singleLoop<This, FieldSolver>(this, dt)` to run lifecycle hooks.
+- Lifecycle hooks to implement:
+   - `preStep(dt)`: prep particles (e.g., half-step momentum for leapfrog).
+   - `preLoop()`: field prep per step (e.g., advance fields, zero source arrays).
+   - `processParticle(p, q, m, dt)`: interpolate fields, push momentum/position, enforce boundaries, deposit charge/current.
+   - `postStep(dt)`: finalize particle state (e.g., second half-step momentum).
+   - Optional: `postLoop`, `startSubLoop`, `endSubLoop` for extra bookkeeping/tiling.
+
+ES1D Field Solver (Example)
+---------------------------
+- State: `Ex` and current `Jx` on 1D periodic grid.
+- `advance(dt)`: $E_x \leftarrow E_x - 4\pi J_x \Delta t$.
+- `getEB(r, E, B)`: CIC interpolation of `Ex` to particle position; sets `B=0`.
+- `fieldLoop(...)`: exposes grid nodes to Python handlers for init/diagnostics.
+- `cellSetField(...)`: fills `CI.F_data` with surrounding node fields for extensions.
+
+ES1D PIC Solver (Example)
+-------------------------
+- Constructs `ES1DFieldSolver`, `Ensemble`, sets `name = "electrostatic_1d"` for Python.
+- `advance(dt)`: calls `advance_singleLoop` to run hooks below.
+- Hooks:
+   - `preStep(dt)`: half-step momentum to align leapfrog.
+   - `preLoop()`: advance field, then zero `Jx` before deposition.
+   - `processParticle(...)`: interpolate `E`, update $p_x$, advance position with periodic BCs, deposit current with CIC weights to neighbors.
+   - `postStep(dt)`: second half-step momentum to complete leapfrog.
+- Empty hooks (`postLoop`, `startSubLoop`, `endSubLoop`) left available for extensions.
+
+Checklist to Add a New Solver
+-----------------------------
+1. **Implement field solver**: subclass `field_solver`, store field/state arrays, implement `advance`, `getEB`, `fieldLoop`, and `cellSetField`.
+2. **Implement PIC solver**: subclass `pic_solver`, wire `Field` and `Ensemble`, set `name`, implement lifecycle hooks and deposition consistent with your interpolation scheme.
+3. **Register in Python**: add the solver to the factory in `src/pipic.h` so `pipic.init(solver="your_name")` constructs it; ensure build scripts compile the new sources.
+4. **Test from Python**: initialize fields via `field_loop`, add particles via `add_particles`, run small steps, and check conserved quantities.
+
+Practical Patterns from ES1D
+----------------------------
+- **Leapfrog alignment**: half-step momentum before/after main loop.
+- **Current deposition**: deposit immediately after pushing particle state to keep fields consistent.
+- **Periodic boundaries**: wrap positions; replace with absorbing/reflecting if required by the physics.
+- **Threading**: `fieldLoop` supports `useOmp`; keep deposition thread-safe if parallelized.
+
+Testing and Validation
+----------------------
+- Reproduce plasma oscillation and two-stream instability setups (see `tutorials/solver/*.ipynb`) with the new solver.
+- Compare against ES1D: field energy, particle energy, phase space snapshots.
+- Use `fieldLoop` and `particle_loop` callbacks for diagnostics of conserved quantities.
+
+Troubleshooting Tips
+--------------------
+- Field remains zero: ensure `advance(dt)` uses deposited sources and sources are reset each step.
+- Instability or noise: check interpolation/deposition order, time step vs. cell size (Courant), boundary handling.
+- Python cannot find solver: confirm `name` matches `pipic.init` and registration in `pipic.h`.

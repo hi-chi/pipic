@@ -1,0 +1,354 @@
+Extensions Reference
+====================
+
+This document describes the built-in extensions available in pi-PIC, their physical models, parameters, and usage examples.
+
+Overview
+--------
+
+Extensions add physics modules to simulations via custom handlers. They are registered using ``sim.add_handler()`` and operate on particles or fields during the simulation advance.
+
+Available extensions:
+
+1. **QED modules:** ``qed_gonoskov2015``, ``qed_volokitin2023``
+2. **Radiation:** ``landau_lifshitz``
+3. **Particle management:** ``downsampler_gonoskov2022``
+4. **Field generation:** ``focused_pulse``
+5. **Boundary handling:** ``x_reflector_c``, ``x_converter_c``, ``absorbing_boundaries``
+6. **Moving window:** ``moving_window``
+
+QED Extensions
+--------------
+
+qed_gonoskov2015
+^^^^^^^^^^^^^^^^
+
+**Description:** QED photon emission and pair production using the locally constant field approximation (LCFA) with rejection sampling.
+
+**Reference:** A. Gonoskov et al., PRE (2015), arXiv:1412.6426
+
+**Physics:**
+
+- Photon emission (synchrotron radiation) from electrons/positrons
+- Pair production from photons
+- Based on synchrotron functions with efficient approximations
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = qed.handler(electron_type, positron_type, photon_type,
+                         probability_threshold=1e-3,
+                         probability_subcycle=0.1)
+
+- ``electron_type`` (int): Type index for electrons (use ``sim.get_type_index('electron')``).
+- ``positron_type`` (int): Type index for positrons (use ``sim.get_type_index('positron')``).
+- ``photon_type`` (int): Type index for photons (use ``sim.get_type_index('photon')``).
+- ``probability_threshold`` (float): Below this threshold, event weights are increased and events are rarified. Default: 1e-3.
+- ``probability_subcycle`` (float): Maximum estimated probability per QED event within a single substep. Default: 0.1.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.qed_gonoskov2015 as qed
+    
+    # Must have electron, positron, and photon types defined
+    sim.add_particles(name='electron', ...)
+    sim.add_particles(name='positron', ...)
+    sim.add_particles(name='photon', charge=0, mass=0, ...)
+    
+    # Get type indices
+    electron_type = sim.get_type_index('electron')
+    positron_type = sim.get_type_index('positron')
+    photon_type = sim.get_type_index('photon')
+    
+    handler_ptr = qed.handler(electron_type, positron_type, photon_type)
+    sim.add_handler(name='qed_gonoskov2015',
+                   subject='electron, positron, photon',
+                   handler=handler_ptr)
+
+**Physical Model:**
+
+Quantum parameter:
+
+.. math::
+
+    \\chi = \\frac{\\gamma}{E_S}\\sqrt{(\\mathbf{E} + \\mathbf{v}/c \\times \\mathbf{B})^2 - (\\mathbf{v}/c \\cdot \\mathbf{E})^2}
+
+where :math:`E_S = m_e^2 c^3 / (e\\hbar) \\approx 1.3 \\times 10^{16}` V/cm is the Schwinger field.
+
+Photon emission rate:
+
+Field Generation
+----------------
+
+focused_pulse
+^^^^^^^^^^^^^
+
+**Description:** Inject a focused Gaussian laser pulse via a field handler (paraxial approximation).
+
+**Configuration functions:**
+
+.. code-block:: python
+
+    focused_pulse.set_box(nx, ny, nz, xmin, ymin, zmin, xmax, ymax, zmax)
+    focused_pulse.set_center(x, y, z)
+    focused_pulse.set_path(x, y, z)          # Propagation direction
+    focused_pulse.set_e_axis(x, y, z)        # Polarization direction
+    focused_pulse.set_theta_max(theta_max)   # Angular aperture
+    focused_pulse.set_l_size(l_size)         # Characteristic length
+    focused_pulse.set_shape(shape)           # Temporal shape function
+    focused_pulse.add_pulse()                # Add configured pulse
+    focused_pulse.clear_pulse()              # Clear all pulses
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.focused_pulse as fp
+    
+    fp.set_box(sim.nx, sim.ny, sim.nz,
+              sim.xmin, sim.ymin, sim.zmin,
+              sim.xmax, sim.ymax, sim.zmax)
+    fp.set_center(0, 0, 0)
+    fp.set_path(1, 0, 0)
+    fp.set_e_axis(0, 1, 0)
+    fp.set_theta_max(30.0)
+    fp.set_l_size(3e-4)
+    fp.set_shape(lambda t: ...)
+    fp.add_pulse()
+
+    field_handler_ptr = fp.field_loop_cb()
+    sim.add_handler(name='focused_pulse',
+                   subject='cells',
+                   field_handler=field_handler_ptr)
+
+**Notes:**
+
+- Only use as a field handler (no particle handler).
+- Paraxial approximation; keep beam waist and angle consistent with grid.
+
+Boundary Handling
+-----------------
+
+x_reflector_c
+^^^^^^^^^^^^^
+
+**Description:** Reflect particles in a finite region along x.
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = x_reflector.handler(location, thickness)
+
+- ``location`` (float): Center position of reflective region (cm).
+- ``thickness`` (float): Thickness of reflective region (cm).
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.x_reflector_c as reflector
+    
+    handler_ptr = reflector.handler(location=1e-3, thickness=1e-5)
+    sim.add_handler(name='x_reflector',
+                   subject='electron, positron',
+                   handler=handler_ptr)
+
+**Behavior:**
+
+- Particles within the region with :math:`p_x > 0` have momentum reversed: :math:`p_x \to -p_x`.
+- Region spans ``location - thickness/2`` to ``location + thickness/2``.
+
+x_converter_c
+^^^^^^^^^^^^^
+
+**Description:** Convert particles to another type when traversing an x-plane region.
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = x_converter.handler(location, thickness, typeTo)
+
+- ``location`` (float): Center position of conversion region (cm).
+- ``thickness`` (float): Thickness of conversion region (cm).
+- ``typeTo`` (int): Target particle type index.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.x_converter_c as converter
+    
+    photon_idx = sim.get_type_index('photon')
+    handler_ptr = converter.handler(location=0, thickness=1e-4, typeTo=photon_idx)
+    sim.add_handler(name='x_converter',
+                   subject='electron',
+                   handler=handler_ptr)
+
+**Notes:**
+
+- Converted particles keep position, momentum, and weight.
+
+absorbing_boundaries
+^^^^^^^^^^^^^^^^^^^^
+
+**Description:** Absorb particles and damp fields near boundaries.
+
+**Parameters (particle handler):**
+
+.. code-block:: python
+
+    handler = absorber.handler(ensemble, simulation_box, characteristic_wavelength,
+                              density_profile=-1, boundary_size=-1.0, axis='x',
+                              fall=-1.0, temperature=0.0, particles_per_cell=1.0,
+                              remove_particles_every=10, moving_window_velocity=0.0,
+                              moving_window_direction='x')
+
+- ``ensemble`` (int): Pointer from ``sim.ensemble_data()``.
+- ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
+- ``characteristic_wavelength`` (float): Characteristic wavelength (cm).
+- ``density_profile`` (int): Density profile callback address. Default: -1.
+- ``boundary_size`` (float): Layer thickness (cm). Default: -1.0 (auto).
+- ``axis`` (char): Boundary axis. Default: 'x'.
+- ``fall`` (float): Field damping coefficient. Default: -1.0.
+- ``temperature`` (float): Temperature for re-injected particles. Default: 0.0.
+- ``particles_per_cell`` (float): Density for re-injection. Default: 1.0.
+- ``remove_particles_every`` (int): Removal frequency. Default: 10.
+- ``moving_window_velocity`` (float): Moving window speed (cm/s). Default: 0.0.
+- ``moving_window_direction`` (char): Moving window axis. Default: 'x'.
+
+**Parameters (field handler):**
+
+.. code-block:: python
+
+    field_handler = absorber.field_handler(simulation_box, characteristic_wavelength,
+                                          boundary_size=-1.0, axis='x', fall=-1.0)
+
+- ``simulation_box`` (int): Simulation box pointer.
+- ``characteristic_wavelength`` (float): Characteristic wavelength (cm).
+- ``boundary_size`` (float): Absorption layer thickness (cm). Default: -1.0.
+- ``axis`` (char): Boundary axis. Default: 'x'.
+- ``fall`` (float): Field damping coefficient. Default: -1.0.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.absorbing_boundaries as absorber
+    
+    ensemble_ptr = sim.ensemble_data()
+    simbox_ptr = sim.simulation_box()
+    
+    handler_ptr = absorber.handler(ensemble_ptr, simbox_ptr,
+                                   characteristic_wavelength=0.8e-4,
+                                   boundary_size=20*dx,
+                                   axis='x')
+    field_handler_ptr = absorber.field_handler(simbox_ptr,
+                                               characteristic_wavelength=0.8e-4,
+                                               boundary_size=20*dx,
+                                               axis='x')
+    
+    sim.add_handler(name='absorber',
+                   subject='all_types',
+                   handler=handler_ptr,
+                   field_handler=field_handler_ptr)
+
+**Behavior:**
+
+- Particle weights reduced in absorption layer; optional re-injection.
+- Fields damped near boundaries to suppress reflections.
+
+Moving Window
+-------------
+
+moving_window
+^^^^^^^^^^^^^
+
+**Description:** Move the simulation window while maintaining plasma injection.
+
+**Parameters (particle handler):**
+
+.. code-block:: python
+
+    handler = mw.handler(ensemble, simulation_box, time_step,
+                        particles_per_cell, temperature, density_profile,
+                        thickness=-1, velocity=lightVelocity, axis='x', angle=0)
+
+- ``ensemble`` (int): Pointer from ``sim.ensemble_data()``.
+- ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
+- ``time_step`` (float): Time step (s).
+- ``particles_per_cell`` (float): Particle density for re-injection.
+- ``temperature`` (float): Temperature for re-injected particles (erg).
+- ``density_profile`` (int): Density profile callback address.
+- ``thickness`` (float): Boundary thickness (cm). Default: -1.
+- ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
+- ``axis`` (char): Movement axis. Default: 'x'.
+- ``angle`` (float): Window angle (degrees). Default: 0.
+
+**Parameters (field handler):**
+
+.. code-block:: python
+
+    field_handler = mw.field_handler(simulation_box, time_step,
+                                     thickness=-1, velocity=lightVelocity,
+                                     axis='x', angle=0)
+
+- ``simulation_box`` (int): Simulation box pointer.
+- ``time_step`` (float): Time step (s).
+- ``thickness`` (float): Boundary thickness (cm). Default: -1.
+- ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
+- ``axis`` (char): Movement axis. Default: 'x'.
+- ``angle`` (float): Window angle (degrees). Default: 0.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.moving_window as mw
+    from pipic import consts, types
+    
+    @cfunc(types.add_particles_callback)
+    def density_profile(r, data_double, data_int):
+        return 1e18
+    
+    ensemble_ptr = sim.ensemble_data()
+    simbox_ptr = sim.simulation_box()
+    
+    handler_ptr = mw.handler(ensemble_ptr, simbox_ptr, dt,
+                            particles_per_cell=10,
+                            temperature=1e-6*consts.electron_mass*consts.light_velocity**2,
+                            density_profile=density_profile.address,
+                            velocity=consts.light_velocity,
+                            axis='x')
+    field_handler_ptr = mw.field_handler(simbox_ptr, dt,
+                                        velocity=consts.light_velocity,
+                                        axis='x')
+    
+    sim.add_handler(name='moving_window',
+                   subject='all_types',
+                   handler=handler_ptr,
+                   field_handler=field_handler_ptr)
+
+**Behavior:**
+
+- Shifts simulation domain along ``axis`` at ``velocity``.
+- Removes particles exiting the rear; optionally re-injects at front via ``density_profile``.
+
+Extension Development
+---------------------
+
+To build custom extensions:
+
+1. Implement a handler callable with ``cellInterface`` data (C++ or numba callback).
+2. Register via ``sim.add_handler(name, subject, handler, field_handler, data_double, data_int)``.
+3. Use ``cellInterface`` to read/modify particles and fields; allocate new particles via ``newParticle``.
+
+Performance tips:
+
+- Prefer C++ extensions for speed; numba callbacks are slower.
+- Minimize allocations inside hot loops.
+- Use thread-local RNG (``CI.rngSeed``) for determinism.

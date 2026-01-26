@@ -1,0 +1,20 @@
+π-PIC Code Overview
+========================
+
+π-PIC provides three interraction levels, the Python interface, extensions and solvers. These enteties are called and combined in the ensemble using common interfaces.  
+
+.. image:: ../_static/pipic_architecture_with_code.png
+   :width: 300px
+   :align: center
+   :alt: Architecture diagram
+
+Notes on Threading and Determinism
+-------------------------------------
+- RNG is thread-locked but seeded deterministically; `pipic.setRngGenSeed` controls reproducibility.
+- OMP parallelism is available for field loops and main advance; loop layout staggers cell processing to reduce write conflicts.
+
+Notes on Units and Conventions
+------------------------------
+- All physics in CGS; 
+- Grid cell counts should be powers of two for FFT-based solvers.
+- Default geometry is periodic unless a solver or handler imposes other boundary rules.

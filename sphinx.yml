@@ -1,0 +1,103 @@
+# Sphinx build and documentation configuration
+# This file defines build settings and CI/CD parameters for π-PIC documentation
+
+sphinx:
+  # Source and output directories (relative to project root)
+  source_dir: docs
+  build_dir: docs/_build
+  config_file: docs/conf.py
+
+  # Build output format
+  builder: html
+  language: en
+  
+  # Parallel builds
+  jobs: 4
+  
+  # Strict mode: warnings become errors
+  strict: false
+  
+  # Warnings
+  warning_is_error: false
+  quiet: false
+  verbose: true
+
+# Documentation structure
+documentation:
+  title: "π-PIC: Relativistic Particle-in-Cell Simulation Framework"
+  description: "Documentation for the pi-PIC framework"
+  
+  # Main sections in order
+  sections:
+    - name: User Guide
+      parts:
+        - PYTHON_INTERFACE
+        - SOLVERS
+        - EXTENSIONS
+        - ENSEMBLE
+    
+    - name: Developer Guide
+      parts:
+        - SOLVER_DEPLOYMENT
+        - CODE_ARCHITECTURE
+
+# Build artifacts
+output:
+  # HTML output configuration
+  html:
+    theme: alabaster
+    logo: null
+    favicon: null
+    
+  # LaTeX/PDF output
+  pdf:
+    enabled: false
+    
+  # Additional formats
+  formats:
+    - html
+    - pdf
+
+# Metadata
+metadata:
+  author: "LWFA Team"
+  copyright: "2026"
+  license: "License details here"
+  version: "1.0.0"
+  repository: "https://github.com/your-repo/pipic"
+  
+# CI/CD
+ci:
+  # Build on these events
+  trigger_on:
+    - push
+    - pull_request
+  
+  # Platforms
+  platforms:
+    - linux
+    - macos
+  
+  # Python versions
+  python_versions:
+    - "3.8"
+    - "3.9"
+    - "3.10"
+    - "3.11"
+  
+  # Post-build
+  publish:
+    enabled: false
+    # destination: "Read the Docs" or custom
+
+# API documentation
+api_docs:
+  enabled: true
+  python_packages:
+    - pipic
+  autodoc: true
+  
+# Search configuration
+search:
+  enabled: true
+  engine: "sphinx"

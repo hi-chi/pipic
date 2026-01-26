@@ -1,0 +1,240 @@
+π-PIC Installation Guide
+==========================
+
+π-PIC has been tested and confirmed to work on Linux, macOS, and Windows (via WSL).
+
+System Requirements
+-------------------
+
+Before installing π-PIC, ensure you have the following:
+
+- **Python 3.8+**
+- **gcc** (C/C++ compiler, 64-bit)
+- **fftw3** (Fast Fourier Transform library, 64-bit)
+- **openmp** (OpenMP parallel computing library)
+- **pybind11** (automatically handled by pip installation)
+
+Python packages (automatically installed with pipic):
+
+- `numba <https://numba.pydata.org/>`_ — JIT compiler for Python
+- `numpy <https://numpy.org/>`_ — Numerical computing library
+
+Installation Methods
+--------------------
+
+PyPI (Recommended)
+^^^^^^^^^^^^^^^^^^
+
+The easiest installation method is via PyPI:
+
+.. code-block:: bash
+
+    pip install pipic
+
+If using a non-standard compiler (e.g., custom gcc on macOS), specify it:
+
+.. code-block:: bash
+
+    CC=<c-compiler> CXX=<c++-compiler> pip install pipic
+
+Conda
+^^^^^
+
+For Conda-based environments, refer to:
+https://github.com/hi-chi/pipic/blob/pipic_tutorial/tutorials/installation.ipynb
+
+From GitHub (Latest Development Version)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To install the latest version or a specific branch from GitHub:
+
+1. Create and enter a directory:
+
+   .. code-block:: bash
+
+       mkdir pipic-dev
+       cd pipic-dev
+
+2. Clone the repository:
+
+   .. code-block:: bash
+
+       git clone https://github.com/hi-chi/pipic.git
+       cd pipic
+
+3. (Optional) Switch to a specific branch:
+
+   .. code-block:: bash
+
+       git checkout <branch-name>
+
+4. (Optional) Uninstall any existing version:
+
+   .. code-block:: bash
+
+       pip uninstall pipic
+
+5. Install from source:
+
+   .. code-block:: bash
+
+       python3 -m pip install .
+
+6. (Optional) Test the installation:
+
+   .. code-block:: bash
+
+       python3 examples/basic_example.py
+
+Platform-Specific Instructions
+-------------------------------
+
+Linux
+^^^^^
+
+On most Linux distributions, install dependencies using your package manager:
+
+**Debian/Ubuntu:**
+
+.. code-block:: bash
+
+    sudo apt-get install build-essential python3 python3-dev libfftw3-dev libomp-dev
+
+**Fedora/RHEL:**
+
+.. code-block:: bash
+
+    sudo yum install gcc gcc-c++ python3-devel fftw-devel libomp-devel
+
+Then install pipic:
+
+.. code-block:: bash
+
+    pip install pipic
+
+macOS
+^^^^^
+
+Installation on macOS depends on which compiler you use.
+
+**Using GCC (via Homebrew)**
+
+Homebrew's gcc includes OpenMP; the built-in macOS gcc (which is actually clang) does not.
+
+1. Install dependencies:
+
+   .. code-block:: bash
+
+       brew install fftw gcc
+
+2. Identify your gcc version (e.g., `gcc-14`):
+
+   .. code-block:: bash
+
+       gcc --version
+
+3. Set environment variables and install:
+
+   .. code-block:: bash
+
+       export LDFLAGS="-L$(brew --prefix)/opt/fftw/lib"
+       export CPPFLAGS="-I$(brew --prefix)/opt/fftw/include"
+       CC=gcc-14 CXX=g++-14 pip install pipic
+
+   (Replace `gcc-14` and `g++-14` with your actual gcc version.)
+
+4. (Optional) Make the exports permanent by adding them to `~/.bashrc` or `~/.zprofile`:
+
+   .. code-block:: bash
+
+       echo 'export LDFLAGS="-L$(brew --prefix)/opt/fftw/lib"' >> ~/.zprofile
+       echo 'export CPPFLAGS="-I$(brew --prefix)/opt/fftw/include"' >> ~/.zprofile
+
+**Using Clang (with Homebrew libomp)**
+
+1. Install dependencies:
+
+   .. code-block:: bash
+
+       brew install fftw libomp
+
+2. Set environment variables and install:
+
+   .. code-block:: bash
+
+       export LDFLAGS="-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
+       export CPPFLAGS="-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
+       pip install pipic
+
+3. (Optional) Make the exports permanent by adding them to `~/.bashrc` or `~/.zprofile`.
+
+Windows
+^^^^^^^
+
+Use **Windows Subsystem for Linux (WSL)** and follow the Linux instructions above.
+
+1. Enable WSL:
+
+   .. code-block:: bash
+
+       wsl --install
+
+2. Inside WSL, install dependencies (Ubuntu/Debian):
+
+   .. code-block:: bash
+
+       sudo apt-get install build-essential python3 python3-dev libfftw3-dev libomp-dev
+
+3. Install pipic:
+
+   .. code-block:: bash
+
+       pip install pipic
+
+Verification
+------------
+
+After installation, verify everything works:
+
+.. code-block:: bash
+
+    python3 -c "import pipic; print(pipic.__version__)"
+
+Or run one of the included examples:
+
+.. code-block:: bash
+
+    python3 examples/basic_example.py
+
+If successful, you should see output without errors. For example output, refer to `examples/ <../../examples/>`_.
+
+Troubleshooting
+---------------
+
+**Error: Could not find compiler**
+
+Ensure gcc and g++ are installed and in your PATH:
+
+.. code-block:: bash
+
+    gcc --version
+    g++ --version
+
+If not found, install them or adjust your PATH.
+
+**Error: fftw3 not found**
+
+Install fftw3 development libraries:
+
+- **Linux (Debian)**: ``sudo apt-get install libfftw3-dev``
+- **Linux (Fedora)**: ``sudo yum install fftw-devel``
+- **macOS**: ``brew install fftw``
+
+**Error: OpenMP not found**
+
+- **Linux**: Usually included with gcc. If missing, install ``libomp-dev`` or ``libomp-devel``.
+- **macOS**: ``brew install libomp``
+
+
+
+
