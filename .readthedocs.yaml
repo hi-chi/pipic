@@ -1,55 +1,13 @@
-# Read the Docs configuration file
-# https://docs.readthedocs.io/en/stable/config-file/v2/
+version: "2"
 
-version: 2
-
-# Build operating system
 build:
-  os: ubuntu-22.04
+  os: "ubuntu-22.04"
   tools:
     python: "3.10"
-    
-    # Install system dependencies for pipic compilation
-    apt_packages:
-      - build-essential
-      - libfftw3-dev
-      - libomp-dev
-      - pkg-config
 
-# Python build settings
 python:
-  version: "3.10"
-  
-  # Install project in development mode
   install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+    - requirements: docs/requirements.txt
 
-# Sphinx configuration
 sphinx:
   configuration: docs/conf.py
-  fail_on_warning: false
-
-# Documentation formats to build
-formats:
-  - pdf
-  - epub
-
-# Build notifications
-notifications:
-  email: false
-
-# Version control
-vcs:
-  show_flyout: true
-
-# Redirects for moved pages
-redirects:
-  guides/INSTALLATION.md: guides/INSTALLATION.rts
-  guides/CODE_ARCHITECTURE.md: guides/CODE_ARCHITECTURE.rts
-
-# Environment variables
-env:
-  READTHEDOCS: "true"
