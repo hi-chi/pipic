@@ -135,21 +135,19 @@ if __name__ == '__main__':
 
     #-----------------------adding the handler of extension-------------------------
     window_speed = consts.light_velocity #speed of moving window
-    density_handler_adress = moving_window.handler(sim.ensemble_data(),
-                                                   sim.simulation_box(),
+    density_handler_adress = moving_window.handler(sim.simulation_box(),
                                                    thickness=thickness,
                                                    particles_per_cell=particles_per_cell,
                                                    temperature=temperature,
                                                    density_profile=density_profile.address,
                                                    velocity=window_speed,)
-    field_handler_adress = moving_window.field_handler(sim.simulation_box(),timestep)
+    field_handler_adress = moving_window.field_handler(sim.simulation_box())
 
     sim.add_handler(name=moving_window.name, 
                     subject='electron,cells',
                     handler=density_handler_adress,
                     field_handler=field_handler_adress,
                     data_int=pipic.addressof(data_int),)
-    
     #-----------------------run simulation-------------------------
     s = int((end_of_plasma+xmax)/consts.light_velocity/timestep) # number of steps in the simulation 
     checkpoint = 10

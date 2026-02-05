@@ -58,13 +58,12 @@ Here we list extensions with short descriptions, references and contacts of deve
                                                        sim.simulation_box(),
                                                        ...),
                   field_handler=absorbing_boundaries.field_handler(sim.simulation_box(),
-                                                                   timestep=timestep,
                                                                    ...),
                   data_int=pipic.addressof(data_int),)
   ```
   - **Handler variables:**
       
-    - **ensemble** (`C++ object address`)  
+    - **ensemble_data** (`C++ object address`)  
       The particle ensemble data from the simulation.
 
     - **simulation_box** (`C++ object address`)  
@@ -103,9 +102,6 @@ Here we list extensions with short descriptions, references and contacts of deve
     - **simulation_box** (`C++ object address`)  
       Geometry of the simulation box.
 
-    - **timestep** (`float`)  
-      Simulation timestep.
-
     - **boundary_size** (`float`, optional, default = `-1.0`)  
       Size (in cm) of the absorbing boundary region for fields.
 
@@ -124,20 +120,16 @@ Here we list extensions with short descriptions, references and contacts of deve
   ```python
   sim.add_handler(name=moving_window.name,
                   subject="particle_name,cells",  # apply to both particles and fields
-                  handler=moving_window.handler(sim.ensemble_data(),
-                                                sim.simulation_box(),
+                  handler=moving_window.handler(sim.simulation_box(),
                                                 particles_per_cell,
                                                 temperature,
                                                 density_profile,
                                                 ...),
                   field_handler=moving_window.field_handler(sim.simulation_box(),
-                                                            timestep,
                                                             ...),)
   ```
 
   - **Handler variables:**
-    - **ensemble** (`C++ object address`)  
-      The particle ensemble data from the simulation.
 
     - **simulation_box** (`C++ object address`)  
       Geometry of the simulation box.
@@ -169,9 +161,6 @@ Here we list extensions with short descriptions, references and contacts of deve
   - **Field handler variables:**
     - **simulation_box** (`C++ object address`)  
       Geometry of the simulation box.
-
-    - **timestep** (`float`)  
-      Simulation timestep.
 
     - **thickness** (`float`, optional, default = `-1`)  
       Thickness of the field absorbing/moving boundary region.

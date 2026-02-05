@@ -91,9 +91,11 @@ sim.add_handler(
     # particle handler
     handler=absorbing_boundaries.handler(
         # pass address to cell and particle data
-        sim.ensemble_data(),
+        ensemble_data = sim.ensemble_data(),
         # pass address to simulation box geometry
-        sim.simulation_box(),
+        simulation_box = sim.simulation_box(),
+        # characteristic wavelength for absorbing boundary
+        characteristic_wavelength = l / 2,
         # pass adress to density profile function
         density_profile=density_profile.address,
         # size of boundary (in cm)
@@ -105,9 +107,9 @@ sim.add_handler(
     ),
     field_handler=absorbing_boundaries.field_handler(
         # pass address to simulation box geometry
-        sim.simulation_box(), 
-        # pass size of time step
-        timestep=timestep
+        simulation_box = sim.simulation_box(), 
+        # characteristic wavelength for absorbing boundary
+        characteristic_wavelength = l / 2,
     ),
     # pass address to data_int for passing iteration number 
     # (see RUN SIMULATION section)
@@ -217,4 +219,5 @@ for i in range(figures):
     xpx_plot.set_data(particle_dd)
 
     # Save figure
+    print(f"Saving figure {i:03d}...")
     plt.savefig(save_to + f"plasma_oscillation_{i:03d}.png", dpi=150)

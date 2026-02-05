@@ -1,4 +1,4 @@
-Getting Started with π-PIC
+Getting Started
 ============================
 
 Introduction
@@ -77,7 +77,8 @@ Set up the physical and numerical parameters for the simulation:
 Step 3: Define Callbacks for Density and Fields
 ------------------------------------------------
 
-Define Python callbacks (using Numba's @cfunc decorator) to initialize the simulation:
+Define Python callbacks (using Numba's @cfunc decorator) to initialize particles and fields. These decorators compile the functions to C-code so π-PIC can call them directly (no Python overhead) while keeping the authoring experience in Python.
+For the full list of callback signatures see `Callback Types <PYTHON_INTERFACE.html#callback-types>`_.
 
 .. code-block:: python
 
@@ -108,7 +109,7 @@ Create the simulation object and add particles and fields:
 
     # Initialize simulation with ec2 solver
     sim = pipic.init(
-        solver='ec2',  # Energy-conserving (2nd order)
+        solver='ec2',  # Energy-conserving (2nd order).
         xmin=xmin, xmax=xmax,
         ymin=ymin, ymax=ymax,
         zmin=zmin, zmax=zmax,
@@ -128,11 +129,9 @@ Create the simulation object and add particles and fields:
     # Set initial electromagnetic field
     sim.field_loop(handler=initial_field.address)
 
-**Key parameters:**
+**Comments:**
 
-- **Solver**: ``ec2`` (energy-conserving, 2nd order) is ideal for long-time simulations where energy conservation is critical. Alternatives: ``fourier_boris``, ``ec``.
-- **Particles per cell**: 200 macroparticles per cell provides good statistics.
-- **field_loop**: Initializes fields by calling ``initial_field`` at each grid node.
+- **Solver**: ``ec2`` (energy-conserving, 2nd order) is ideal for long-time simulations where energy conservation is critical. See `SOLVERS <SOLVERS.html>`_ for the complete list of available solvers and their characteristics.
 
 Step 5: Run the Simulation
 ---------------------------
@@ -237,63 +236,12 @@ Plot the results to verify the plasma oscillation:
 - **Phase space plot**: Sinusoidal bunching of electrons in x-p_x plane, showing oscillatory motion.
 - **Field plot**: Sinusoidal variation of Ex along x.
 
-Step 8: Analyze Energy Conservation
-------------------------------------
 
-One advantage of the EC2 solver is machine-precision energy conservation:
+Examples
+--------
+Explore additional ready-to-run notebooks in the tutorials folder:
 
-.. code-block:: python
-
-    # Define energy arrays
-    kinetic_energy = []
-    field_energy = []
-    times = []
-    
-    @cfunc(types.particle_loop_callback)
-    def compute_kinetic(r, p, w, id, data_double, data_int):
-        """Compute kinetic energy (non-relativistic)."""
-        data = carray(data_double, (1,), dtype=np.double)
-        gamma = np.sqrt(1 + (p[0]**2 + p[1]**2 + p[2]**2) / 
-                              (consts.electron_mass * consts.light_velocity)**2)
-        kinetic = w[0] * (gamma - 1) * consts.electron_mass * consts.light_velocity**2
-        data[0] += kinetic
-    
-    @cfunc(types.field_loop_callback)
-    def compute_field_energy(ind, r, E, B, data_double, data_int):
-        """Compute electromagnetic field energy."""
-        data = carray(data_double, (1,), dtype=np.double)
-        E_mag2 = E[0]**2 + E[1]**2 + E[2]**2
-        B_mag2 = B[0]**2 + B[1]**2 + B[2]**2
-        dV = (xmax - xmin) / nx * (ymax - ymin) / ny * (zmax - zmin) / nz
-        field_energy_density = (E_mag2 + B_mag2) / (8 * np.pi) * dV
-        data[0] += field_energy_density
-    
-    # Monitor energy during simulation
-    for step in range(num_steps):
-        sim.advance(time_step=timestep, number_of_iterations=1)
-        
-        # Sample energies
-        KE = np.array([0.0], dtype=np.double)
-        FE = np.array([0.0], dtype=np.double)
-        sim.particle_loop(name='electron', handler=compute_kinetic.address, 
-                         data_double=pipic.addressof(KE))
-        sim.field_loop(handler=compute_field_energy.address, 
-                      data_double=pipic.addressof(FE))
-        
-        kinetic_energy.append(KE[0])
-        field_energy.append(FE[0])
-        times.append(step * timestep)
-    
-    # Plot energy conservation
-    fig, ax = plt.subplots()
-    total_E = np.array(kinetic_energy) + np.array(field_energy)
-    ax.plot(times, total_E / total_E[0], 'b-', label='Total Energy', linewidth=2)
-    ax.set_ylabel('Normalized Total Energy')
-    ax.set_xlabel('Time [s]')
-    ax.set_title('Energy Conservation (EC2 Solver)')
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-
-**Expected result**: Total energy should remain constant to machine precision (relative error < 10⁻¹⁵).
+- `laser_wakefield_1d.ipynb <../tutorials/laser_wakefield_1d.ipynb>`_ — baseline 1D laser wakefield acceleration setup and diagnostics.
+- `plasma_oscillation.ipynb <../tutorials/plasma_oscillation.ipynb>`_ — the plasma oscillation walkthrough mirrored in notebook form.
+- `plasma_oscillation_with_boundaries.ipynb <../tutorials/extensions/plasma_oscillation_with_boundaries.ipynb>`_ — plasma oscillation with absorbing boundaries and boundary absorption diagnostics.
+- `two_stream_instability.ipynb <../tutorials/solver/two_stream_instability.ipynb>`_ — classic two-stream instability setup and growth analysis.

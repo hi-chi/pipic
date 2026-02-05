@@ -1,12 +1,12 @@
-Solver Reference
+Solvers
 =================
 
-This document describes the available PIC solvers in pi-PIC, their use cases, underlying algorithms, and implementation details.
+This document describes the available PIC solvers in π-PIC, their use cases, underlying algorithms, and implementation details.
 
 Overview
 --------
 
-Pi-PIC provides five built-in solvers:
+π-PIC provides five built-in solvers:
 
 1. ``fourier_boris`` - Spectral electromagnetic solver with Boris particle pusher
 2. ``ec`` - First-order energy-conserving solver
@@ -20,64 +20,20 @@ All solvers follow the same interface and can be selected via:
 
     sim = pipic.init(solver='fourier_boris', nx=256, xmin=0, xmax=1e-3)
 
+Available Solvers
+-----------------
+
 Fourier-Boris Solver
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 **Name:** ``fourier_boris``
 
-**Use Cases:**
-
-- General-purpose relativistic electromagnetic PIC simulations
-- Laser-plasma interactions
-- Beam dynamics
-- Multi-dimensional problems (1D, 2D, 3D)
-
 **Algorithm:**
 
-- **Field solver:** Spectral (FFT-based) solution of Maxwell's equations in momentum space
+- **Field solver:** Spectral (FFT-based) 
 - **Particle pusher:** Boris algorithm for relativistic particle motion
-- **Current deposition:** Cloud-in-Cell (CIC) with half-step backward shift
+- **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
-
-**Key Features:**
-
-- Divergence cleaning (∇·E = 4πρ enforcement) - enabled by default
-- Optional high-frequency filter (sin² suppression near Nyquist frequency)
-- Optimized for FFTW with patient planning
-- Thread-local field sub-maps for efficient OpenMP parallelization
-
-**Implementation Details:**
-
-Field advance (spectral space):
-
-.. math::
-
-    \\mathbf{E}(\\mathbf{k}, t+\\Delta t) &= \\mathbf{E}(\\mathbf{k}, t) - 4\\pi \\Delta t \\mathbf{J}(\\mathbf{k}) \\\\
-    \\mathbf{B}(\\mathbf{k}, t+\\Delta t) &= \\text{advance via Maxwell in k-space}
-
-Boris pusher (per particle):
-
-1. Half electric impulse: :math:`\\mathbf{u}^0 = \\mathbf{p} + \\frac{q\\Delta t}{2}\\mathbf{E}`
-2. Magnetic rotation:
-
-   .. math::
-
-       \\mathbf{t} = \\frac{q\\Delta t}{2mc\\gamma}\\mathbf{B}, \\quad
-       \\mathbf{s} = \\frac{2\\mathbf{t}}{1 + |\\mathbf{t}|^2}
-   
-   .. math::
-
-       \\mathbf{u}^1 = \\mathbf{u}^0 + \\mathbf{u}^0 \\times \\mathbf{t}
-
-   .. math::
-
-       \\mathbf{p}' = \\mathbf{u}^0 + \\mathbf{u}^1 \\times \\mathbf{s} + \\frac{q\\Delta t}{2}\\mathbf{E}
-
-3. Position update:
-
-   .. math::
-
-       \\mathbf{r}(t+\\Delta t) = \\mathbf{r}(t) + \\frac{\\Delta t}{m\\gamma}\\mathbf{p}'
 
 **Configuration:**
 
@@ -93,52 +49,20 @@ Boris pusher (per particle):
 - Overstep migration warning if particles move > 0.99999 cells per step
 
 Energy-Conserving Solver (EC)
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Name:** ``ec``
 
-**Use Cases:**
-
-- Long-time simulations requiring strict energy conservation
-- Beam dynamics where numerical heating is problematic
-- Benchmarks and validation studies
+**Description:** Explicit energy conserving solver. See A. Gonoskov et al., PRE **84**, 026404 (2011) - `DOI: 10.1103/PhysRevE.84.026404 <https://doi.org/10.1103/PhysRevE.84.026404>`__, `arXiv:1106.4356 <https://arxiv.org/abs/1106.4356>`__.
 
 **Algorithm:**
 
 - **Field solver:** Spectral (FFT-based) Maxwell solver
 - **Particle pusher:** First-order energy-conserving implicit scheme
-- **Current deposition:** Implicit coupling with field energy
+- **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
 
-**Key Features:**
 
-- Machine-precision energy conservation (with ``en_corr_type=1``)
-- Implicit field-particle coupling prevents numerical heating
-- Configurable energy correction types
-
-**Implementation Details:**
-
-The EC solver uses an implicit coupling between particle kinetic energy and field energy. For each particle:
-
-1. Half-step position estimate:
-
-   .. math::
-
-       \\mathbf{v}_{\\Delta t/2} = \\frac{\\Delta t}{2\\gamma}c\\frac{\\mathbf{p}}{mc}, \\quad
-       \\mathbf{r}_{mid} = \\mathbf{r} + \\mathbf{v}_{\\Delta t/2}
-
-2. Interpolate fields at mid-point
-3. Boris magnetic rotation
-4. Implicit E-p coupling:
-
-   .. math::
-
-       \\mathbf{p}' = (1+\\cos(b)-1)\\mathbf{p} + \\frac{1}{\\sqrt{\\kappa}}\\sin(b)\\frac{q}{mc}\\mathbf{E}
-
-   where :math:`\\kappa = \\frac{4\\pi q^2 w}{m V_g \\gamma}\\xi`, :math:`b = \\sqrt{\\kappa}\\Delta t`, and :math:`\\xi = \\sum_i c_i^2` (CIC weights squared).
-
-5. Energy correction (``en_corr_type=1``): multiply :math:`\\mathbf{p}` by correction factor to achieve machine-precision energy conservation
-6. Alternative correction (``en_corr_type=2``): adjust field energy instead
 
 **Configuration:**
 
@@ -155,30 +79,19 @@ The EC solver uses an implicit coupling between particle kinetic energy and fiel
 - Slightly slower than Boris due to implicit coupling
 
 Energy-Conserving Solver (EC2)
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Name:** ``ec2``
 
-**Use Cases:**
-
-- Similar to EC, with second-order accuracy
-- Applications requiring both energy conservation and higher accuracy
+**Description:** Similar to EC, with second-order accuracy. See A. Gonoskov et al., PRE **84**, 026404 (2011) - `DOI: 10.1103/PhysRevE.84.026404 <https://doi.org/10.1103/PhysRevE.84.026404>`__, `arXiv:1106.4356 <https://arxiv.org/abs/1106.4356>`__.
 
 **Algorithm:**
 
 - **Field solver:** Spectral (FFT-based)
 - **Particle pusher:** Second-order energy-conserving scheme
-- **Current deposition:** Second-order implicit coupling
+- **Current deposition:** Cloud-in-Cell (CIC)
+- **Boundary conditions:** Periodic
 
-**Key Features:**
-
-- Second-order accurate in time
-- Machine-precision energy conservation
-- Similar interface to EC solver
-
-**Implementation Details:**
-
-Similar to EC but with second-order corrections in the implicit coupling. The mathematical formulation includes additional terms to achieve :math:`O(\\Delta t^2)` accuracy while maintaining energy conservation.
 
 **Configuration:**
 
@@ -188,50 +101,33 @@ Similar to EC but with second-order corrections in the implicit coupling. The ma
     sim.en_corr_type(2)  # Default
 
 Electromagnetic Energy-Conserving Solver (EMC2)
------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Name:** ``emc2``
 
-**Use Cases:**
-
-- Full electromagnetic simulations with energy conservation
-- Multi-dimensional plasma dynamics
+**Description:** Similar to EC, with second-order accuracy and approximate momentum-conservation. See `arXiv:2511.09950 <https://arxiv.org/abs/2511.09950>`__. (needs update)
 
 **Algorithm:**
 
 - **Field solver:** Spectral electromagnetic
-- **Particle pusher:** Energy-conserving with full EM coupling
+- **Particle pusher:** Energy-conserving and approximate momentum-conservation. 
+- **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
 
-**Key Features:**
-
-- Combines energy conservation with full electromagnetic dynamics
-- Suitable for complex multi-species plasma simulations
 
 Electrostatic 1D Solver (ES1D)
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Name:** ``electrostatic_1d``
 
-**Use Cases:**
-
-- 1D plasma oscillations
-- Two-stream instabilities
-- Rapid prototyping and testing
-- Educational demonstrations
+**Description:** A 1D-electrostatic PIC-code. Constructed as a reference implementation for solver development (see `solver tutorials <https://github.com/hi-chi/pipic/tree/main/tutorials/solver>`__). For implementation details see also `arXiv:2511.09950 <https://arxiv.org/abs/2511.09950>`__. (needs update)
 
 **Algorithm:**
 
-- **Field solver:** Direct integration of Poisson equation
+- **Field solver:** Time advancment using Forward Euler of Amperes-Maxwells law.
 - **Particle pusher:** Leapfrog with electrostatic force
 - **Current deposition:** CIC to node-centered current
 - **Boundary conditions:** Periodic
-
-**Key Features:**
-
-- Simple, efficient 1D implementation
-- Magnetic field :math:`\\mathbf{B} = 0` by definition
-- Reference implementation for solver development
 
 **Implementation Details:**
 
@@ -239,7 +135,7 @@ Field update (per node):
 
 .. math::
 
-    E_x \\leftarrow E_x - 4\\pi J_x \\Delta t
+    E_x \leftarrow E_x - 4\pi J_x \Delta t
 
 Particle push (leapfrog):
 
@@ -247,7 +143,7 @@ Particle push (leapfrog):
 
    .. math::
 
-       p_x \\leftarrow p_x - \\frac{q\\Delta t}{2}E_x
+       p_x \leftarrow p_x - \frac{q\Delta t}{2}E_x
 
 2. Main loop per iteration:
 
@@ -256,8 +152,8 @@ Particle push (leapfrog):
    c. For each particle:
 
       - Interpolate :math:`E_x` at particle position (CIC)
-      - Update momentum: :math:`p_x \\leftarrow p_x + q\\Delta t E_x`
-      - Update position: :math:`x \\leftarrow x + \\Delta t p_x / m`
+      - Update momentum: :math:`p_x \leftarrow p_x + q\Delta t E_x`
+      - Update position: :math:`x \leftarrow x + \Delta t p_x / m`
       - Apply periodic BC
       - Deposit current to neighbors (CIC)
 
@@ -265,89 +161,167 @@ Particle push (leapfrog):
 
    .. math::
 
-       p_x \\leftarrow p_x + \\frac{q\\Delta t}{2}E_x
+       p_x \leftarrow p_x + \frac{q\Delta t}{2}E_x
 
-**Example Usage:**
-
-.. code-block:: python
-
-    # 1D plasma oscillation
-    sim = pipic.init(solver='electrostatic_1d', nx=64, xmin=-L/2, xmax=L/2)
-    
-    @cfunc(types.field_loop_callback)
-    def initial_field(ind, r, E, B, data_double, data_int):
-        E[0] = E0 * np.sin(2*np.pi*r[0]/L)
-    
-    sim.field_loop(handler=initial_field.address)
-    sim.add_particles(...)
-    sim.advance(time_step=dt, number_of_iterations=100)
 
 **Notes:**
 
 - Only :math:`E_x` component is active; :math:`E_y = E_z = B_x = B_y = B_z = 0`
-- Momentum stored as momentum per real particle (not per macroparticle)
 - Suitable only for 1D geometries (set ``ny=1, nz=1``)
 
-Solver Selection Guidelines
-----------------------------
 
-**Choose fourier_boris when:**
 
-- General-purpose EM simulations
-- Laser-plasma interactions
-- Multi-dimensional problems
-- Speed is priority
-
-**Choose ec or ec2 when:**
-
-- Energy conservation is critical
-- Long-time beam dynamics
-- Numerical heating must be minimized
-- Validation/benchmarking
-
-**Choose emc2 when:**
-
-- Energy conservation + full EM coupling needed
-- Multi-species plasma simulations
-
-**Choose electrostatic_1d when:**
-
-- 1D problems only
-- Rapid prototyping
-- Educational purposes
-- Benchmarking against analytical solutions
-
-Common Solver Parameters
--------------------------
-
-**Time step selection:**
-
-- Courant condition: :math:`c\\Delta t < \\Delta x`
-- Typical choice: :math:`\\Delta t \\sim 0.1 \\Delta x / c`
-- Reduce if overstep warnings appear
-
-**Grid resolution:**
-
-- Resolve Debye length: :math:`\\Delta x < \\lambda_D`
-- Powers of 2 for FFT-based solvers
-- Typical: 10-100 cells per :math:`\\lambda_D`
-
-**Particle counts:**
-
-- 10-100 particles per cell recommended
-- Higher for better statistics
-- Use downsampling extensions if needed
-
-Implementation Architecture
+Deploying New Solvers
 ---------------------------
 
-All solvers implement:
+This guide explains the required structures for new solvers, namely: a `field_solver` and a `pic_solver`. Generally the pic_solver advances the particles and the field solver the fields, however, other constructs are possible within the framework. Both structures are constrained by templates defined in ``ìnterfaces.h`` (see `interfaces.h <https://github.com/hi-chi/pipic/blob/main/src/interfaces.h>`__). These interfaces defines a set of mandatory methods that are needed to maintain compatability with the rest of the framework. For a minimal example of a implementation of a field and pic solver see `ES1D_field_solver.h <https://github.com/hi-chi/pipic/blob/main/src/ES1D_field_solver.h>`__ and `ES1D_pic_solver.h <https://github.com/hi-chi/pipic/blob/main/src/ES1D_pic_solver.h>`__. 
 
-- ``advance(timeStep)``: Main time-stepping routine
-- ``preStep(timeStep)``: Initialize staggered schemes
-- ``preLoop()``: Per-iteration field preparation
-- ``processParticle(p, q, m, dt)``: Push individual particle
-- ``postLoop()``: Field advancement
-- ``postStep(timeStep)``: Finalize staggered schemes
+PIC Solver
+^^^^^^^^^^^^
 
-See ``SOLVER_DEPLOYMENT.rts`` for details on implementing new solvers.
+Derive from `pic_solver` base class and implement the following required members and methods:
+
+**Required Member Variables:**
+
+- ``field_solver *Field`` - Pointer to the field solver instance managing electromagnetic fields
+- ``ensemble *Ensemble`` - Pointer to the ensemble managing all particles 
+- ``string name`` - Solver name used by Python (e.g., ``"electrostatic_1d"`` used in ``pipic.init(solver="electrostatic_1d")``)
+
+**Required Methods:**
+
+- ``void advance(double timeStep)`` - *Pure virtual*. Main entry point called by ``sim.advance()`` in Python. Recommended implementation:
+
+  .. code-block:: cpp
+
+      void advance(double timeStep) {
+          Ensemble->advance_singleLoop<YourSolverClass, YourFieldSolverClass>(this, timeStep);
+      }
+
+**Lifecycle Hook Methods (optional):**
+
+These hooks can be used to implement the PIC algorithm and are called automatically by ``advance_singleLoop`` in the following order.
+
+**Execution Order per Time Step:**
+
+1. ``preStep(dt)``
+2. For each timestep:
+
+   a. Apply field extensions (``apply_fieldHandlers()``)
+   b. ``preLoop()``
+   c. For each cell:
+
+      i. Apply cell extensions with ``particleType = -1`` (``apply_actOnCellHandlers()``)
+      ii. For each particle type in cell:
+
+          - ``startSubLoop(i, charge, mass, dt)``
+          - Apply particle extensions (``apply_particleHandlers()``)
+          - For each particle: ``processParticle(P, charge, mass, dt)``
+          - ``endSubLoop()``
+
+   d. ``postLoop()``
+3. ``postStep(dt)``
+
+**Hook Method Descriptions:**
+
+- ``void preStep(double dt)`` - Called before the main time step loop begins. Parameter ``dt`` is the time step duration.
+
+- ``void preLoop()`` - Called at the start of each iteration, before processing any particles.
+
+- ``void startSubLoop(int3 i, double charge, double mass, double dt)`` - Called before processing particles of a given type in a cell. Parameters:
+
+  - ``i`` - Three-index (ix, iy, iz) of the cell grid coordinates
+  - ``charge`` - Charge of the particle type
+  - ``mass`` - Mass of the particle type
+  - ``dt`` - Time step duration
+
+- ``void processParticle(particle &P, double charge, double mass, double dt)`` - Advances a single particle by one time step. Parameters:
+
+  - ``P`` - Reference to the particle (position, momentum, weight modified in-place)
+  - ``charge`` - Particle charge
+  - ``mass`` - Particle mass
+  - ``dt`` - Time step duration
+
+- ``void endSubLoop()`` - Called after processing all particles of a type in a cell.
+
+- ``void postLoop()`` - Called after all particles in an iteration are processed, before advancing to the next iteration.
+
+- ``void postStep(double dt)`` - Called after the main time step loop completes. Parameter ``dt`` is the time step duration.
+
+
+
+Field Solver
+^^^^^^^^^^^^^^
+
+Derive from `field_solver` base class and implement the following required members and methods:
+
+**Required Member Variables:**
+
+- ``string type`` - Solver type identifier (optional, for internal use)
+- ``simulationBox box`` - Simulation domain with grid spacing and extents; passed to constructor and maintains grid information (``n``, ``min``, ``max``, ``step``, ``invStep``, ``dim``, ``timeStep``)
+
+**Constructor:**
+
+.. code-block:: cpp
+
+    field_solver(simulationBox box) : box(box) {}
+
+Initialize the field solver with the simulation box containing grid geometry.
+
+**Required Pure Virtual Methods:**
+
+- ``void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false)`` - *Must implement*. Iterates over all grid nodes and calls user-provided handler callback for each:
+
+  - ``handler`` - Function pointer to callback with signature: ``void handler(int *ind, double *r, double *E, double *B, double *dataDouble, int *dataInt)``
+  - ``ind[0], ind[1], ind[2]`` - Three-index of the node (grid coordinates)
+  - ``ind[4]`` - Field component code: 0=Ex, 1=Ey, 2=Ez, 3=Bx, 4=By, 5=Bz, 6=all
+  - ``r`` - Physical coordinates of the node
+  - ``E, B`` - Electric and magnetic field values (pointer to array of up to 3 components)
+  - ``dataDouble, dataInt`` - User data arrays passed through from Python
+  - ``useOmp`` - Whether to parallelize with OpenMP
+  
+  Common uses: field initialization, diagnostics, applying boundary conditions
+
+- ``void cellSetField(cellInterface &CI, int3 i)`` - *Must implement*. Transfers electromagnetic field data from the field solver to a cellInterface for a specific cell at grid position ``i``:
+
+  - Packs field values at surrounding nodes into ``CI.F_data`` array
+  - Called by the ensemble during particle processing loops
+  - Enables extensions/handlers to access field values via cellInterface
+
+**Optional Virtual Methods:**
+
+- ``void advance(double timeStep)`` - Update field state using accumulated sources (charge/current deposits). Default: empty. Implement to:
+
+  - Apply Maxwell's equations or Poisson solver
+  - Clear/reset source terms after field update
+  - Update time tracking if needed
+
+- ``void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0)`` - Read-only field access with custom iteration pattern. Default: empty. Use for:
+
+  - Accessing fields at user-specified points
+  - Diagnostics with non-standard grid sampling
+  - ``it2coord`` - Callback to convert iteration index to coordinates
+  - ``field2data`` - Callback to process field at each point
+
+**Helper Methods (do not override):**
+
+- ``void setGridType(cellInterface &CI, int gridType)`` - Set interpolation grid type for cellInterface (0=collocated grid where E and B are at cell corners)
+- ``double*& getCI_F_Data(cellInterface &CI)`` - Access field data pointer from cellInterface
+
+
+Registering New Solvers
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To make a new solver available to Python via ``pipic.init(solver=...)``, update the central constructor in `pipic.h <https://github.com/hi-chi/pipic/blob/main/src/pipic.h>`__:
+
+1. **Include the pic solver header** near the top of the file (e.g., add ``#include "your_solver.h"``).
+2. **Add a constructor mapping** inside ``pipic::pipic(...)``:
+
+   .. code-block:: cpp
+
+     if(solverName == "your_solver") Solver = new your_solver(box);
+
+3. **Ensure the solver name string matches** the ``pic_solver::name`` set inside your solver implementation (this is what ``pipic.init(solver=...)`` expects).
+
+After these changes, rebuild the Python extension so the new solver becomes selectable from Python.
+
+

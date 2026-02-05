@@ -1,12 +1,12 @@
-Ensemble Architecture
+Ensemble
 ============================
 
-This document describes the ensemble system in pi-PIC, which serves as the execution engine for advancing particles and managing handler invocations during ``sim.advance()``.
+This document describes the ensemble system in π-PIC, which serves as the execution engine for advancing particles and managing handler invocations during ``sim.advance()``.
 
 Overview
 --------
 
-The **ensemble** is the core particle storage and loop executor in pi-PIC. It:
+The **ensemble** is the core particle storage and loop executor in π-PIC. It:
 
 - Stores all particles in a 3D cell-based structure
 - Manages particle types and their properties
@@ -15,141 +15,64 @@ The **ensemble** is the core particle storage and loop executor in pi-PIC. It:
 - Provides thread-safe parallelization with OpenMP
 - Tracks performance metrics and diagnostics
 
-Role in sim.advance()
----------------------
+PIC advancement 
+------------------
 
-When ``sim.advance(time_step, number_of_iterations)`` is called:
+When ``sim.advance(time_step, number_of_iterations)`` is called in Python, most solvers invokes the ``advance_singleLoop()`` method of the ensemble. An alternative advance method is ``advance_doubleLoop()``.
 
-1. The solver's ``preStep()`` hook runs (e.g., half-step momentum initialization)
-2. For each iteration:
-   - **Field handlers** execute (diagnostics, laser injection, etc.)
-   - ``preLoop()`` hook runs (field advancement, source zeroing)
-   - **Ensemble loop** iterates over all cells and particle types:
-        - Cell handlers execute
-        - Particle handlers execute per type
-        - ``processParticle()`` called for each particle (push + deposit)
-        - Particle migration/deletion handled
-   - ``postLoop()`` hook runs (field finalization)
-   - Handler manager closes iteration
-3. The solver's ``postStep()`` hook runs (e.g., complete leapfrog)
 
-The ensemble orchestrates this entire workflow via ``advance_singleLoop()`` or ``advance_doubleLoop()`` templates.
+advance_singleLoop()
+^^^^^^^^^^^^^^^^^^^^^
+The nested loop structure of this method shows how solver hooks and extension handlers interleave in the advance call:
 
-Data Structure
---------------
+1. ``preStep()`` - pic solver hook (e.g., pull momentum back by half-step for leapfrog). Executes once per ``sim.advance()`` call.
 
-**Cell-based storage:**
+2. For each iteration (time step):
 
-.. code-block:: cpp
+   a. ``apply_fieldHandlers()`` - Execute field extensions before particle processing. (Parallelization strategy implemented in field solver.)
+   b. ``preLoop()`` - pic solver hook (e.g., advances fields). 
+   c. For each cell in the grid (with **OpenMP parallelization** of cells using x-slicing with stride-8 staging):
+      
+      - ``apply_actOnCellHandlers()`` - Particle extensions operate on cell interface (e.g for addition of particles). **Parallel execution**. 
+      - For each particle type within the cell:
+        
+        * ``startSubLoop()`` - pic solver hook. **Parallel execution**.
+        * ``apply_particleHandlers()`` - Particle extensions acts on particles of this type (e.g., QED, ionization, downsampling). **Parallel execution**.
+        * For each particle of this type:
+          
+          - ``processParticle()`` - pic solver hook (e.g particle-push, deposition of current). **Parallel execution**.
+        
+        * ``endSubLoop()`` - pic solver hook (e.g., upload field data). **Parallel execution**.
+   
+   d. Post-OMP migration handling - Process deferred migrations from ``postOmpMigrationList``. **Serial execution**.
+   e. ``postLoop()`` - pic solver hook. **Serial execution**.
 
-    cellContainer ***cell;  // cell[ig][it] -> particles
+3. ``postStep()`` - pic solver hook (e.g., push momentum forward by half-step). Executes once per ``sim.advance()`` call. **Serial execution**.
 
-- ``cell[ig]``: Pointer to array of particle containers for grid cell ``ig``
-- ``cell[ig][it]``: Container for particle type ``it`` in cell ``ig``
-- Lazy allocation: cells/types created only when particles added
-
-**Cell container:**
-
-.. code-block:: cpp
-
-    struct cellContainer {
-        vector<particle> P;      // Particle array
-        int endShift;            // Particles from other cells (during OMP)
-    };
-
-**Particle structure:**
-
-.. code-block:: cpp
-
-    struct particle {
-        double3 r, p;            // Position, momentum
-        double w;                // Weight
-        unsigned long long id;   // Unique identifier
-        // Additional attributes if configured at compile time
-    };
-
-**Thread-local data:**
-
-.. code-block:: cpp
-
-    struct threadData {
-        cellInterface* CI;                // Interface for handlers
-        vector<particle> NP;              // New particle buffer
-        vector<int> toRemove;             // Particle removal list
-        vector<P_pointer> postOmpMigrationList;  // Delayed migrations
-        unsigned long long numMigrated, numDeleted, numCreated;
-    };
-
-Advancement Loop (advance_singleLoop)
--------------------------------------
-
-This is the primary loop used by most solvers. It executes one pass per time step.
-
-**Workflow:**
+**Pseudocode:**
 
 .. code-block:: text
 
-    preStep(dt)
-    for each iteration:
-        apply_fieldHandlers()             # Field-level extensions
-        preLoop()                         # Solver field prep
-        
-        for stage in [0..7]:              # Staged x-iteration
-            #pragma omp parallel for
-            for cell in stage_cells:
-                set cellInterface
-                
-                apply_actOnCellHandlers() # Cell-level extensions
-                
-                for particle_type in cell:
-                    startSubLoop()        # Solver per-type prep
-                    shuffle particles (if enabled)
-                    
-                    apply_particleHandlers() # Particle extensions
-                    
-                    for particle in type:
-                        if charge != 0:
-                            processParticle()  # Solver push
-                        else:
-                            processChargelessParticle()
-                        
-                        check migration/deletion
-                    
-                    endSubLoop()          # Solver cleanup
-        
-        handle post-OMP migrations
-        postLoop()                        # Solver field finalization
-        
-    postStep(dt)
+    preStep()                                  
+    for n in numberOfIterations:
+        apply_fieldHandlers() # Parallelization strategy defined in field solver (see fieldLoop() method)
+        preLoop()                              
+        #pragma omp parallel for (stride-8 x-staging) # parallelized cell execution
+        for cell in CellInterface:             
+            apply_actOnCellHandlers()          
+            for particle_type in cell:
+                startSubLoop()                 
+                apply_particleHandlers()      
+                for particle in particles_of_this_type_in_cell:
+                    processParticle()          
+                endSubLoop()                   
+        handle_postOmpMigrations()            
+        postLoop()                             
+    postStep()                                 
 
-**Staged iteration:**
 
-- X-axis divided into 8 interlaced stages (stride 8)
-- Randomized order per stage
-- Prevents OMP write conflicts when particles migrate to neighbors
-- Stages determined by ``loopLayoutStride8x``
-
-**Migration handling:**
-
-- **Local migration** (to neighbor within 1 cell): immediate, respects stage order
-- **Non-local migration** (>1 cell): deferred to ``postOmpMigrationList``
-- After OMP loop: process deferred migrations serially
-
-**Deletion:**
-
-- Set ``particle.w = 0`` to mark for removal
-- Compaction happens after processing all particles in cell
-- Actual removal via ``compresList()``
-
-**Creation:**
-
-- New particles written to ``threadData.NP`` buffer
-- Validated to be within current cell
-- Added via ``accommodateNPfromCI()``
-- Buffer auto-expands if capacity exceeded
-
-Advancement Loop (advance_doubleLoop)
--------------------------------------
+advance_doubleLoop()
+^^^^^^^^^^^^^^^^^^^^^
 
 Alternative two-pass loop for certain solvers (not commonly used).
 
@@ -165,215 +88,3 @@ Alternative two-pass loop for certain solvers (not commonly used).
 
 Used when solver splits particle push into two stages.
 
-Thread Safety and Parallelization
-----------------------------------
-
-**OpenMP regions:**
-
-.. code-block:: cpp
-
-    #pragma omp parallel for collapse(1) if(advanceWithOmp)
-    for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
-        for(int iz = 0; iz < box.n.z; iz += 1)
-            for(int iy = 0; iy < box.n.y; iy += 1)
-
-- Parallelized over x-slices (with stride 8)
-- Each thread has private ``threadData``
-- Field sub-maps downloaded per thread (in solvers like Fourier-Boris)
-
-**Thread-local RNG:**
-
-.. code-block:: cpp
-
-    RndGen.setTreadLocalRng(ix);  // Before cell processing
-    // ... process cell ...
-    RndGen.setTreadLocalRng(0);   // After loop
-
-- RNG seeded per x-index for reproducibility
-- Deterministic even with OMP enabled
-
-**Conflict avoidance:**
-
-- Staged x-iteration prevents same-cell writes from multiple threads
-- Post-OMP migrations handle cross-stage movements
-- ``endShift`` tracks particles added by earlier types (within same cell)
-
-Particle Management Methods
-----------------------------
-
-``placeParticles(typeName, totalNumber, charge, mass, temperature, density, ...)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Called by ``sim.add_particles()`` to initialize particle distribution.
-
-**Algorithm:**
-
-1. Register or find particle type index
-2. Evaluate density callback at all cell centers (parallel)
-3. Estimate total real particles: :math:`N_{real} = \\sum_{cells} \\rho V_{cell}`
-4. Compute weight: :math:`w = N_{real} / N_{macro}`
-5. Reserve memory per cell based on expected count
-6. Generate particles:
-   - Random position within cell (uniform)
-   - Random momentum (Maxwellian, relativistic-corrected)
-   - Assign weight ``w`` and unique ID
-
-**Thread-safety:** No parallelization during placement (before first advance).
-
-``checkMove(particle *P, bool &move, bool &postOmpMove)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Determines if particle has left its cell and how to handle it.
-
-**Logic:**
-
-1. Compute displacement: ``sx``, ``sy``, ``sz`` (in cell units)
-2. Apply periodic BC to position
-3. If within ±1 cell: local migration → add to neighbor, update ``endShift``
-4. If >1 cell: deferred migration → add to ``postOmpMigrationList``
-5. Check stage order: if target cell unprocessed this stage, increment ``endShift``
-
-``compresList(P, thread, ig, it)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Compact particle list after marking deletions/migrations.
-
-**Algorithm:**
-
-1. For each marked particle (in ``toRemove``):
-   - If local removal: swap with last particle and pop
-   - If deferred: swap to end, add to ``postOmpMigrationList``
-2. Shrink vector to remove gaps
-
-``addParticle_general(P, it, migrated)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Add particle to correct cell (non-OMP, for post-loop migrations or manual insertion).
-
-**Validation:**
-
-- Check particle within domain
-- Compute target cell from position
-- Allocate cell/type if needed
-- Append to particle list
-
-Handler Management
-------------------
-
-**Handler types:**
-
-1. **Field handlers:** operate on fields before ensemble loop
-2. **Cell handlers:** operate on cells (subject ``"cells"``)
-3. **Particle handlers:** operate on particle types (subject ``"electron, positron"``)
-
-**Execution order:**
-
-.. code-block:: cpp
-
-    apply_fieldHandlers<field_solver>(Field);
-    // ... preLoop ...
-    apply_actOnCellHandlers<pic_solver, field_solver>(Solver, ...);
-    // ... per type ...
-    apply_particleHandlers<pic_solver, field_solver>(it, Solver, ...);
-
-**Handler manager (``handlerManager``):**
-
-- Stores registered handlers
-- Parses subject strings (``"electron, positron"``, ``"all_types"``, ``"cells"``)
-- Builds ``actOn`` masks per type
-- Tracks timing and particle counts per handler
-
-Cell Interface
---------------
-
-``cellInterface`` passed to all handlers provides:
-
-**Grid info:**
-
-- ``i``: Cell index (ix, iy, iz)
-- ``n``: Grid dimensions (nx, ny, nz)
-- ``cellMin()``, ``cellMax()``: Cell boundaries
-- ``step``, ``invStep``: Cell size and inverse
-
-**Particle access:**
-
-- ``Particle(i)``: Pointer to i-th particle in current subset
-- ``particleSubsetSize``: Number of particles to process
-- ``newParticle(i)``: Allocate new particle in buffer
-- ``particleBufferSize``: Current new-particle count (increment when adding)
-
-**Field access:**
-
-- ``interpolateField(r, E, B)``: Interpolate fields at position ``r``
-- ``F_data``: Field data at surrounding nodes (populated by solver's ``cellSetField``)
-
-**Metadata:**
-
-- ``timeStep``, ``particleCharge``, ``particleMass``
-- ``threadNum``: OpenMP thread index
-- ``rngSeed``: Random seed for this cell/iteration
-
-Performance Metrics
--------------------
-
-Tracked by ``handlerManager`` and reported per iteration:
-
-- ``latestParticleUpdates``: Total particles processed
-- ``latestEnsembleTime``: Time spent in ensemble loop (seconds)
-- ``latestFieldTime``: Time spent in field advancement (seconds)
-- ``latest_av_ppc``: Average particles per cell
-- ``latest_av_cmr``: Average cell migration rate
-
-Handler-specific timing via ``chronometer`` per thread.
-
-Particle Shuffling
-------------------
-
-**Purpose:** Improve cache locality and randomize processing order.
-
-**Control:**
-
-.. code-block:: cpp
-
-    Ensemble->shuffle = true;   // Enable (EC, EC2)
-    Ensemble->shuffle = false;  // Disable (Fourier-Boris)
-
-**Implementation:**
-
-.. code-block:: cpp
-
-    if(shuffle) cell[ig][it]->shuffle();
-
-Uses ``std::shuffle`` with thread-local RNG before processing particles in cell.
-
-Lazy Allocation
----------------
-
-Cells and particle type arrays allocated only when first particle added:
-
-.. code-block:: cpp
-
-    void checkInitCell(intg ig, int typeIndex) {
-        if(cell[ig] == nullptr) {
-            cell[ig] = new cellContainer*[type.size()];
-            for(int it = 0; it < type.size(); it++)
-                cell[ig][it] = nullptr;
-        }
-        if(cell[ig][typeIndex] == nullptr)
-            cell[ig][typeIndex] = new cellContainer;
-    }
-
-Saves memory for sparse distributions and multi-species simulations.
-
-Summary
--------
-
-The ensemble is the heart of pi-PIC's execution model:
-
-- **Storage:** Cell-based particle containers with lazy allocation
-- **Advancement:** Staged OMP loop with solver hooks and handler invocations
-- **Migration:** Immediate local, deferred non-local with post-processing
-- **Thread-safety:** Private thread data, staged x-iteration, deterministic RNG
-- **Extensibility:** Handler system for custom physics modules
-
-All solvers use ``ensemble::advance_singleLoop()`` or ``advance_doubleLoop()`` to orchestrate the time-stepping workflow, making the ensemble the universal executor regardless of field solver or particle pusher choice.

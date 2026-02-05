@@ -11,7 +11,6 @@ static double ppc;
 static int64_t _density_profile;
 static double _velocity; // velocity of the moving window
 static double _angle; // angle of the moving window
-static double _timeStep; // time step of the simulation
 static int dir; // principal direction of the moving window
 static int ndir; // next direction (used for angle)
 static int n[3]; // number of cells in each direction
@@ -20,15 +19,8 @@ static double gmin[3]; // minimum coordinate in each direction
 static double gmax[3]; // maximum coordinate in each direction
 bool staticsHasBeenSet = false; // flag to check if static variables have been set
 simulationBox* _simbox; // cell interface for manipulating with the content of a cell
-double *_time; // current simulation time
-
-struct cellContainer
-{
-    vector<particle> P;
-    int endShift; 
-    cellContainer(): endShift(0) {}
-};
-static cellContainer ***cell;
+static double* _time; // current simulation time
+static double* _timeStep; // time step of the simulation
 
 void addParticle(cellInterface &CI, particle &P){
     if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
@@ -55,7 +47,7 @@ static vector<threadHandler> Thread;
 void fieldHandler(int* ind, double *r, double *E, double *B, double *dataDouble, int *dataInt){
     int rollback = floor(_time[0] *_velocity/step[dir]);
     if(rollback%(_thickness/2)==0 && rollback > 0){ 
-        int rollback_prev = floor((_time[0] - _timeStep)*_velocity/step[dir]);
+        int rollback_prev = floor((_time[0] - _timeStep[0])*_velocity/step[dir]);
         if(rollback_prev!=rollback){
             // initial r_rel is at the end of the cell and marks the end of the cleaning region 
             double r_rel = gmin[dir] + step[dir]*(rollback%n[dir]); 
@@ -89,7 +81,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
     cellInterface CI(I, D, F, P, NP); // interface for manipulating with the content of a cell
     int rollback = floor(_time[0] * _velocity/step[dir]);
     if(rollback%(_thickness/2)==0 && rollback > 0){ 
-        int rollback_prev = floor((_time[0]-_timeStep)*_velocity/step[dir]);
+        int rollback_prev = floor((_time[0]-_timeStep[0])*_velocity/step[dir]);
         if(rollback_prev!=rollback){
             double cell_min[3] = {CI.cellMin().x, CI.cellMin().y, CI.cellMin().z};
             double cell_max[3] = {CI.cellMax().x, CI.cellMax().y, CI.cellMax().z};
@@ -118,19 +110,15 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
                 ( (r_min > r_rel) and ((cell_min[dir] + eps >= r_min) || (cell_max[dir] - eps <= r_rel)))){ 
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately
                     // removing particles 
-                    if(cell[ig] != nullptr){
-                        int it = 0;
-                        if(cell[ig][it] != nullptr){
-                            cellContainer *C = cell[ig][it];
-                            if(C->endShift > 0) memcpy(&C->P[0], &C->P[C->P.size() - cell[ig][it]->endShift], sizeof(particle)*C->endShift);
-                            C->P.resize(C->endShift);
-                        };
+                    for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
+                        particle *P = CI.Particle(ip);
+                        // Remove particle by setting weight to zero
+                        P->w = 0.0;
                     };
                 };
                 if (CI.particleTypeIndex==-1){
                     threadHandler &cthread(Thread[CI.threadNum]); // cthread (current thread) is to run in a thread-safe way
                     cthread.rng.seed(CI.rngSeed);
-                    
                     // adding particles
                     double3 r = (CI.cellMin() + 0.5*CI.step);
                     double R[3]; 
@@ -177,9 +165,9 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 };
 
 
-void set_statics(int64_t simbox, double timeStep, int thickness, double velocity, double angle, char direction){
-    _timeStep = timeStep;
+void set_statics(int64_t simbox, int thickness, double velocity, double angle, char direction){
     _simbox = (simulationBox*)simbox;
+
     _angle = angle;
     _velocity = velocity/cos(angle); // adjust velocity according to the angle
     
@@ -207,6 +195,7 @@ void set_statics(int64_t simbox, double timeStep, int thickness, double velocity
     gmax[1] = _simbox->max.y;
     gmax[2] = _simbox->max.z;
     _time = &_simbox->time;
+    _timeStep = &_simbox->timeStep;
 
     if (dir==2){
         ndir=0;
@@ -219,7 +208,7 @@ void set_statics(int64_t simbox, double timeStep, int thickness, double velocity
         _thickness = thickness;
     };
 
-    if (_timeStep > step[dir]/lightVelocity){
+    if (_timeStep[0] > step[dir]/lightVelocity){
         pipic_log.message("pi-PIC error: moving_window field_handler(): time step must be smaller than the cell size divided by the light velocity.", true);
     };
 };
@@ -227,13 +216,12 @@ void set_statics(int64_t simbox, double timeStep, int thickness, double velocity
 
 
 // extension initialization
-int64_t handler(int64_t ensembleData, int64_t simulation_box, double timeStep, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, char axis, double angle){ 
-    cell = (cellContainer***)ensembleData;
+int64_t handler(int64_t simulation_box, double particles_per_cell, double temperature, int64_t density_profile, int thickness, double velocity, char axis, double angle){ 
     ppc = particles_per_cell;
     _temperature = temperature;
     _density_profile = density_profile;
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, timeStep, thickness, velocity, angle, axis);
+        set_statics(simulation_box, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window handler(): "
@@ -246,9 +234,9 @@ int64_t handler(int64_t ensembleData, int64_t simulation_box, double timeStep, d
 
 
 // extension initialization
-int64_t field_handler(int64_t simulation_box, double timeStep, int thickness, double velocity, char axis, double angle){ 
+int64_t field_handler(int64_t simulation_box, int thickness, double velocity, char axis, double angle){ 
     if(!staticsHasBeenSet){
-        set_statics(simulation_box, timeStep, thickness, velocity, angle, axis);
+        set_statics(simulation_box, thickness, velocity, angle, axis);
         staticsHasBeenSet = true;
     }else{
         pipic_log.message("pi-PIC warning: moving_window field_handler(): "
@@ -263,9 +251,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(_moving_window, object) {
     object.attr("name") = name;
     object.def("handler", &handler, 
-               py::arg("ensemble"), 
                py::arg("simulation_box"), 
-               py::arg("time_step"),
                py::arg("particles_per_cell"), 
                py::arg("temperature"),
                py::arg("density_profile"), 
@@ -276,7 +262,6 @@ PYBIND11_MODULE(_moving_window, object) {
 
     object.def("field_handler", &field_handler, 
                py::arg("simulation_box"), 
-               py::arg("time_step"),
                py::arg("thickness")=-1, 
                py::arg("velocity")=lightVelocity,
                py::arg("axis")='x',

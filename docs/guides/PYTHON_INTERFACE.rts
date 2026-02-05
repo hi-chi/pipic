@@ -1,13 +1,13 @@
-Python Interface Reference
+Python Interface
 ===========================
 
-This document lists all Python-exposed functions from the `pipic` module with their arguments and descriptions.
+This document lists all Python-exposed functions from the `pipic` module with their arguments and descriptions. (See `src/pipic.h <../../src/pipic.h>`__ for C++ implementation.)
 
 Initialization
 --------------
 
 ``pipic.init(solver, nx, xmin, xmax, ny=1, ymin=-0.5, ymax=0.5, nz=1, zmin=-0.5, zmax=0.5)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Initialize a PIC simulation container.
 
@@ -30,114 +30,39 @@ Initialize a PIC simulation container.
     import pipic
     sim = pipic.init(solver='fourier_boris', nx=256, xmin=0, xmax=1e-3)
 
-Read-Only Attributes
---------------------
+**Read-Only Attributes:**
 
 After initialization, the simulation object exposes grid parameters:
 
 - ``sim.nx``, ``sim.ny``, ``sim.nz``: Grid cell counts.
 - ``sim.xmin``, ``sim.xmax``, ``sim.ymin``, ``sim.ymax``, ``sim.zmin``, ``sim.zmax``: Domain boundaries.
 
-Particle Management
--------------------
+Advance
+----------
 
-``sim.add_particles(name, number, charge, mass, temperature, density, data_double=0, data_int=0)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``sim.advance(time_step, number_of_iterations=1, use_omp=True)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Add particles to the simulation.
+Advance the simulation by one or more time steps.
 
 **Parameters:**
 
-- ``name`` (str): Particle species identifier (e.g., ``"electron"``, ``"positron"``, ``"photon"``).
-- ``number`` (int): Total number of macroparticles to add.
-- ``charge`` (float): Particle charge in esu (use ``pipic.consts.electron_charge`` for electrons).
-- ``mass`` (float): Particle mass in grams (use ``pipic.consts.electron_mass`` for electrons).
-- ``temperature`` (float): Initial thermal energy in erg, defined as :math:`\\frac{2}{3}\\langle E_k \\rangle`.
-- ``density`` (int): Address of density callback function (see below).
-- ``data_double`` (int, optional): Address of double-precision data array. Default: 0.
-- ``data_int`` (int, optional): Address of integer data array. Default: 0.
-
-**Density callback signature:**
-
-.. code-block:: python
-
-    from numba import cfunc
-    from pipic import types
-    
-    @cfunc(types.add_particles_callback)
-    def density_profile(r, data_double, data_int):
-        # r[0] = x, r[1] = y, r[2] = z
-        return density_value  # particles per cm³
+- ``time_step`` (float): Duration of each time step in seconds.
+- ``number_of_iterations`` (int, optional): Number of time steps to advance. Default: 1.
+- ``use_omp`` (bool, optional): Enable OpenMP parallelization. Default: True.
 
 **Example:**
 
 .. code-block:: python
 
-    @cfunc(types.add_particles_callback)
-    def uniform_density(r, data_double, data_int):
-        return 1e18  # cm⁻³
-    
-    sim.add_particles(name='electron', 
-                     number=10000,
-                     charge=pipic.consts.electron_charge,
-                     mass=pipic.consts.electron_mass,
-                     temperature=1e-6 * pipic.consts.electron_mass * pipic.consts.light_velocity**2,
-                     density=uniform_density.address)
+    dt = 1e-16  # seconds
+    sim.advance(time_step=dt, number_of_iterations=100)
 
-``sim.get_number_of_particles()``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Return total number of macroparticles across all species.
-
-**Returns:** int
-
-``sim.get_type_index(type_name)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Get internal index for a particle type.
-
-**Parameters:**
-
-- ``type_name`` (str): Particle species name.
-
-**Returns:** int (type index)
-
-Particle Data Access
---------------------
-
-``sim.particle_loop(name, handler, data_double=0, data_int=0)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Iterate over particles of a specific type (single-threaded).
-
-**Parameters:**
-
-- ``name`` (str): Particle species to loop over.
-- ``handler`` (int): Address of particle loop callback.
-- ``data_double`` (int, optional): Address of double-precision data array.
-- ``data_int`` (int, optional): Address of integer data array.
-
-**Handler signature:**
-
-.. code-block:: python
-
-    from numba import cfunc, carray
-    from pipic import types
-    
-    @cfunc(types.particle_loop_callback)
-    def particle_handler(r, p, w, id, data_double, data_int):
-        # r: position array [x, y, z]
-        # p: momentum array [px, py, pz]
-        # w: weight array [weight]
-        # id: particle ID array [id]
-        # Read but DO NOT modify r, p, w, id directly
-        # Use data arrays for output
-
-Field Management
-----------------
+Field Callbacks
+---------------
 
 ``sim.field_loop(handler, data_double=0, data_int=0, use_omp=False)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Iterate over grid nodes to initialize or read field values.
 
@@ -172,42 +97,85 @@ Iterate over grid nodes to initialize or read field values.
     
     sim.field_loop(handler=set_field.address)
 
-``sim.custom_field_loop(number_of_iterations, it2r, field2data, data_double=0, data_int=0)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Particle Callbacks
+------------------
 
-Sample fields at arbitrary coordinates.
+``sim.add_particles(name, number, charge, mass, temperature, density, data_double=0, data_int=0)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Parameters:**
-
-- ``number_of_iterations`` (int): Number of sample points.
-- ``it2r`` (int): Address of coordinate callback.
-- ``field2data`` (int): Address of field-to-data callback.
-- ``data_double`` (int, optional): Address of double-precision data array.
-- ``data_int`` (int, optional): Address of integer data array.
-
-Simulation Advancement
-----------------------
-
-``sim.advance(time_step, number_of_iterations=1, use_omp=True)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Advance the simulation by one or more time steps.
+Add particles to the simulation.
 
 **Parameters:**
 
-- ``time_step`` (float): Duration of each time step in seconds.
-- ``number_of_iterations`` (int, optional): Number of time steps to advance. Default: 1.
-- ``use_omp`` (bool, optional): Enable OpenMP parallelization. Default: True.
+- ``name`` (str): Particle species identifier (e.g., ``"electron"``, ``"positron"``, ``"photon"``).
+- ``number`` (int): Total number of macroparticles to add.
+- ``charge`` (float): Particle charge in esu (use ``pipic.consts.electron_charge`` for electrons).
+- ``mass`` (float): Particle mass in grams (use ``pipic.consts.electron_mass`` for electrons).
+- ``temperature`` (float): Initial thermal energy in erg, defined as :math:`\\frac{2}{3}\\langle E_k \\rangle`.
+- ``density`` (int): Address of density callback function (see below).
+- ``data_double`` (int, optional): Address of double-precision data array. Default: 0.
+- ``data_int`` (int, optional): Address of integer data array. Default: 0.
 
 **Example:**
 
 .. code-block:: python
 
-    dt = 1e-16  # seconds
-    sim.advance(time_step=dt, number_of_iterations=100)
+    from numba import cfunc
+    from pipic import types
+    
+    @cfunc(types.add_particles_callback)
+    def uniform_density(r, data_double, data_int):
+        return 1e18  # cm⁻³
+    
+    sim.add_particles(name='electron', 
+                     number=10000,
+                     charge=pipic.consts.electron_charge,
+                     mass=pipic.consts.electron_mass,
+                     temperature=1e-6 * pipic.consts.electron_mass * pipic.consts.light_velocity**2,
+                     density=uniform_density.address)
 
-Extension Handlers
-------------------
+**Density Callback (for add_particles)**
+
+.. code-block:: python
+
+    from numba import cfunc
+    from pipic import types
+    
+    @cfunc(types.add_particles_callback)
+    def density_profile(r, data_double, data_int):
+        # r[0] = x, r[1] = y, r[2] = z
+        return density_value  # particles per cm³
+
+``sim.particle_loop(name, handler, data_double=0, data_int=0)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Iterate over particles of a specific type (single-threaded).
+
+**Parameters:**
+
+- ``name`` (str): Particle species to loop over.
+- ``handler`` (int): Address of particle loop callback.
+- ``data_double`` (int, optional): Address of double-precision data array.
+- ``data_int`` (int, optional): Address of integer data array.
+
+**Handler signature:**
+
+.. code-block:: python
+
+    from numba import cfunc, carray
+    from pipic import types
+    
+    @cfunc(types.particle_loop_callback)
+    def particle_handler(r, p, w, id, data_double, data_int):
+        # r: position array [x, y, z]
+        # p: momentum array [px, py, pz]
+        # w: weight array [weight]
+        # id: particle ID array [id]
+        # Read but DO NOT modify r, p, w, id directly
+        # Use data arrays for output
+
+Add Handler
+-----------
 
 ``sim.add_handler(name, subject="", handler=0, field_handler=0, data_double=0, data_int=0)``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -234,83 +202,11 @@ Register a custom extension handler.
                    subject='electron, positron',
                    handler=handler_ptr)
 
-Solver-Specific Settings
--------------------------
-
-``sim.fourier_solver_settings(divergence_cleaning=-1, sin2_kfilter=-1)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Configure Fourier-based solver options (only for ``fourier_boris`` and related solvers).
-
-**Parameters:**
-
-- ``divergence_cleaning`` (int, optional): Enable (1) or disable (0) divergence cleaning. Default: -1 (no change).
-- ``sin2_kfilter`` (int, optional): Enable (1) or disable (0) high-frequency filter. Default: -1 (no change).
-
-**Example:**
-
-.. code-block:: python
-
-    sim.fourier_solver_settings(divergence_cleaning=1, sin2_kfilter=0)
-
-``sim.en_corr_type(correction_type=2)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Set energy correction type for EC/EC2 solvers.
-
-**Parameters:**
-
-- ``correction_type`` (int, optional): Correction algorithm variant. Default: 2.
-
-**Note:** Only applicable to ``ec`` and ``ec2`` solvers.
-
-Logging and Diagnostics
+Constants and Utilities
 -----------------------
 
-``sim.log_policy(log_to_file=True, log_to_screen=False)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Control logging output destinations.
-
-**Parameters:**
-
-- ``log_to_file`` (bool, optional): Write log messages to ``pipic_log.txt``. Default: True.
-- ``log_to_screen`` (bool, optional): Print log messages to console. Default: False.
-
-``sim.set_rng_seed(seed)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Set random number generator seed for reproducibility.
-
-**Parameters:**
-
-- ``seed`` (int): RNG seed value.
-
-**Example:**
-
-.. code-block:: python
-
-    sim.set_rng_seed(42)  # Deterministic runs
-
-Advanced Data Access
---------------------
-
-``sim.ensemble_data()``
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Return pointer to internal ensemble data structure (for advanced C++ integration).
-
-**Returns:** int (memory address)
-
-``sim.simulation_box()``
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Return pointer to simulation box structure (for advanced C++ integration).
-
-**Returns:** int (memory address)
-
 Constants Module
-----------------
+^^^^^^^^^^^^^^^^
 
 Access physical constants via ``pipic.consts``:
 
@@ -325,8 +221,8 @@ Access physical constants via ``pipic.consts``:
     consts.pi                  # π = 3.14159...
     consts.hbar                # ℏ = 1.055×10⁻²⁷ erg·s
 
-Types Module
-------------
+Callback Types
+^^^^^^^^^^^^^^
 
 Callback type signatures via ``pipic.types``:
 
@@ -335,10 +231,10 @@ Callback type signatures via ``pipic.types``:
 - ``types.field_loop_callback``: For field iteration
 
 Utilities
----------
+^^^^^^^^^
 
 ``pipic.addressof(array)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""
 
 Get memory address of NumPy array for passing to callbacks.
 
@@ -356,3 +252,118 @@ Get memory address of NumPy array for passing to callbacks.
     data = np.zeros(100, dtype=np.double)
     sim.field_loop(handler=callback.address,
                   data_double=pipic.addressof(data))
+
+Advanced Usage
+--------------
+
+Particle Queries
+^^^^^^^^^^^^^^^^
+
+``sim.get_number_of_particles()``
+""""""""""""""""""""""""""""""""""
+
+Return total number of macroparticles across all species.
+
+**Returns:** int
+
+``sim.get_type_index(type_name)``
+""""""""""""""""""""""""""""""""""
+
+Get internal index for a particle type.
+
+**Parameters:**
+
+- ``type_name`` (str): Particle species name.
+
+**Returns:** int (type index)
+
+Custom Field Sampling
+^^^^^^^^^^^^^^^^^^^^^
+
+``sim.custom_field_loop(number_of_iterations, it2r, field2data, data_double=0, data_int=0)``
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Sample fields at arbitrary coordinates.
+
+**Parameters:**
+
+- ``number_of_iterations`` (int): Number of sample points.
+- ``it2r`` (int): Address of coordinate callback.
+- ``field2data`` (int): Address of field-to-data callback.
+- ``data_double`` (int, optional): Address of double-precision data array.
+- ``data_int`` (int, optional): Address of integer data array.
+
+Solver-Specific Settings
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``sim.fourier_solver_settings(divergence_cleaning=-1, sin2_kfilter=-1)``
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Configure Fourier-based solver options (only for ``fourier_boris`` and related solvers).
+
+**Parameters:**
+
+- ``divergence_cleaning`` (int, optional): Enable (1) or disable (0) divergence cleaning. Default: -1 (no change).
+- ``sin2_kfilter`` (int, optional): Enable (1) or disable (0) high-frequency filter. Default: -1 (no change).
+
+**Example:**
+
+.. code-block:: python
+
+    sim.fourier_solver_settings(divergence_cleaning=1, sin2_kfilter=0)
+
+``sim.en_corr_type(correction_type=2)``
+""""""""""""""""""""""""""""""""""""""""
+
+Set energy correction type for EC/EC2 solvers.
+
+**Parameters:**
+
+- ``correction_type`` (int, optional): Correction algorithm variant. Default: 2.
+
+**Note:** Only applicable to ``ec`` and ``ec2`` solvers.
+
+Logging and Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^
+
+``sim.log_policy(log_to_file=True, log_to_screen=False)``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Control logging output destinations.
+
+**Parameters:**
+
+- ``log_to_file`` (bool, optional): Write log messages to ``pipic_log.txt``. Default: True.
+- ``log_to_screen`` (bool, optional): Print log messages to console. Default: False.
+
+``sim.set_rng_seed(seed)``
+""""""""""""""""""""""""""
+
+Set random number generator seed for reproducibility.
+
+**Parameters:**
+
+- ``seed`` (int): RNG seed value.
+
+**Example:**
+
+.. code-block:: python
+
+    sim.set_rng_seed(42)  # Deterministic runs
+
+Advanced C++ Integration
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``sim.ensemble_data()``
+"""""""""""""""""""""""
+
+Return pointer to internal ensemble data structure (for advanced C++ integration).
+
+**Returns:** int (memory address)
+
+``sim.simulation_box()``
+""""""""""""""""""""""""
+
+Return pointer to simulation box structure (for advanced C++ integration).
+
+**Returns:** int (memory address)

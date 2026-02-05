@@ -6,7 +6,6 @@ version of the absorbing boundaries that comes with piPIC. */
 #include "interfaces.h"
 #include "ensemble.h"
 #include "services.h"
-#include "extension.h"
 #include <pybind11/pybind11.h>
 #include "pybind11/stl.h"
 #include <pybind11/operators.h>
@@ -20,12 +19,31 @@ static int ax = 2; // axis along which the boundary is applied, 0 - x, 1 - y, 2 
 static double gmin;
 static double gmax;
 static double temperature;
-// Struct to hold the cell interface data (see definition in ensemble.h)
-static cellContainer ***cell;
-// Struct for managing the thread-specific data (see definition in extension.h)
+
+
+// Struct for managing the thread-specific data 
 // It contains a random number generator and distributions for uniform and normal random numbers
 // to make the particle generation thread-safe and deterministic.
+struct threadHandler{
+    mt19937 rng;
+    std::uniform_real_distribution<double> U1;
+    std::normal_distribution<double> N1;
+    threadHandler(): U1(0, 1.0), N1(0, 1.0) {}
+    double random() {return U1(rng);} // returns a random number from [0, 1)
+    double nrandom() {return N1(rng);} // returns a normal random number from [0, 1)
+};
 static vector<threadHandler> Thread;
+
+
+// Function for adding new particles to the cell interface.
+void addParticle(cellInterface &CI, particle &P){
+    if(CI.particleBufferSize < CI.particleBufferCapacity){ // checking if the buffer permits adding a particle 
+        *CI.newParticle(CI.particleBufferSize) = P; // copy particle to a new particle (buffer)
+        CI.particleBufferSize++;
+    } else {
+        pipic_log.message("pi-PIC error: particle buffer overflow.", true);
+    };
+};
 
 // absorbing boundary
 double mask(double x, double fall){
@@ -102,20 +120,17 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
                 P.w = weight;
                 P.id = particleTypeIndex; // set particle type index
-                // see definition of addParticle in extension.h
                 addParticle(CI, P);
             };
 
         } else if (CI.particleTypeIndex==particleTypeIndex){ // remove particles 
-            // calculate global cell index
-            int ig = CI.i.x + (CI.i.y + CI.i.z*CI.n.y)*CI.n.x; 
-            // check if the cell is not empty
-            if(cell[ig] != nullptr){
-                // check if the cell contains particles of the type to be removed
-                if(cell[ig][particleTypeIndex] != nullptr){
-                    // see definition of removeParticles in extension.h
-                    removeParticles(cell[ig][particleTypeIndex], cthread, rate); // remove particles according to the rate
-                };
+
+            for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
+                if (cthread.random() > rate) {
+                    particle *P = CI.Particle(ip);
+                    // Remove particle by setting weight to zero
+                    P->w = 0.0;
+                }
             };
         };
     };  
@@ -123,12 +138,10 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
 
 // particle handler initialization
-int64_t handler(int64_t ensembleData, // adress of the ensemble data
-                int64_t simbox,  // adress of the simulation box
+int64_t handler(int64_t simbox,  // adress of the simulation box
                 double _density, 
                 double boundary_size,
                 double _temperature){ 
-    cell = (cellContainer***)ensembleData;
     boundarySize = boundary_size; // size of the boundary region
     density = _density; // density of the particles
     temperature = _temperature; // temperature of the particles
@@ -153,7 +166,6 @@ namespace py = pybind11;
 PYBIND11_MODULE(extension, object) {
     object.attr("name") = name;
     object.def("handler", &handler, 
-                py::arg("ensemble"), 
                 py::arg("simulation_box"), 
                 py::arg("density"),
                 py::arg("boundary_size"),

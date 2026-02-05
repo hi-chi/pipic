@@ -4,6 +4,7 @@
 
 import os
 import sys
+import subprocess
 
 # Add parent directory to path for autodoc
 sys.path.insert(0, os.path.abspath('..'))
@@ -24,6 +25,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.duration',
+    'sphinx.ext.autosummary',
 ]
 
 # Source file suffix
@@ -39,14 +42,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 language = 'en'
 
 # -- Options for HTML output --
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_logo = 'logo/pipic_logo.png' if os.path.exists('logo/pipic_logo.png') else None
-html_theme_options = {
-    'fixed_sidebar': True,
-    'sidebar_width': '250px',
-    'page_width': '960px',
-}
 
 # -- Options for LaTeX output --
 latex_elements = {
@@ -85,4 +82,8 @@ autodoc_member_order = 'bysource'
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 }
+
+# -- Options for EPUB output
+epub_show_urls = 'footnote'

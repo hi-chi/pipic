@@ -73,7 +73,7 @@ struct cellInterface // main structure for developing extensions; provides acces
 
     //access to particles being processed and new to be added (indices must be within limits):
     particle* Particle(int i){return (particle*)(P_data + i*(8 + I[7]));} // pointer to i-th particle to be processed (use of attributes requires manual compartibility control)
-    //Warning: It is foriden to change particles' coordinates Particle(i)->r
+    //Warning: It is forbidden to change particles' coordinates Particle(i)->r
     //To remove a particle set its weight Particle(i).w to zero.
     particle* newParticle(int i){return (particle*)(NP_data + i*(8 + I[7]));} // pointer to i-th particle in the buffer for new particles
     //The type is to be placed into id (by convention).

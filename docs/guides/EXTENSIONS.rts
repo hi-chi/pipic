@@ -1,27 +1,21 @@
-Extensions Reference
+Extensions
 ====================
 
-This document describes the built-in extensions available in pi-PIC, their physical models, parameters, and usage examples.
+This document describes the built-in extensions available in π-PIC, their physical models, parameters, and usage examples.
 
 Overview
 --------
 
 Extensions add physics modules to simulations via custom handlers. They are registered using ``sim.add_handler()`` and operate on particles or fields during the simulation advance.
 
-Available extensions:
-
-1. **QED modules:** ``qed_gonoskov2015``, ``qed_volokitin2023``
-2. **Radiation:** ``landau_lifshitz``
-3. **Particle management:** ``downsampler_gonoskov2022``
-4. **Field generation:** ``focused_pulse``
-5. **Boundary handling:** ``x_reflector_c``, ``x_converter_c``, ``absorbing_boundaries``
-6. **Moving window:** ``moving_window``
+Extensions
+----------
 
 QED Extensions
---------------
+^^^^^^^^^^^^^^
 
 qed_gonoskov2015
-^^^^^^^^^^^^^^^^
+""""""""""""""""
 
 **Description:** QED photon emission and pair production using the locally constant field approximation (LCFA) with rejection sampling.
 
@@ -68,23 +62,194 @@ qed_gonoskov2015
                    subject='electron, positron, photon',
                    handler=handler_ptr)
 
-**Physical Model:**
+qed_volokitin2023
+"""""""""""""""""
 
-Quantum parameter:
+**Description:** Optimized QED event generator using minimal rate computations per event (faster equivalent to qed_gonoskov2015).
 
-.. math::
+**Reference:** V. Volokitin et al., JCS **74**, 102170 (2023) - `DOI: 10.1016/j.jocs.2023.102170 <https://doi.org/10.1016/j.jocs.2023.102170>`__
 
-    \\chi = \\frac{\\gamma}{E_S}\\sqrt{(\\mathbf{E} + \\mathbf{v}/c \\times \\mathbf{B})^2 - (\\mathbf{v}/c \\cdot \\mathbf{E})^2}
+**Physics:**
 
-where :math:`E_S = m_e^2 c^3 / (e\\hbar) \\approx 1.3 \\times 10^{16}` V/cm is the Schwinger field.
+- Photon emission (Compton scattering) from electrons/positrons
+- Pair production (Breit-Wheeler process) from photons
+- Based on Fast_QED module from pyHiChi
+- Optimized algorithm minimizing rate computations
 
-Photon emission rate:
+**Developer:** Joel Magnusson (joel.magnusson@physics.gu.se), based on pyHiChi implementation
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = qed.handler(electron_type, positron_type, photon_type)
+
+- ``electron_type`` (int): Type index for electrons (use ``sim.get_type_index('electron')``).
+- ``positron_type`` (int): Type index for positrons (use ``sim.get_type_index('positron')``).
+- ``photon_type`` (int): Type index for photons (use ``sim.get_type_index('photon')``).
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.qed_volokitin2023 as qed
+    
+    # Must have electron, positron, and photon types defined
+    sim.add_particles(name='electron', ...)
+    sim.add_particles(name='positron', ...)
+    sim.add_particles(name='photon', charge=0, mass=0, ...)
+    
+    # Get type indices
+    electron_type = sim.get_type_index('electron')
+    positron_type = sim.get_type_index('positron')
+    photon_type = sim.get_type_index('photon')
+    
+    handler_ptr = qed.handler(electron_type, positron_type, photon_type)
+    sim.add_handler(name='qed_volokitin2023',
+                   subject='electron, positron, photon',
+                   handler=handler_ptr)
+
+**Notes:**
+
+- Equivalent physics to qed_gonoskov2015 but with optimized performance.
+- Recommended over qed_gonoskov2015 for production simulations.
+- See ``examples/qed_volokitin2023_test.py`` for usage example.
+
+Particle Management
+^^^^^^^^^^^^^^^^^^^
+
+downsampler_gonoskov2022
+""""""""""""""""""""""""
+
+**Description:** Agnostic conservative downsampling for dynamically reducing particle count while preserving distributions and conserved quantities.
+
+**Reference:** A. Gonoskov, CPC **271**, 108200 (2022) - `DOI: 10.1016/j.cpc.2021.108200 <https://doi.org/10.1016/j.cpc.2021.108200>`__, `arXiv:1607.03755 <https://arxiv.org/abs/1607.03755>`__
+
+**Physics:**
+
+- Reduces particle ensemble without introducing flattening or systematic distribution changes
+- Preserves conserved quantities: total weight, energy, momentum, CIC contributions
+- Operates on subsets of particles contributing to nearby grid nodes (2/4/8 nodes depending on dimensionality)
+- Can be configured for multiple particle types via ``add_assignment()``
+
+**Developer:** Arkady Gonoskov (arkady.gonoskov@physics.gu.se)
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = downsampler.handler(ensemble_data, type_index,
+                                 preserve_energy=True,
+                                 preserve_momentum=True,
+                                 preserve_cic_weight=True,
+                                 cap=15,
+                                 target_ratio=1.0)
+
+- ``ensemble_data`` (int): Ensemble data pointer from ``sim.ensemble_data()``.
+- ``type_index`` (int): Type index of particles to downsample.
+- ``preserve_energy`` (bool): Preserve energy of particle subsets. Default: True.
+- ``preserve_momentum`` (bool): Preserve momentum of particle subsets. Default: True.
+- ``preserve_cic_weight`` (bool): Preserve CIC contributions to grid nodes. Default: True.
+- ``cap`` (int): Threshold for number of particles per subset (effectively per cell). Default: 15.
+- ``target_ratio`` (float): Target particle count after downsampling as fraction of cap (≤1.0). Default: 1.0.
+
+**Additional Configuration:**
+
+.. code-block:: python
+
+    downsampler.add_assignment(type_index, preserve_energy=True,
+                              preserve_momentum=True, preserve_cic_weight=True,
+                              cap=15, target_ratio=1.0)
+
+- Use to configure downsampling for additional particle types after initialization.
+- Parameters same as ``handler()`` except ``ensemble_data`` not needed.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.downsampler_gonoskov2022 as downsampler
+    
+    # Get ensemble data pointer
+    ensemble_ptr = sim.ensemble_data()
+    
+    # Get type index for electrons
+    electron_type = sim.get_type_index('electron')
+    
+    # Initialize handler
+    handler_ptr = downsampler.handler(ensemble_ptr, electron_type,
+                                     preserve_energy=True,
+                                     preserve_momentum=True,
+                                     preserve_cic_weight=True,
+                                     cap=15,
+                                     target_ratio=1.0)
+    
+    # Add additional particle types if needed
+    positron_type = sim.get_type_index('positron')
+    downsampler.add_assignment(positron_type, cap=15, target_ratio=1.0)
+    
+    # Register handler (must use 'cells' as subject)
+    sim.add_handler(name='downsampler',
+                   subject='cells',
+                   handler=handler_ptr)
+
+**Notes:**
+
+- Subject must be set to 'cells', not specific particle types.
+- Downsampling applied when particle count in a cell exceeds ``cap``.
+- Reduces particles to ``target_ratio * cap`` when triggered.
+- See ``examples/downsampler_gonoskov2022_test.py`` for usage example.
+
+Radiation Reaction
+^^^^^^^^^^^^^^^^^^
+
+landau_lifshitz
+"""""""""""""""
+
+**Description:** Account for radiation reaction using leading terms of the Landau-Lifshitz model.
+
+**Physics:**
+
+- Classical radiation reaction force on charged particles
+- Based on Landau-Lifshitz equation (leading order)
+- Accounts for energy loss due to radiation in strong electromagnetic fields
+
+**Developer:** Joel Magnusson (joel.magnusson@physics.gu.se)
+
+**Parameters:**
+
+.. code-block:: python
+
+    handler = landau_lifshitz.handler()
+
+- No parameters required for initialization.
+
+**Usage:**
+
+.. code-block:: python
+
+    import pipic.extensions.landau_lifshitz as ll
+    
+    # Initialize handler
+    handler_ptr = ll.handler()
+    
+    # Register handler for electrons and positrons
+    sim.add_handler(name='landau_lifshitz',
+                   subject='electron, positron',
+                   handler=handler_ptr)
+
+**Notes:**
+
+- Applies classical radiation reaction force to particles.
+- Most relevant for high-intensity laser-plasma interactions where radiation damping is significant.
+- Can be applied to any charged particle types.
+
 
 Field Generation
-----------------
+^^^^^^^^^^^^^^^^
 
 focused_pulse
-^^^^^^^^^^^^^
+"""""""""""""
 
 **Description:** Inject a focused Gaussian laser pulse via a field handler (paraxial approximation).
 
@@ -130,10 +295,10 @@ focused_pulse
 - Paraxial approximation; keep beam waist and angle consistent with grid.
 
 Boundary Handling
------------------
+^^^^^^^^^^^^^^^^^
 
 x_reflector_c
-^^^^^^^^^^^^^
+"""""""""""""
 
 **Description:** Reflect particles in a finite region along x.
 
@@ -163,7 +328,7 @@ x_reflector_c
 - Region spans ``location - thickness/2`` to ``location + thickness/2``.
 
 x_converter_c
-^^^^^^^^^^^^^
+"""""""""""""
 
 **Description:** Convert particles to another type when traversing an x-plane region.
 
@@ -194,7 +359,7 @@ x_converter_c
 - Converted particles keep position, momentum, and weight.
 
 absorbing_boundaries
-^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""
 
 **Description:** Absorb particles and damp fields near boundaries.
 
@@ -202,13 +367,13 @@ absorbing_boundaries
 
 .. code-block:: python
 
-    handler = absorber.handler(ensemble, simulation_box, characteristic_wavelength,
+    handler = absorber.handler(ensemble_data, simulation_box, characteristic_wavelength,
                               density_profile=-1, boundary_size=-1.0, axis='x',
                               fall=-1.0, temperature=0.0, particles_per_cell=1.0,
                               remove_particles_every=10, moving_window_velocity=0.0,
                               moving_window_direction='x')
 
-- ``ensemble`` (int): Pointer from ``sim.ensemble_data()``.
+- ``ensemble_data`` (int): Ensemble data pointer from ``sim.ensemble_data()``.
 - ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
 - ``characteristic_wavelength`` (float): Characteristic wavelength (cm).
 - ``density_profile`` (int): Density profile callback address. Default: -1.
@@ -263,10 +428,10 @@ absorbing_boundaries
 - Fields damped near boundaries to suppress reflections.
 
 Moving Window
--------------
+^^^^^^^^^^^^^
 
 moving_window
-^^^^^^^^^^^^^
+"""""""""""""
 
 **Description:** Move the simulation window while maintaining plasma injection.
 
@@ -274,35 +439,31 @@ moving_window
 
 .. code-block:: python
 
-    handler = mw.handler(ensemble, simulation_box, time_step,
-                        particles_per_cell, temperature, density_profile,
+    handler = mw.handler(simulation_box, particles_per_cell,
+                        temperature, density_profile,
                         thickness=-1, velocity=lightVelocity, axis='x', angle=0)
 
-- ``ensemble`` (int): Pointer from ``sim.ensemble_data()``.
 - ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
-- ``time_step`` (float): Time step (s).
 - ``particles_per_cell`` (float): Particle density for re-injection.
 - ``temperature`` (float): Temperature for re-injected particles (erg).
 - ``density_profile`` (int): Density profile callback address.
 - ``thickness`` (float): Boundary thickness (cm). Default: -1.
 - ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
 - ``axis`` (char): Movement axis. Default: 'x'.
-- ``angle`` (float): Window angle (degrees). Default: 0.
+- ``angle`` (float): Window angle (radians). Default: 0.
 
 **Parameters (field handler):**
 
 .. code-block:: python
 
-    field_handler = mw.field_handler(simulation_box, time_step,
-                                     thickness=-1, velocity=lightVelocity,
-                                     axis='x', angle=0)
+    field_handler = mw.field_handler(simulation_box, thickness=-1,
+                                     velocity=lightVelocity, axis='x', angle=0)
 
 - ``simulation_box`` (int): Simulation box pointer.
-- ``time_step`` (float): Time step (s).
 - ``thickness`` (float): Boundary thickness (cm). Default: -1.
 - ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
 - ``axis`` (char): Movement axis. Default: 'x'.
-- ``angle`` (float): Window angle (degrees). Default: 0.
+- ``angle`` (float): Window angle (radians). Default: 0.
 
 **Usage:**
 
@@ -315,16 +476,15 @@ moving_window
     def density_profile(r, data_double, data_int):
         return 1e18
     
-    ensemble_ptr = sim.ensemble_data()
     simbox_ptr = sim.simulation_box()
     
-    handler_ptr = mw.handler(ensemble_ptr, simbox_ptr, dt,
+    handler_ptr = mw.handler(simbox_ptr,
                             particles_per_cell=10,
                             temperature=1e-6*consts.electron_mass*consts.light_velocity**2,
                             density_profile=density_profile.address,
                             velocity=consts.light_velocity,
                             axis='x')
-    field_handler_ptr = mw.field_handler(simbox_ptr, dt,
+    field_handler_ptr = mw.field_handler(simbox_ptr,
                                         velocity=consts.light_velocity,
                                         axis='x')
     
@@ -341,14 +501,453 @@ moving_window
 Extension Development
 ---------------------
 
-To build custom extensions:
+π-PIC offers the possibility to develop custom extensions in Python, C/C++, Fortran, and other languages that can produce a callable function for Python. Extensions can modify, add, and remove particles based on local field state, and can also modify field state. This enables implementing physics like ionization, radiation reaction, QED processes, etc.
 
-1. Implement a handler callable with ``cellInterface`` data (C++ or numba callback).
-2. Register via ``sim.add_handler(name, subject, handler, field_handler, data_double, data_int)``.
-3. Use ``cellInterface`` to read/modify particles and fields; allocate new particles via ``newParticle``.
+Overview
+^^^^^^^^
 
-Performance tips:
+Extensions connect to π-PIC via two types of an interfaces: one for particles and one for fields. The particle interface is based on the ``cellInterface`` structure, which provides direct data access without performance loss. The field access is realized through the ``fieldLoop()`` method defined for every ``field_solver``. The interfaces are defined in:
 
-- Prefer C++ extensions for speed; numba callbacks are slower.
-- Minimize allocations inside hot loops.
-- Use thread-local RNG (``CI.rngSeed``) for determinism.
+- Python: ``/pipic/interfaces/cellinterface.py``
+- C/C++: ``src/interfaces.h``
+
+Extensions must provide *Handler* and/or *fieldHandler* functions that process particle subsets and/or electromagnetic fields. The Handler is called during ``advance()`` for each subset of particles in each cell for each specified type, while the fieldHandler is called for each gridpoint.
+
+**Key capabilities:**
+
+- Add new particles within the same cell (buffered until next loop), enabling implementation of particle creation mechanisms
+- Process particles by type or process all cells via ``subject='cells'`` for applications like ionization
+- Pass custom data via ``data_double`` and ``data_int`` parameters for storing extension-specific state across calls
+
+**Example registration:**
+
+.. code-block:: python
+
+    import my_extension
+    from pipic import addressof
+    
+    # Initialize handlers
+    handler_ptr = my_extension.handler(param1, param2)
+    field_handler_ptr = my_extension.field_handler(param3)
+    
+    # Optional: allocate custom data arrays
+    data_double = np.zeros((10,), dtype=np.double)
+    data_int = np.zeros((5,), dtype=np.intc)
+    
+    # Register both particle and field handlers
+    sim.add_handler(name=my_extension.name,
+                   subject='electron, positron',     # Apply particle handler to these types
+                   handler=handler_ptr,               # Processes particles
+                   field_handler=field_handler_ptr,   # Processes fields (optional)
+                   data_double=addressof(data_double),  # Custom data (optional)
+                   data_int=addressof(data_int))        # Custom data (optional)
+
+
+Python Extensions
+^^^^^^^^^^^^^^^^^
+
+Python extensions use `Numba C callbacks <https://numba.readthedocs.io/en/stable/user/cfunc.html>`__ for high performance while maintaining Python flexibility.
+
+**Extension Structure:**
+
+1. **Set extension name** (must match filename):
+
+   .. code-block:: python
+
+       name = "my_extension"
+
+2. **Allocate shared data** (if needed, must be thread-safe):
+
+   .. code-block:: python
+
+       from numba import int32, float64
+       from ctypes import c_double, c_int
+       
+       DataDouble = (c_double * 10)()  # Array of 10 doubles
+       DataInt = (c_int * 5)()         # Array of 5 integers
+
+3. **Implement Handler** using ``CellInterface``:
+
+   .. code-block:: python
+
+       from numba import cfunc
+       from pipic.types import handler_callback
+       from pipic.interfaces import CellInterface
+       
+       @cfunc(handler_callback)
+       def Handler(CI_I, CI_D, CI_F, CI_P, CI_NP, data_double, data_int):
+           C = CellInterface(CI_I, CI_D, CI_F, CI_P, CI_NP)
+           
+           # Process each particle in the subset
+           for ip in range(C.particleSubsetSize):
+               P = C.Particle(ip)
+               
+               # Access electromagnetic field at particle position
+               E, B = C.interpolateField(P.r)
+               
+               # Modify particle momentum/position
+               P.p.x += ...
+               
+               # Add new particle if needed
+               if C.particleBufferSize < C.particleBufferCapacity:
+                   newP = C.newParticle(C.particleBufferSize)
+                   newP.r = P.r
+                   newP.p = ...
+                   newP.w = P.w
+                   newP.id = target_type_index
+                   C.particleBufferSize += 1
+
+4. **Create initialization function** returning Handler address:
+
+   .. code-block:: python
+
+       def handler(param1, param2, ...):
+           # Configure extension with parameters
+           DataDouble[0] = param1
+           DataInt[0] = param2
+           return Handler.address
+
+5. **Provide data accessors** (if using shared data):
+
+   .. code-block:: python
+
+       from ctypes import addressof
+       
+       def data_double():
+           return addressof(DataDouble)
+       
+       def data_int():
+           return addressof(DataInt)
+
+**Usage example:**
+
+.. code-block:: python
+
+    import my_extension
+    
+    handler_ptr = my_extension.handler(param1=1.0, param2=42)
+    sim.add_handler(name=my_extension.name,
+                   subject='electron',
+                   handler=handler_ptr,
+                   data_double=my_extension.data_double(),
+                   data_int=my_extension.data_int())
+
+**Reference:** See `x_reflector_py.py <https://github.com/hi-chi/pipic/blob/main/pipic/extensions/x_reflector_py.py>`__ and its usage in `x_reflector_py_test.py <https://github.com/hi-chi/pipic/blob/main/examples/x_reflector_py_test.py>`__.
+
+
+
+C/C++ Extensions
+^^^^^^^^^^^^^^^^
+
+C/C++ extensions provide maximum flexibility and performance. Unlike Python extensions using Numba, C/C++ extensions are compiled independently and can achieve full CPU performance. The following outlines both local development and the recommended contribution workflow.
+
+**Extension Structure:**
+
+1. **Include required headers:**
+
+   .. code-block:: cpp
+
+       #include "interfaces.h"
+       #include <pybind11/pybind11.h>
+       #include "pybind11/stl.h"
+       #include <pybind11/operators.h>
+
+2. **Set extension name and global static parameters** (used for module export):
+
+   .. code-block:: cpp
+
+       const string name = "my_extension";
+       static double globalParameter; 
+
+
+3. **Implement Handler function** processing particles:
+
+   .. code-block:: cpp
+
+       // Particle handler: processes particles of specified types
+       void Handler(int *I, double *D, double *F, double *P, 
+                   double *NP, double *dataDouble, int *dataInt) {
+           cellInterface CI(I, D, F, P, NP);
+           
+           // Generate new particles when CI.particleTypeIndex == -1 (cell-level handler)
+           if (CI.particleTypeIndex == -1) {
+               // Called once per cell, independent of particle types
+               // Use this for particle generation/injection
+               
+               if(CI.particleBufferSize < CI.particleBufferCapacity) {
+                   particle *newP = CI.newParticle(CI.particleBufferSize);
+                   newP->r = ...;  // Set position
+                   newP->p = ...;  // Set momentum
+                   newP->w = ...;  // Set weight
+                   newP->id = target_type_index;
+                   CI.particleBufferSize++;
+               }
+           } 
+           // Modify/remove particles when CI.particleTypeIndex == particleTypeIndex
+           else if (CI.particleTypeIndex == particleTypeIndex) {
+               // Called for each particle subset of the specified type
+               // Use this for particle modification or removal
+               
+               for(int ip = 0; ip < CI.particleSubsetSize; ip++) {
+                   particle *P = CI.Particle(ip);
+                   
+                   // Interpolate EM field at particle position
+                   double3 E, B;
+                   CI.interpolateField(P->r, E, B);
+                   
+                   // Modify particle momentum. Note: do not modify positions since it can cause buffer overflow.
+                   P->p.x += ...;
+                   
+                   // Remove particle by setting weight to zero
+                   // P->w = 0.0;
+               }
+           }
+       }
+       
+4. **Implement initialization function** returning Handler address:
+
+   .. code-block:: cpp
+
+       int64_t handler(double param1, int param2) {
+           globalParameter = param1;
+           return (int64_t)Handler;
+       }
+       
+
+5. **Implement fieldHandler function** processing electromagnetic fields:
+
+   .. code-block:: cpp
+
+       // Field handler: processes electromagnetic fields
+       void fieldHandler(int *ind, double *r, double *E, double *B, 
+                        double *dataDouble, int *dataInt) {
+           // Modify field at position r and grid index ind
+           E[0] *= damping_factor;
+           // ...
+       }
+
+6. **Implement initialization function** returning fieldHandler address:
+
+   .. code-block:: cpp
+
+       int64_t field_handler(double param1) {
+           globalParameter = param1;
+           return (int64_t)fieldHandler;
+       }
+
+7. **Export via pybind11:**
+
+   .. code-block:: cpp
+
+       namespace py = pybind11;
+       PYBIND11_MODULE(_my_extension, object) {
+           object.attr("name") = name;
+           object.def("handler", &handler, 
+                     py::arg("param1"), py::arg("param2"));
+           object.def("field_handler", &field_handler, 
+                     py::arg("param1"));
+       }
+
+
+
+**Thread Management in Handlers**
+
+Handlers are executed in parallel using OpenMP, with multiple threads processing different cells simultaneously. Any data structures that are **modified during Handler execution** must be thread-safe to avoid race conditions and data corruption.
+
+**Example: threadHandler struct** 
+
+Random number generation (RNG) requires maintaining state (the current seed value) that changes after each call, otherwise multiple OpenMP threads access the same RNG state simultaneously. The solution is to provide each OpenMP thread with its own independent RNG instance via thread-local storage and deterministic seeding based on ``CI.rngSeed``.
+
+   .. code-block:: cpp
+
+       struct threadHandler {
+           mt19937 rng;
+           std::uniform_real_distribution<double> U1;
+           std::normal_distribution<double> N1;
+           double working_array[100];  // Temporary computation buffers
+           
+           threadHandler(): U1(0, 1.0), N1(0, 1.0) {}
+           double random() { return U1(rng); }
+       };
+       
+       static vector<threadHandler> Thread;
+       
+       void Handler(...) {
+           cellInterface CI(...);
+           Thread.resize(omp_get_max_threads());
+           threadHandler &th = Thread[CI.threadNum];  // Get thread-local instance
+           th.rng.seed(CI.rngSeed);  // Deterministic per-cell seeding
+           
+           // Use th.random(), th.working_array[i], etc.
+       }
+
+
+**Example from extension.cpp:**
+
+See `extension.cpp <https://github.com/hi-chi/pipic/blob/main/tutorials/extensions/extension.cpp>`__ for a minimal example using `threadHandler`.
+
+
+Build extension (C/C++)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Two build strategies are available for extensions: **local build** which creates a local executable, or **integrated build** which makes the extension callable within the π-PIC framework.
+
+**Local build**
+
+
+1. **Prepare build environment** (from a working directory):
+
+   .. code-block:: bash
+
+       mkdir my_extension && cd my_extension
+       git clone https://github.com/hi-chi/pipic.git
+       cd pipic
+       
+       # Optional: create and switch to development branch
+       git checkout -b my_extension
+       
+       # Optional: reinstall pipic
+       pip uninstall pipic
+       python3 -m pip install .
+
+2. **Set up extension folder:**
+
+   .. code-block:: bash
+
+       cd src/extensions
+       mkdir my_extension && cd my_extension
+
+3. **Copy necessary files:**
+
+   .. code-block:: bash
+
+       git clone https://github.com/pybind/pybind11
+       cp ../../primitives.h .
+       cp ../../interfaces.h .
+       cp ../../ensemble.h .    # For particle management
+       cp ../../services.h .    # For logging
+       cp ../../CMakeLists.txt .
+
+4. **Configure CMakeLists.txt** (replace pipic references):
+
+   Change from:
+
+   .. code-block:: cmake
+
+       set(pipic 
+           pipic.cpp)
+       pybind11_add_module(_pipic${pipic})
+
+   To:
+
+   .. code-block:: cmake
+
+       set(my_extension
+           my_extension.cpp)
+       pybind11_add_module(_my_extension ${my_extension})
+
+   Optional: Remove FFTW if not needed:
+
+   .. code-block:: bash
+
+       # Remove these lines from CMakeLists.txt:
+       # find_package(PkgConfig REQUIRED)
+       # pkg_search_module(FFTW REQUIRED fftw3 IMPORTED_TARGET)
+       # Remove #include <fftw3.h> from primitives.h
+
+5. **Add your extension files**: ``my_extension.cpp``. See `extension.cpp <https://github.com/hi-chi/pipic/blob/main/tutorials/extensions/extension.cpp>`__ for a complete example.
+
+6. **Compile locally:**
+
+   .. code-block:: bash
+
+       cmake .
+       make
+
+7. **Test in Python:**
+
+   .. code-block:: python
+
+       import my_extension
+       from pipic import addressof
+       
+       # Initialize extension
+       handler_ptr = my_extension.handler(param1=1.0, param2=42)
+       field_handler_ptr = my_extension.field_handler(param1=0.1)
+       
+       # Register handlers
+       sim.add_handler(name=my_extension.name,
+                      subject='electron',
+                      handler=handler_ptr,
+                      field_handler=field_handler_ptr)
+
+
+**Practical Example:**
+
+The tutorial `plasma_oscillation_with_boundaries.ipynb <https://github.com/hi-chi/pipic/blob/main/tutorials/extensions/plasma_oscillation_with_boundaries.ipynb>`__ demonstrates developing an absorbing boundary extension. 
+
+
+**Integrated build**
+
+After successful development and testing:
+
+1. **Update pybind11 module name** (add underscore prefix to avoid conflicts):
+
+   .. code-block:: cpp
+
+       PYBIND11_MODULE(_my_extension, object) {
+
+2. **Organize files** in ``src/extensions/my_extension/``:
+
+   .. code-block:: bash
+
+       src/extensions/my_extension/
+       ├── my_extension.cpp
+       └── my_extension.h       (if needed)
+
+3. **Create example** ``my_extension_test.py`` in ``examples/`` folder:
+
+   .. code-block:: python
+
+       from pipic.extensions import my_extension
+       import pipic
+       from pipic import consts
+       
+       sim = pipic.init(...)
+       handler_ptr = my_extension.handler(...)
+       sim.add_handler(name=my_extension.name,
+                      subject='electron',
+                      handler=handler_ptr)
+
+4. **Register in** ``pipic/extensions/__init__.py``
+
+5. **Test clean build:**
+
+   .. code-block:: bash
+
+       pip uninstall pipic
+       python3 -m pip install .
+       python3 examples/my_extension_test.py
+
+6. **Commit and push:**
+
+   .. code-block:: bash
+
+       git add src/extensions/my_extension/
+       git add examples/my_extension_test.py
+       git add pipic/extensions/__init__.py
+       git commit -m "Add my_extension: ..."
+       git push origin my_extension
+       # Create pull request on GitHub
+
+7. **Document in EXTENSIONS.md** with physics description, parameters, and usage.
+
+Performance Tips
+^^^^^^^^^^^^^^^^
+
+- **Use C/C++ for performance-critical extensions**; numba callbacks are slower but more convenient for prototyping.
+- **Minimize allocations** inside hot loops (particle/cell processing).
+- **Use thread-local RNG** via ``CI.rngSeed`` for deterministic random number generation.
+- **Disable threading** during debugging: ``sim.advance(..., use_omp=False)``.
+
+

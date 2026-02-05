@@ -1,12 +1,26 @@
-π-PIC Code Overview
+Code overview
 ========================
 
-π-PIC provides three interraction levels, the Python interface, extensions and solvers. These enteties are called and combined in the ensemble using common interfaces.  
+π-PIC provides three interraction levels, the Python interface, extensions and solvers. These entities are called and combined in the ensemble using common interfaces.  
 
-.. image:: ../_static/pipic_architecture_with_code.png
-   :width: 300px
-   :align: center
-   :alt: Architecture diagram
+.. raw:: html
+
+   <div style="text-align: center; margin: 20px 0;">
+      <object data="../_static/pipic.svg" type="image/svg+xml" style="width: 100%; max-width: 700px; border: 1px solid #ccc; border-radius: 5px;">
+         <img src="../_static/pipic_architecture_with_code.png" alt="π-PIC Architecture" style="width: 100%; max-width: 700px;">
+      </object>
+      <p style="font-size: 11px; color: #666; margin-top: 8px;">Click on any section to navigate to its documentation</p>
+   </div>
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture Components
+
+   PYTHON_INTERFACE
+   EXTENSIONS
+   SOLVERS
+   ENSEMBLE
 
 Notes on Threading and Determinism
 -------------------------------------
@@ -18,3 +32,4 @@ Notes on Units and Conventions
 - All physics in CGS; 
 - Grid cell counts should be powers of two for FFT-based solvers.
 - Default geometry is periodic unless a solver or handler imposes other boundary rules.
+
