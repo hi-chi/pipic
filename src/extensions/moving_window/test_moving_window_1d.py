@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     #-----------------------adding the handler of extension-------------------------
     window_speed = consts.light_velocity #speed of moving window
-    density_handler_adress = moving_window.handler(sim.ensemble_data(),
+    density_handler_adress = moving_window.handler(
                                                    sim.simulation_box(),
                                                    thickness=thickness,
                                                    particles_per_cell=particles_per_cell,

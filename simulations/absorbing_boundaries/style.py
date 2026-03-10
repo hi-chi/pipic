@@ -13,8 +13,9 @@ colors = ['tab:blue','tab:orange','tab:green','tab:red']
 # PRE figsize
 mm_to_inch = 0.039370079
 pw = 8.3
-double_column_width = pw-2
-figsize = { 'inch': {'column_width': double_column_width/2*scale, #(PRE), #89, #(nature) # 86, #(PRE)
+double_column_width = 7.48#pw-2
+single_column_width = 3.543
+figsize = { 'inch': {'column_width': single_column_width*scale, #(PRE), #89, #(nature) # 86, #(PRE)
                    'double_column_width': double_column_width*scale, #(PRE) # 183, # (nature) # 178, #(PRE)
                    'units': 'inches',
                    'golden_ratio': 0.618}, }
