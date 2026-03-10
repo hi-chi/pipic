@@ -1,3 +1,15 @@
+/*
+ * ----------------------------------------------------------------------------
+ * This file is a copy of code originally developed in pyHiChi.
+ *
+ * Original Source: [Link to the original repository or a specific file]
+ * Original Copyright: Copyright (c) 2019 pyhichi
+ * Original License: MIT
+ *
+ * See the "3RD-PARTY-LICENSES" (or NOTICE) file in the root of this
+ * repository for the full text of the MIT license and copyright information.
+ * ----------------------------------------------------------------------------
+ */
 #pragma once
 #include <cmath>
 
