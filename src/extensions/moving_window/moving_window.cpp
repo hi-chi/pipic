@@ -104,8 +104,7 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
             if (r_rel > gmax[dir]) r_rel = gmin[dir] + (r_rel - gmax[dir]);
 
             double eps = step[dir]/10;
-            int ig, ix = CI.i.x, iy = CI.i.y, iz = CI.i.z; 
-            ig = ix + (iy + iz*CI.n.y)*CI.n.x; 
+            int ix = CI.i.x, iy = CI.i.y, iz = CI.i.z; 
             if ((cell_min[dir]+eps >= r_min and cell_max[dir]-eps <= r_rel) ||
                 ( (r_min > r_rel) and ((cell_min[dir] + eps >= r_min) || (cell_max[dir] - eps <= r_rel)))){ 
                 if (CI.particleTypeIndex==0){ // remove particles when electrons are called to count this time separately

@@ -74,7 +74,6 @@ struct ES1DPicSolver: public pic_solver
         field->getEB(P.r, E, B); // get electric field at the particle position
         P.p.x += timeStep*charge*E.x; // advance particle momentum
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
-        double l = box.max.x - box.min.x;
         if (P.r.x < box.min.x) P.r.x += (box.max.x - box.min.x); // periodic boundary conditions
         else if (P.r.x > box.max.x) P.r.x += (-box.max.x + box.min.x); // periodic boundary conditions
         // note that the momentum is defined as momentum per particle not per macroparticle
