@@ -24,7 +24,7 @@ CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
 
 ## Conda
-Follow the instructions at: https://github.com/hi-chi/pipic/blob/pipic_tutorial/tutorials/installation.ipynb
+Follow the instructions at: https://github.com/hi-chi/pipic/blob/main/tutorials/installation.ipynb
 ```
 
 
