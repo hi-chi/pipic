@@ -12,7 +12,7 @@ $\pi$-PIC (PIPIC, Python-controlled Interactive PIC) is an open-source collectio
 - absence of numerical dispersion.
 
 The solvers provide a way to either suppress or eliminate numerical artefacts (instabilities, heating, numerical Cherenkov radiation, etc.) permitting larger space and time steps, as well as lower number of particles per cell.
-Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [Reference](#Reference) or a [presentation at PIF24](https://plymouth.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=86a17791-6db2-4009-be2f-b1dc00c846d0).
+Because of reduced computational demands, the solvers can be found useful for quick tests of ideas, as well as for scanning parameter spaces. For a description of the underlying methods see [Reference](#Reference), the [documentation][readthedocs] or a [presentation at PIF24](https://plymouth.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=86a17791-6db2-4009-be2f-b1dc00c846d0).
 
 ---
 
@@ -35,6 +35,15 @@ We demonstrate the use of these elements in the [tutorial][]. A complete list of
 
 The implementation of new solvers is exemplified [here][solver_development_notebook].
 
+
+# New in $\pi$-PIC v.3
+The following updates has been made for $\pi$-PIC v.3. For more details see Ref.[2].
+- [`extension`][extensions] for moving window simulations.
+- [`extension`][extensions] for absorbing boundaries.
+- Improved structure for handeling fields and particles in C++ extensions.
+- An energy conserving solver with improved momentum conservation `emc`.
+
+
 # New in $\pi$-PIC v1.2
 - options for energy correction routine in `ec` and `ec2` (see `docs/guides/INTERFACES.md`)
 - [`extension`][extensions] for initializing arbitrary tightly focused pulses, e.g. dipole waves (`focused_pulse`)
@@ -46,8 +55,8 @@ The implementation of new solvers is exemplified [here][solver_development_noteb
 See all releases [here][releases].
 
 # Reference
-A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [J. Comput. Phys., 502, 112820](https://doi.org/10.1016/j.jcp.2024.112820); [arXiv:2302.01893][] (2024).
-
+[1] A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method, [J. Comput. Phys., 502, 112820](https://doi.org/10.1016/j.jcp.2024.112820); [arXiv:2302.01893][] (2024). <br>
+[2] F. Brogren, $\pi$-PIC: a framework for modular particle-in-cell developments and simulations, [arXiv:2511.09950](https://doi.org/10.48550/arXiv.2511.09950) (2025).
 
 
 <!-- prettier-ignore-start -->
@@ -67,4 +76,5 @@ A. Gonoskov, Explicit energy-conserving modification of relativistic PIC method,
 [solver_development_notebook]: https://github.com/hi-chi/pipic/tree/main/tutorials/solver
 [releases]: https://github.com/hi-chi/pipic/blob/main/docs/RELEASES.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
+[readthedocs]: https://pipic.readthedocs.io/en/latest
 <!-- prettier-ignore-end -->
