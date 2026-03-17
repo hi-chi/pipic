@@ -36,7 +36,7 @@ We demonstrate the use of these elements in the [tutorial][]. A complete list of
 The implementation of new solvers is exemplified [here][solver_development_notebook].
 
 
-# New in $\pi$-PIC v.3
+# New in $\pi$-PIC v1.3
 The following updates has been made for $\pi$-PIC v.3. For more details see Ref.[2].
 - [`extension`][extensions] for moving window simulations.
 - [`extension`][extensions] for absorbing boundaries.
