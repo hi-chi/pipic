@@ -5,34 +5,32 @@ import os
 import tempfile
 import shutil
 
-EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'examples'))
-EXTENSIONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'extensions'))
-SOLVER_TEST_SCRIPT = os.path.join(EXAMPLES_DIR, 'basic_example_test_solvers.py')
+TEST_SCRIPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_scripts'))
+EXAMPLES_DIR = os.path.join(TEST_SCRIPTS_DIR, 'examples')
+EXTENSIONS_DIR = os.path.join(TEST_SCRIPTS_DIR, 'test_extensions')
+SOLVER_TEST_SCRIPT = os.path.join(TEST_SCRIPTS_DIR, 'test_solvers', 'basic_example_test_solvers.py')
 
 EXAMPLE_FILES = [
     'basic_example.py',
     'basic_example_3d.py',
-    'downsampler_gonoskov2022_test.py',
     'energy_conservation.py',
-    'focused_pulse_test.py',
     'laser_solid_interaction.py',
     'plasma_oscillation.py',
-    'qed_gonoskov2015_test.py',
-    'qed_volokitin2023_test.py',
-    'x_converter_c_test.py',
-    'x_reflector_c_test.py',
-    'x_reflector_py_test.py',
 ]
 
-# Each entry is (relative_path_from_EXTENSIONS_DIR, script_filename)
-EXTENSION_TEST_FILES = [
-    ('absorbing_boundaries', 'test_absorbing_boundaries.py'),
-    ('absorbing_boundaries', 'test_absorbing_boundaries_with_plasma_no_ba.py'),
-    ('absorbing_boundaries', 'test_absorbing_boundaries_with_plasma.py'),
-    ('moving_window', 'test_moving_window_1d.py'),
-    ('moving_window', 'test_moving_window.py'),
-    ('moving_window', 'test_moving_window_rotated.py'),
-]
+def collect_extension_test_files(root_dir):
+    """Return extension test scripts from tests/test_scripts/test_extensions."""
+    items = []
+    for entry in sorted(os.scandir(root_dir), key=lambda e: e.name):
+        if not entry.is_dir():
+            continue
+        for filename in sorted(os.listdir(entry.path)):
+            if filename.endswith('_test.py') or filename.startswith('test_'):
+                items.append((entry.name, filename))
+    return items
+
+
+EXTENSION_TEST_FILES = collect_extension_test_files(EXTENSIONS_DIR)
 
 SOLVERS = [
     'electrostatic_1d',
@@ -42,9 +40,11 @@ SOLVERS = [
     'fourier_boris',
 ]
 
+PIC_ADVANCEMENTS_PER_TEST = 1
 
-def make_script_test(filepath, source_dir, timeout, test_prefix, extra_args=None):
-    """Return a test method that runs *filepath* for up to *timeout* seconds."""
+
+def make_script_test(filepath, source_dir, test_prefix, extra_args=None):
+    """Return a test method that runs *filepath* and requires clean completion."""
     filename = os.path.basename(filepath)
 
     def test_method(self):
@@ -55,25 +55,21 @@ def make_script_test(filepath, source_dir, timeout, test_prefix, extra_args=None
                 src = os.path.join(source_dir, f)
                 if os.path.isfile(src):
                     shutil.copy2(src, tmpdir)
-            try:
-                command = [sys.executable, filepath]
-                if extra_args:
-                    command.extend(extra_args)
-                result = subprocess.run(
-                    command,
-                    timeout=timeout,
-                    capture_output=True,
-                    text=True,
-                    cwd=tmpdir,
-                )
-                self.assertEqual(
-                    result.returncode, 0,
-                    msg=f"{filename} exited with code {result.returncode}:\n{result.stderr}",
-                )
-                print(result.returncode)
-            except subprocess.TimeoutExpired:
-                # Still running after timeout — considered a pass
-                pass
+            command = [sys.executable, filepath]
+            command.extend(["--steps", str(PIC_ADVANCEMENTS_PER_TEST)])
+            if extra_args:
+                command.extend(extra_args)
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+            )
+            self.assertEqual(
+                result.returncode, 0,
+                msg=f"{filename} exited with code {result.returncode}:\n{result.stderr}",
+            )
+            print(result.returncode)
         # tmpdir and all created files are deleted here
 
     stem = os.path.splitext(filename)[0]
@@ -92,12 +88,11 @@ class TestPipic(unittest.TestCase):
 class TestExamples(unittest.TestCase):
     pass
 
-
 for _filename in EXAMPLE_FILES:
     _filepath = os.path.join(EXAMPLES_DIR, _filename)
     _test_name = f'test_example_{os.path.splitext(_filename)[0]}'
     setattr(TestExamples, _test_name,
-            make_script_test(_filepath, EXAMPLES_DIR, timeout=10, test_prefix='test_example_'))
+            make_script_test(_filepath, EXAMPLES_DIR, test_prefix='test_example_'))
 
 
 class TestExtensions(unittest.TestCase):
@@ -109,7 +104,7 @@ for _subdir, _filename in EXTENSION_TEST_FILES:
     _filepath = os.path.join(_source_dir, _filename)
     _test_name = f'test_extension_{os.path.splitext(_filename)[0]}'
     setattr(TestExtensions, _test_name,
-            make_script_test(_filepath, _source_dir, timeout=10, test_prefix='test_extension_'))
+            make_script_test(_filepath, _source_dir, test_prefix='test_extension_'))
 
 
 class TestSolvers(unittest.TestCase):
@@ -123,8 +118,7 @@ for _solver in SOLVERS:
         _test_name,
         make_script_test(
             SOLVER_TEST_SCRIPT,
-            EXAMPLES_DIR,
-            timeout=10,
+            os.path.dirname(SOLVER_TEST_SCRIPT),
             test_prefix='test_solver_',
             extra_args=['--solver', _solver],
         ),
