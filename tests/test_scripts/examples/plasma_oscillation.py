@@ -1,10 +1,8 @@
 # This is the file used for producing fig. 2 in arXiv:2302.01893.
 import pipic
 from pipic import consts, types
-import matplotlib.pyplot as plt
 import numpy as np
 from numba import cfunc, carray
-import os
 import sys
 
 
@@ -56,8 +54,6 @@ sim.field_loop(handler=setField_callback.address)
 
 
 # =================================OUTPUT========================================
-fig, axs = plt.subplots(2, constrained_layout=True)
-
 # -------------preparing output for electron distrribution f(x, px)--------------
 xpx_dist = np.zeros((64, 128), dtype=np.double)
 pxLim = 5 * np.sqrt(temperature * consts.electron_mass)
@@ -73,26 +69,12 @@ def xpx_callback(r, p, w, id, data_double, data_int):
         data[iy, ix] += w[0] * inv_dx_dpx
 
 
-axs[0].set_title("$\partial N / \partial x \partial p_x$ (s g$^{-1}$cm$^{-2}$)")
-axs[0].set(ylabel="$p_x$ (cm g/s)")
-axs[0].xaxis.set_ticklabels([])
-plot0 = axs[0].imshow(
-    xpx_dist,
-    vmax=3 * density / pxLim,
-    extent=[xmin, xmax, -pxLim, pxLim],
-    interpolation="none",
-    aspect="auto",
-    cmap="YlOrBr",
-)
-fig.colorbar(plot0, ax=axs[0], location="right")
-
-
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(
         name="electron", handler=xpx_callback.address, data_double=pipic.addressof(xpx_dist)
     )
-    plot0.set_data(xpx_dist)
+    return np.sum(xpx_dist)
 
 
 # -------------------------preparing output of Ex(x)-----------------------------
@@ -109,14 +91,6 @@ def get_Ex(it, r, E, B, data_double, data_int):
     data_double[it[0]] = E[0]
 
 
-axs[1].set_xlim([xmin, xmax])
-axs[1].set_ylim([-field_amplitude, field_amplitude])
-axs[1].set(xlabel="$x$ (cm)", ylabel="$E_x$ (cgs units)")
-x_axis = np.linspace(xmin, xmax, Ex.shape[0])
-sim.custom_field_loop(Ex.shape[0], Ex_it2r.address, get_Ex.address, pipic.addressof(Ex))
-(plot_Ex_,) = axs[1].plot(x_axis, Ex)
-
-
 def plot_Ex():
     sim.custom_field_loop(
         number_of_iterations=Ex.shape[0],
@@ -124,19 +98,13 @@ def plot_Ex():
         field2data=get_Ex.address,
         data_double=pipic.addressof(Ex),
     )
-    plot_Ex_.set_ydata(Ex)
+    return np.sum(Ex)
 
 
 # ===============================SIMULATION======================================
-outputFolder = "plasma_oscillation_output"
-if not os.path.exists(outputFolder):
-    os.makedirs(outputFolder)
 steps = get_pic_steps(64)
 for i in range(steps):
     sim.advance(time_step=time_step, number_of_iterations=1)
-    plot_xpx()
-    plot_Ex()
-    fig.savefig(outputFolder + "/im" + str(i) + ".png")
-    if i == 25:
-        fig.savefig(outputFolder + "/fig2.pdf")
-    print(i, "/", steps)
+    xpx_sum = plot_xpx()
+    ex_sum = plot_Ex()
+    print(i, "/", steps, "sum(xpx)=", xpx_sum, "sum(Ex)=", ex_sum)

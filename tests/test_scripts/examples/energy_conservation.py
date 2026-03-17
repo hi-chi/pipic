@@ -1,7 +1,6 @@
 # Demonstration of energy conservation (figs. 5 and 6 in arXiv:2302.01893)
 import pipic
 from pipic import consts, types
-import matplotlib.pyplot as plt
 import numpy as np
 from numba import cfunc, carray
 import sys
@@ -66,8 +65,6 @@ sim.field_loop(handler=setField_callback.address)
 
 
 # =================================OUTPUT========================================
-fig, axs = plt.subplots(2, constrained_layout=True)
-
 # -------------preparing output for electron distrribution f(x, px)--------------
 xpx_dist = np.zeros((64, 128), dtype=np.double)
 pxLim = 5 * np.sqrt(temperature * consts.electron_mass)
@@ -81,28 +78,6 @@ def xpx_callback(r, p, w, id, data_double, data_int):
     data = carray(data_double, xpx_dist.shape, dtype=np.double)
     if iy >= 0 and iy < xpx_dist.shape[0]:
         data[iy, ix] += w[0] * inv_dx_dpx
-
-
-axs[0].set_title("$\partial N / \partial x \partial p_x$ (s g$^{-1}$cm$^{-2}$)")
-axs[0].set(ylabel="$p_x$ (cm g/s)")
-axs[0].xaxis.set_ticklabels([])
-plot0 = axs[0].imshow(
-    xpx_dist,
-    vmax=3 * density / pxLim,
-    extent=[xmin, xmax, -pxLim, pxLim],
-    interpolation="none",
-    aspect="auto",
-    cmap="YlOrBr",
-)
-fig.colorbar(plot0, ax=axs[0], location="right")
-
-
-def plot_xpx():
-    xpx_dist.fill(0)
-    sim.particle_loop(
-        name="electron", handler=xpx_callback.address, data_double=pipic.addressof(xpx_dist)
-    )
-    plot0.set_data(xpx_dist)
 
 
 # --------------------preparing output of kinetic energy-------------------------
@@ -159,12 +134,17 @@ for i in range(n_iterations):
     print(i, "/", n_iterations)
     Ek = getKineticEn(sim)
     Ef = getFieldEnergy(sim)
+    xpx_dist.fill(0)
+    sim.particle_loop(
+        name="electron", handler=xpx_callback.address, data_double=pipic.addressof(xpx_dist)
+    )
     if i == 0:
         E0 = Ek + Ef
     timeP = np.append(timeP, i * time_step / plasma_period)
     Efield = np.append(Efield, Ef / E0)
     Etot = np.append(Etot, (Ek + Ef) / E0)
     print("relative energy deviation = ", ((Ek + Ef) - E0) / E0)
+    print("sum(xpx)=", np.sum(xpx_dist))
     if Ef > 2 * E0:
         break
     sim.advance(time_step=time_step)

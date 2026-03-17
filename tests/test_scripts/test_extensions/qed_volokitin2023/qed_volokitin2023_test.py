@@ -2,11 +2,9 @@
 
 import pipic
 from pipic import consts, types
-import matplotlib.pyplot as plt
 import numpy as np
-from numba import cfunc, carray
-import os, time
-from pipic.extensions import qed_gonoskov2015, qed_volokitin2023
+from numba import cfunc
+from pipic.extensions import qed_volokitin2023
 import math
 import sys
 
@@ -80,14 +78,6 @@ sim.add_particles(
 
 sim.set_rng_seed(14)
 # ------------------------------adding extension---------------------------------
-"""
-qed_handler=qed_gonoskov2015.handler(electron_type=sim.get_type_index('electron'),
-                                positron_type=sim.get_type_index('positron'),
-                                photon_type=sim.get_type_index('photon'))
-sim.add_handler(name=qed_gonoskov2015.name, subject='electron, positron, photon',
-                handler=qed_handler)
-"""
-
 qed_handler = qed_volokitin2023.handler(
     electron_type=sim.get_type_index("electron"),
     positron_type=sim.get_type_index("positron"),
@@ -121,9 +111,6 @@ def setField_callback(ind, r, E, B, data_double, data_int):
 
 
 sim.field_loop(handler=setField_callback.address)
-
-# =================================OUTPUT========================================
-# fig, axs = plt.subplots(2, constrained_layout=True)
 
 # -------------preparing output for electron distribution f(x, px)--------------
 N_e_ep = np.zeros((1,), dtype=np.double)

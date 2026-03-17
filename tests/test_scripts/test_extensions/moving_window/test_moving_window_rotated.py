@@ -4,10 +4,8 @@ import sys
 import pipic
 from pipic.extensions import moving_window
 from pipic import consts,types
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-from numba import cfunc, carray, types as nbt
+from numba import cfunc, carray
 
 
 def get_pic_steps(default_steps):
@@ -23,8 +21,6 @@ if __name__ == '__main__':
     #===========================SIMULATION INITIALIZATION===========================
     # Electron number density
     n0 = 8e18 #1e18 # [1/cm^3]
-    # plasma frequency, [e] = statC, [me] = g, [n0] = 1/cm^3, [c] = cm/s
-    omega_p = np.sqrt(np.pi*4*consts.electron_charge**2*n0/consts.electron_mass) # [1/s]
     # laser wavelength
     wl = 1e-4 # [cm]
 
@@ -66,8 +62,7 @@ if __name__ == '__main__':
 
     #=================================PLASMA PROFILE========================================
     # plasma profile
-    debye_length = 1e-2 # [cm] 
-    temperature = 0#1e-12 * 4 * np.pi * n0 * consts.electron_charge ** 2 * debye_length ** 2 # [erg/kB] (?)
+    temperature = 0
     start_upramp = zmax
     end_upramp = start_upramp + zmax
     density_drop = end_upramp
@@ -173,7 +168,6 @@ if __name__ == '__main__':
     s = get_pic_steps(s)
     checkpoint = 10
 
-    fig, ax = plt.subplots(2, 1, figsize=(5, 5))
     for i in range(s):
         sim.advance(time_step=timestep, number_of_iterations=1,use_omp=False)
 
@@ -185,14 +179,4 @@ if __name__ == '__main__':
             sim.particle_loop(name='electron', handler=get_density.address,
                         data_double=pipic.addressof(rho))
             load_fields()
-            rollback = i*timestep*consts.light_velocity*np.cos(angle)//dz
-            rollback_x = i*timestep*consts.light_velocity*np.sin(angle)//dx
-            rho = np.roll(rho, -int(rollback), axis=2)
-            Ey = np.roll(Ey, -int(rollback), axis=2)
-            # plot fields and densities
-            im = ax[0].imshow(rho[:, ny//2, :], origin='lower', aspect='auto',
-                        extent=[ymin, ymax, zmin, zmax], cmap='Reds',vmin=0, vmax=n0)
-            ax[1].imshow(Ey[:, ny//2, :], origin='lower', aspect='auto',
-                        extent=[ymin, ymax, zmin, zmax], cmap='seismic')
-            plt.savefig(f'./rho_{i:04d}.png')
 

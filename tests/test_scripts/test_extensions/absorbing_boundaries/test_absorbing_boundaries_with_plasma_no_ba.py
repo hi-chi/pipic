@@ -2,13 +2,10 @@
 #for results see fig. 6 in arXiv:2302.01893
 import sys
 import pipic
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_col
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-from pipic.extensions import absorbing_boundaries, moving_window
+from pipic.extensions import moving_window
 from pipic import consts,types
-from numba import cfunc, carray, types as nbt
+from numba import cfunc, carray
 
 
 def get_pic_steps(default_steps):
@@ -16,7 +13,6 @@ def get_pic_steps(default_steps):
         idx = sys.argv.index("--steps")
         return max(1, int(sys.argv[idx + 1]))
     return default_steps
-
 
 
 #===========================SIMULATION INITIALIZATION===========================
@@ -30,10 +26,7 @@ timeStep = dx/consts.light_velocity/4
 #sim = pipic.ec(nx=nx, ny=ny, XMin=XMin, XMax=XMax, YMin=YMin, YMax=YMax) 
 sim = pipic.init(solver='ec',nx=nx,ny=ny,xmin=XMin,xmax=XMax,ymin=YMin,ymax=YMax) 
 #---------------------------setting field of the pulse--------------------------
-boundarySize = (4)*wavelength
-fall = 0.01
 density = 1e18 # in cm^-3
-pmax = 1e-7 # in m_e*c
 pulseWidth_x = wavelength*2#*0.001 # [cm] (radial size of the laser focus)
 a0 = 10.
 omega = 2*np.pi*consts.light_velocity/wavelength
@@ -64,8 +57,6 @@ def initiate_field_callback(ind, r, E, B, data_double, data_int):
         B[1] = -gp   
 
 
-
-
 start_plasma = XMax
 @cfunc(types.add_particles_callback)
 def density_callback_electron(r, data_double, data_int):  # callback function
@@ -83,19 +74,9 @@ Ey = np.zeros((nx,ny), dtype=np.double)
 Bz = np.zeros((nx,ny), dtype=np.double) 
 Ex = np.zeros((nx,ny), dtype=np.double) 
 Bx = np.zeros((nx,ny), dtype=np.double) 
-ps = np.zeros((nx,ny), dtype=np.double) # phase space
 rho = np.zeros((nx,ny), dtype=np.double) # density
 
 #------------------get functions-----------------------------------------------
-
-@cfunc(types.particle_loop_callback)
-def get_phase_space(r, p, w, id, data_double, data_int):   
-    ix = int(ps.shape[1]*(r[0] - XMin)/(XMax - XMin))
-    iy = int(ps.shape[0]*(r[1] - YMin)/(YMax - YMin))
-    data = carray(data_double, ps.shape, dtype=np.double)
-
-    if ix >= 0 and ix < ps.shape[1] and iy >= 0 and iy < ps.shape[0]:
-        data[ix,iy] += w[0]*p[0]  # density in phase space
 @cfunc(types.particle_loop_callback)
 def get_density(r, p, w, id, data_double, data_int):   
     ix = int(nx*(r[0] - XMin)/(XMax - XMin))
@@ -144,9 +125,7 @@ def load_fields():
     sim.field_loop(handler=get_field_Bz.address, data_double=pipic.addressof(Bz), use_omp=True)
     sim.field_loop(handler=get_field_Bx.address, data_double=pipic.addressof(Bx), use_omp=True)
     sim.field_loop(handler=get_field_Ex.address, data_double=pipic.addressof(Ex), use_omp=True)
-    #sim.particle_loop(name='electron', handler=get_phase_space.address, data_double=pipic.addressof(ps))
     sim.particle_loop(name='electron', handler=get_density.address, data_double=pipic.addressof(rho))
-
 
 
 def get_energy():
@@ -187,41 +166,17 @@ sim.add_handler(name=moving_window.name,
                 handler=particle_handler_adress,
                 data_int=pipic.addressof(dataInt),)
 
-#------------------- plot fields -------------------------------------------
-fig, a = plt.subplots(2,2, constrained_layout=True)
-axs = a.flatten()
-
-load_fields()
-rho_plot = axs[0].imshow(rho.T,vmin=0, vmax=1.5*density, 
-        extent=[XMin,XMax,YMin,YMax], interpolation='none', \
-        aspect='auto', cmap='inferno_r', origin='lower')
-phase_plot = axs[2].imshow(Ez.T, vmin = -E0, vmax=E0,
-        extent=[XMin,XMax,YMin,YMax], interpolation='none', \
-        aspect='auto', cmap='inferno_r', origin='lower')
-Ex_plot = axs[3].imshow(Ex.T, vmin = -E0/1e2, vmax=E0/1e2,
-        extent=[XMin,XMax,YMin,YMax], interpolation='none', \
-        aspect='auto', cmap='seismic', origin='lower')
-rho2_plot = axs[1].plot(np.linspace(YMin,YMax,ny), rho[nx//2,:], color='red')
-axs[1].set_ylim(0,1.5*density)
-#fig.colorbar(rho_plot,ax=axs[0])
-#fig.colorbar(phase_plot,ax=axs[1])
 
 
 #===============================SIMULATION======================================
 default_steps = 2000
 s = get_pic_steps(default_steps)
-u = np.empty((s//20,2))
-count = 0
 for i in range(s):
     dataInt[0] = i
     sim.advance(time_step=timeStep, number_of_iterations=1,use_omp=True)
     if i%20==0:
         rho.fill(0)
-        ps.fill(0)
         load_fields()
-        rho_plot.set_data(rho.T)
-        phase_plot.set_data(Ez.T)
-        rho2_plot[0].set_ydata(rho[nx//2,:])
-        Ex_plot.set_data(Ex.T)
-        fig.savefig('im' + str(i) + '.png')
+        energy = get_energy()
+        print(i, f': energy_sum={np.sum(energy)*dx*dy}, rho_sum={np.sum(rho)*dx*dy}')
 

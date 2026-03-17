@@ -2,8 +2,7 @@ import pipic
 from pipic.tools import *
 from pipic.extensions import x_converter_c
 from numba import cfunc, carray
-import matplotlib.pyplot as plt
-import math, os, time
+import math, time
 import numpy as np
 from pipic import consts, types
 import numba
@@ -51,8 +50,7 @@ print('focused_pulse took', time.time() - time_start, 's.')
 sim.advance(time_step=(dist - starting_dist)/consts.light_velocity) # bringing the pulse to the initial location of a further simulation
 sim.fourier_solver_settings(divergence_cleaning=False) # unless using fourier_boris, for which divergence cleaning is recommended
 
-#============ show field in xy plane ==================
-fig, ax = plt.subplots()
+#============ sample field in xy plane ==================
 field_output = np.zeros((sim.ny, sim.nx), dtype=np.double)
 xmin, ymin = sim.xmin, sim.ymin
 nx, ny = sim.nx, sim.ny
@@ -68,25 +66,15 @@ def fieldPlot_cb(it, r, E, B, data_double, data_int):
     Field[int((it[0] - (it[0] % nx))/nx), (it[0] % nx)] = np.sqrt(E[0]*E[0] + E[1]*E[1] + E[2]*E[2] + B[0]*B[0] + B[1]*B[1] + B[2]*B[2])
 sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
                       field2data=fieldPlot_cb.address, data_double=pipic.addressof(field_output))
-plot0 = ax.imshow(field_output, vmin=0, vmax=3,
-                  extent=[sim.xmin,sim.xmax,sim.ymin,sim.ymax], interpolation='none',
-                  aspect='equal', cmap='YlOrBr', origin='lower')
-ax.set(xlabel='$x$ (cm)', ylabel='$y$ (cm)')
-ax.ticklabel_format(axis='both', scilimits=(0,0), useMathText=True)
 
 # =============== simulation =====================
 time_step = 0.125*wavelength/consts.light_velocity
 frames = get_pic_steps(100)
-output_folder = 'test_focused_pulse_output'
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
 for i in range(frames):
     sim.advance(time_step=time_step)
     sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
                       field2data=fieldPlot_cb.address, data_double=pipic.addressof(field_output))
-    plot0.set_data(field_output)
-    fig.savefig(output_folder + '/im' + str(i) + '.png')
-    print(i)
+    print(i, 'field_sum=', np.sum(field_output))
 
 
 # An example of setting field directly in Python

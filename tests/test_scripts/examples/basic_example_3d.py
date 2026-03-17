@@ -3,7 +3,6 @@ from pipic import consts, types
 import numpy as np
 from numba import cfunc, carray
 from pipic.extensions import moving_window
-import matplotlib.pyplot as plt
 import sys
 
 
@@ -85,24 +84,10 @@ for i in range(simulation_steps):
     
     sim.advance(time_step=timestep,number_of_iterations=1)    
 
-     # read and plot Ez-field and particle phase-space every 10 iterations
-    if i % 10 == 0:
-        sim.field_loop(handler=field_callback.address, 
-                        data_double=pipic.addressof(field_dd),
-                        use_omp=True)
-        
-        sim.particle_loop(name='particle_name', 
+    sim.field_loop(handler=field_callback.address, 
+                    data_double=pipic.addressof(field_dd),
+                    use_omp=True)
+    
+    sim.particle_loop(name='particle_name', 
                             handler=particle_callback.address, 
                                 data_double=pipic.addressof(particle_dd))
-        
-        # plot Ez-field and particle phase-space        
-        fig,ax = plt.subplots(2, 1, constrained_layout=True)
-        ax[0].imshow(field_dd, 
-                     extent=[zmin, zmax,xmin, xmax], 
-                     aspect='auto', origin='lower', 
-                     cmap='coolwarm')
-        ax[1].imshow(particle_dd, 
-                     extent=[zmin, zmax,pmin, pmax], 
-                     aspect='auto', origin='lower', 
-                     cmap='Reds')
-        fig.savefig(f'output_{i//10:04d}.png')

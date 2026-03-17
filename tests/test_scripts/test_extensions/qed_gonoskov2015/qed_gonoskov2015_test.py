@@ -2,10 +2,8 @@
 
 import pipic
 from pipic import consts, types
-import matplotlib.pyplot as plt
 import numpy as np
-from numba import cfunc, carray
-import os, time
+from numba import cfunc
 from pipic.extensions import qed_gonoskov2015
 import math
 import sys
@@ -112,9 +110,6 @@ def setField_callback(ind, r, E, B, data_double, data_int):
 
 
 sim.field_loop(handler=setField_callback.address)
-
-# =================================OUTPUT========================================
-# fig, axs = plt.subplots(2, constrained_layout=True)
 
 # -------------preparing output for electron distribution f(x, px)--------------
 N_e_ep = np.zeros((1,), dtype=np.double)

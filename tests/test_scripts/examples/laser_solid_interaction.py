@@ -2,12 +2,8 @@
 # for results see Sec. 8 in arXiv:2302.01893
 import pipic
 from pipic import consts, types
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numba import cfunc, carray, types as nbt
-import os
 import sys
 
 
@@ -126,41 +122,9 @@ sim.add_particles(
 
 
 # =================================OUTPUT========================================
-fig, axs = plt.subplots(2, constrained_layout=True)
-ax = axs[0]
-
 # ------------------------------field output-------------------------------------
-tmp = np.zeros((1, 1), dtype=np.double)  # null plot to show the color bar
-G_cmap = mpl.colors.LinearSegmentedColormap.from_list("N", [(1, 1, 1), (0, 0.5, 0)], N=32)
-cbar = ax.imshow(
-    tmp,
-    vmin=0,
-    vmax=2,
-    extent=[xmin, xmax, ymin, ymax],
-    interpolation="none",
-    aspect="equal",
-    origin="lower",
-    cmap=G_cmap,
-)
 oBz = np.zeros((ny, nx), dtype=np.double)
 maxField = 2 * fieldAmplitude
-plot0 = ax.imshow(
-    oBz,
-    vmin=-maxField,
-    vmax=maxField,
-    extent=[xmin, xmax, ymin, ymax],
-    interpolation="none",
-    aspect="equal",
-    cmap="RdBu",
-    origin="lower",
-)
-ax.set(xlabel="$x$ (cm)", ylabel="$y$ (cm)")
-ax.ticklabel_format(axis="both", scilimits=(0, 0), useMathText=True)
-divider = make_axes_locatable(ax)
-cax = divider.append_axes("right", size="2%", pad=0.05)
-fig.add_axes(cax)
-bar0 = fig.colorbar(plot0, cax=cax, orientation="vertical")
-bar0.set_label(label="$B_z$ (CGS)")
 
 
 @cfunc(types.field_loop_callback)
@@ -170,8 +134,9 @@ def fieldBz_cb(ind, r, E, B, data_double, data_int):
 
 
 def plot_field():
+    oBz.fill(0)
     sim.field_loop(handler=fieldBz_cb.address, data_double=pipic.addressof(oBz))
-    plot0.set_data(oBz)
+    return np.sum(oBz)
 
 
 # ----------------------------density output-------------------------------------
@@ -187,30 +152,10 @@ def density_cb(r, p, w, id, data_double, data_int):
         data[iy, ix] += w[0] / (dx * dy * 2 * density)
 
 
-N_cmap = mpl.colors.LinearSegmentedColormap.from_list("N", [(0, 0.5, 0), (0, 0.5, 0)], N=9)
-plot1 = ax.imshow(
-    oN,
-    vmin=0,
-    vmax=1,
-    alpha=oN,
-    extent=[xmin, xmax, ymin, ymax],
-    interpolation="none",
-    aspect="equal",
-    origin="lower",
-    cmap=N_cmap,
-)
-ax.set(xlabel="$x$ (cm)", ylabel="$y$ (cm)")
-ax.ticklabel_format(axis="both", scilimits=(0, 0), useMathText=True)
-cax1 = divider.append_axes("right", size="2%", pad=0.85)
-fig.add_axes(cax1)
-bar1 = fig.colorbar(cbar, cax=cax1, orientation="vertical")
-bar1.set_label(label="$N/N_0$")
-
-
 def plot_density():
     oN.fill(0)
     sim.particle_loop(name="electron", handler=density_cb.address, data_double=pipic.addressof(oN))
-    plot1.set_data(oN)
+    return np.sum(oN)
 
 
 # ----------------------------1dfield output-------------------------------------
@@ -236,19 +181,7 @@ def get_Es(it, r, E, B, data_double, data_int):
     data_double[it[0]] = E[2]
 
 
-axs[1].set_xlim([0, EpSize])
-axs[1].set_ylim([-maxField, maxField])
-axs[1].set(xlabel="$x$ (cm)", ylabel="$E_p$ (cgs units)")
 x_axis = np.linspace(0, EpSize, oEp.shape[0])
-(plot_Ep,) = axs[1].plot(x_axis, oEp)
-
-with open("./res_.npy", "rb") as f:  # reading data of RES computation
-    res_X_0 = np.load(f)
-    res_Ep = -np.load(f)
-    res_Es = -np.load(f)
-
-res_X = res_X_0 + -arrivalDelay * consts.light_velocity
-(plot_res_Ep,) = axs[1].plot(res_X, res_Ep)
 
 
 def plot_E(i):
@@ -258,31 +191,22 @@ def plot_E(i):
         field2data=get_Ep.address,
         data_double=pipic.addressof(oEp),
     )
-    plot_Ep.set_ydata(oEp)
-    res_X = res_X_0 + (
-        (-arrivalDelay + i * time_step) * consts.light_velocity
-        + wavelength * np.cos(incidenceAngle)
-    )  # due to surface being at 0.5 \mu m
-    plot_res_Ep.set_xdata(res_X)
     if i == 21 * figStride:
         with open("im21_Ep_" + str(nx) + ".npy", "wb") as f:
             np.save(f, x_axis)
             np.save(f, oEp)
+    return np.sum(oEp)
 
 
 # ===============================SIMULATION======================================
-outputFolder = "laser_solid_interaction_output"
-if not os.path.exists(outputFolder):
-    os.makedirs(outputFolder)
 data_int = np.zeros((1,), dtype=np.intc)  # data for passing the iteration number
 steps = get_pic_steps(figStride * 21 + 1)
 for i in range(steps):
-    print(i, "/", steps)
     data_int[0] = i
     sim.field_loop(handler=field_callback.address, data_int=pipic.addressof(data_int), use_omp=True)
     if i % figStride == 0:
-        plot_field()
-        plot_density()
-        plot_E(i)
-        fig.savefig(outputFolder + "/im" + str(int(i / figStride)) + ".png", dpi=300)
+        field_sum = plot_field()
+        density_sum = plot_density()
+        ep_sum = plot_E(i)
+        print(i, "/", steps, "sum(Bz)=", field_sum, "sum(N)=", density_sum, "sum(Ep)=", ep_sum)
     sim.advance(time_step=time_step)

@@ -2,8 +2,7 @@ import pipic
 from pipic.tools import *
 from pipic.extensions import downsampler_gonoskov2022
 from numba import cfunc, carray
-import matplotlib.pyplot as plt
-import math, numpy, os, time
+import math, numpy
 
 # ===========================SIMULATION INITIALIZATION===========================
 temperature = 1e-6 * electron_mass * light_velocity**2
@@ -47,8 +46,6 @@ downsampler = downsampler_gonoskov2022.handler(
 sim.add_handler(name=downsampler_gonoskov2022.name, subject="cells", handler=downsampler)
 
 # =================================OUTPUT========================================
-fig, axs = plt.subplots(2, constrained_layout=True)
-
 # -------------preparing output for electron distrribution f(x, px)--------------
 Ne = numpy.zeros((ny, nx), dtype=numpy.double)
 
@@ -77,52 +74,16 @@ def Ne_cb(r, p, w, id, data_double, data_int):
     data[ny - 1 - iy, ix] += gx * (1 - gy) * w[0] / dxdy
 
 
-def plot_initial_density():
+def load_density():
     Ne.fill(0)
     sim.particle_loop(name="electron", handler=Ne_cb.address, data_double=addressof(Ne))
-    axs[0].set_title("Initial density")
-    axs[0].set(ylabel="$y$ (cm)")
-    axs[0].xaxis.set_ticklabels([])
-    plot0 = axs[0].imshow(
-        Ne,
-        vmin=0,
-        vmax=2 * density,
-        extent=[xmin, xmax, ymin, ymax],
-        interpolation="none",
-        aspect="auto",
-        cmap="YlOrBr",
-    )
-    fig.colorbar(plot0, ax=axs[0], location="right")
-
-
-axs[1].set_title("Density after downsampling")
-axs[1].set(ylabel="$y$ (cm)")
-axs[1].xaxis.set_ticklabels([])
-plot1 = axs[1].imshow(
-    Ne,
-    vmin=0,
-    vmax=2 * density,
-    extent=[xmin, xmax, ymin, ymax],
-    interpolation="none",
-    aspect="auto",
-    cmap="YlOrBr",
-)
-fig.colorbar(plot1, ax=axs[1], location="right")
-
-
-def plot_density():
-    Ne.fill(0)
-    sim.particle_loop(name="electron", handler=Ne_cb.address, data_double=addressof(Ne))
-    plot1.set_data(Ne)
 
 
 # ===============================SIMULATION======================================
-outputFolder = "output_downsampler_gonoskov2022"
-if not os.path.exists(outputFolder):
-    os.makedirs(outputFolder)
-plot_initial_density()
+load_density()
 print("Before downsampling N_macro = ", sim.get_number_of_particles())
 print("CIC density at x = y = 0: ", Ne[ny - 1 - int(ny / 2), int(nx / 2)])
+print("Density sum = ", numpy.sum(Ne))
 sim.advance(time_step=0.0, number_of_iterations=1)
 print("After downsampling N_macro = ", sim.get_number_of_particles())
 sim.advance(time_step=0.0, number_of_iterations=1)
@@ -130,6 +91,6 @@ print(
     "After extra iteration (to remove zero-weight particles in processed cells) N_macro = ",
     sim.get_number_of_particles(),
 )
-plot_density()
+load_density()
 print("CIC density at x = y = 0: ", Ne[ny - 1 - int(ny / 2), int(nx / 2)])
-fig.savefig(outputFolder + "/im0.png")
+print("Density sum = ", numpy.sum(Ne))

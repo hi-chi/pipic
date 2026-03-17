@@ -2,13 +2,10 @@
 #for results see fig. 6 in arXiv:2302.01893
 import sys
 import pipic
-import matplotlib.pyplot as plt
-import matplotlib.colors as plt_col
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from pipic.extensions import absorbing_boundaries
 from pipic import consts,types
-from numba import cfunc, carray, types as nbt
+from numba import cfunc, carray
 
 
 def get_pic_steps(default_steps):
@@ -40,8 +37,6 @@ k = 2*np.pi/wavelength
 
 boundarySize = (4)*wavelength
 fall = 1
-#fp = f'data_ts_0,25_fall_{str(fall)}_bs_4.txt'
-fp = f'data_ts_0,25_fall_{str(fall)}_bs_{str(boundarySize/wavelength)}.txt'
 rot = -np.pi/4
 
 @cfunc(types.field_loop_callback)
@@ -132,21 +127,10 @@ sim.add_handler(name=absorbing_boundaries.name,
                 subject='fields', 
                 field_handler=field_handler_adress,)
 
-#------------------- plot fields -------------------------------------------
-fig, axs = plt.subplots(1, constrained_layout=True)
-
-E = get_energy()
-E_plot = axs.imshow(E,vmin=0, vmax=fieldAmplitude**2, 
-        extent=[XMin,XMax,YMin,YMax], interpolation='none', \
-        aspect='equal', cmap='inferno_r', origin='lower')
-fig.colorbar(E_plot,ax=axs)
-
 #===============================SIMULATION======================================
 dataInt = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
 s = 1000
 s = get_pic_steps(s)
-u = np.empty((s//20+1,2))
-count = 0
 for i in range(s):
     dataInt[0] = i
     sim.field_loop(handler=setField_callback.address, data_int=pipic.addressof(dataInt), \
@@ -154,11 +138,6 @@ for i in range(s):
     sim.advance(time_step=timeStep, number_of_iterations=1,use_omp=True)
     if i%20==0:
         load_fields()
-        E = get_energy()
-        E_plot.set_data(E)
-        u_ = np.sum(E)*dx*dy
-        u[count,:] = [i*timeStep,u_]
-        count += 1
-        print(i,f':{u_}')
-        fig.savefig('im' + str(i) + '.png')
+    energy = get_energy()
+    print(i, f': energy_sum={np.sum(energy)*dx*dy}')
 
