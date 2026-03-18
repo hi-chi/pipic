@@ -34,23 +34,22 @@ jobs:
       - name: Install cibuildwheel
         run: pipx install cibuildwheel==2.21.3
       - id: set-matrix
-        # Generate identifiers and route each macOS arch to a matching runner.
+        # Generate macOS identifiers for Apple Silicon wheels.
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
-              && CIBW_ARCHS_MACOS=arm64 cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-14"}' \
-              && CIBW_ARCHS_MACOS=x86_64 cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-15"}'
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-14"}'
             } | jq -sc
           )
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
     env:
       # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
+      # macos-14 is an Apple Silicon runner
       CIBW_ARCHS_LINUX: x86_64
-      #CIBW_ARCHS_MACOS: "arm64 x86_64"
+      CIBW_ARCHS_MACOS: arm64
 
 
   build-wheels:

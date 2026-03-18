@@ -39,10 +39,8 @@ dependencies = [
     'numba>=0.59; python_version=="3.12" and sys_platform!="darwin"',
     'numba>=0.61; python_version=="3.13" and sys_platform!="darwin"',
     'numba>=0.63; python_version=="3.14" and sys_platform!="darwin"',
-    # macOS Apple Silicon keeps the latest floor.
+    # macOS support is Apple Silicon (arm64) only.
     'numba>=0.63; sys_platform=="darwin" and platform_machine=="arm64"',
-    # macOS Intel uses older numba lines with known wheel support (numba dropped intel support after 0.62).
-    'numba<=0.62; sys_platform=="darwin" and platform_machine=="x86_64"',
 ]
 
 [project.optional-dependencies]
@@ -96,7 +94,7 @@ extend-select = [
 # See: https://github.com/pypa/distutils/issues/283
 # Disable building musllinux due to: "Failed to build numba llvmlite"
 # Disable building wheels on Python 3.13 due to current numba restrictions.
-skip = "pp* *-musllinux* cp313*"
+skip = "pp* *-musllinux* cp313* *-macosx_x86_64"
 
 # Run basic_example.py for each wheel
 test-requires = "numpy"
@@ -123,4 +121,4 @@ before-all = "brew install fftw libomp"
 CC = "/usr/bin/clang"
 CXX = "/usr/bin/clang++"
 CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
-LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib -Wl,-rpath,$(brew --prefix)/opt/libomp/lib"
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib 
