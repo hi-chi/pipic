@@ -108,8 +108,8 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-if sys.version_info < (3, 8, 0, "final", 0):
-    raise SystemExit("Python 3.8 or later is required!")
+if sys.version_info < (3, 10, 0, "final", 0):
+    raise SystemExit("Python 3.10 or later is required!")
 
 
 if __name__ == "__main__":
