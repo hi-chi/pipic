@@ -30,8 +30,8 @@ classifiers = [
 
 requires-python = '>=3.10'
 dependencies = [
-    'numpy>=1.22; python_version~="3.10"',
-    'numpy>=1.24; python_version>="3.11"',
+    'numpy>=1.22,<2.3; python_version=="3.10"',
+    'numpy>=1.24; python_version=="3.11"',
     'numpy>=1.26; python_version>="3.12"',
     # Keep Linux/Windows behavior aligned with the intended Python-minor floors.
     'numba>=0.55; python_version=="3.10" and sys_platform!="darwin"',
@@ -39,8 +39,11 @@ dependencies = [
     'numba>=0.59; python_version=="3.12" and sys_platform!="darwin"',
     'numba>=0.61; python_version=="3.13" and sys_platform!="darwin"',
     'numba>=0.63; python_version=="3.14" and sys_platform!="darwin"',
-    # macOS support is Apple Silicon (arm64) only.
+    # macOS Apple Silicon keeps the latest floor.
     'numba>=0.63; sys_platform=="darwin" and platform_machine=="arm64"',
+    # macOS Intel uses older numba lines with known wheel support.
+    'numba>=0.55,<0.60; python_version=="3.10" and sys_platform=="darwin" and platform_machine=="x86_64"',
+    'numba>=0.57,<0.61; python_version=="3.11" and sys_platform=="darwin" and platform_machine=="x86_64"',
 ]
 
 [project.optional-dependencies]
@@ -94,8 +97,7 @@ extend-select = [
 # See: https://github.com/pypa/distutils/issues/283
 # Disable building musllinux due to: "Failed to build numba llvmlite"
 # Disable building wheels on Python 3.13 due to current numba restrictions.
-# Disable macOS Intel wheels due to missing numba wheels.
-skip = "pp* *-musllinux* cp313* *-macosx_x86_64"
+skip = "pp* *-musllinux* cp313*"
 
 # Run basic_example.py for each wheel
 test-requires = "numpy"
