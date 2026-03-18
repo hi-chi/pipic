@@ -34,24 +34,22 @@ jobs:
       - name: Install cibuildwheel
         run: pipx install cibuildwheel==2.21.3
       - id: set-matrix
-        # macos-14 is disabled as it doesn't recognize itself as arm64.
-        # Should probably change to use the scikit-build-core backend.
-        # See: https://github.com/pypa/cibuildwheel/issues/1989
+        # Generate macOS identifiers for Apple Silicon wheels.
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               && cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-latest"}'
+              | jq -nRc '{"only": inputs, "os": "macos-14"}'
             } | jq -sc
           )
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
     env:
       # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
-      # Note that macos-13 is an Intel runner, macos-14 is Apple Silicon
+      # macos-14 is an Apple Silicon runner
       CIBW_ARCHS_LINUX: x86_64
-      CIBW_ARCHS_MACOS: native
+      CIBW_ARCHS_MACOS: arm64
 
 
   build-wheels:
