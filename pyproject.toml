@@ -42,7 +42,7 @@ dependencies = [
     # macOS Apple Silicon keeps the latest floor.
     'numba>=0.63; sys_platform=="darwin" and platform_machine=="arm64"',
     # macOS Intel uses older numba lines with known wheel support (numba dropped intel support after 0.62).
-    'numba=<0.62; sys_platform=="darwin" and platform_machine=="x86_64"',
+    'numba<=0.62; sys_platform=="darwin" and platform_machine=="x86_64"',
 ]
 
 [project.optional-dependencies]
