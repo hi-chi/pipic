@@ -121,4 +121,4 @@ before-all = "brew install fftw libomp"
 CC = "/usr/bin/clang"
 CXX = "/usr/bin/clang++"
 CPPFLAGS = "-I$(brew --prefix)/opt/fftw/include -I$(brew --prefix)/opt/libomp/include"
-LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib 
+LDFLAGS = "-L$(brew --prefix)/opt/fftw/lib -L$(brew --prefix)/opt/libomp/lib"
