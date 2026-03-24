@@ -34,7 +34,7 @@ jobs:
       - name: Install cibuildwheel
         run: pipx install cibuildwheel==2.21.3
       - id: set-matrix
-        # Generate macOS identifiers for both Apple Silicon and Intel wheels.
+        # Generate macOS identifiers for Apple Silicon wheels.
         run: |
           MATRIX=$(
             {
@@ -47,9 +47,9 @@ jobs:
           echo "include=$MATRIX" >> $GITHUB_OUTPUT
     env:
       # See: https://cibuildwheel.pypa.io/en/stable/options/#archs
-      # Build both macOS arm64 and x86_64 wheel identifiers.
+      # macos-14 is an Apple Silicon runner
       CIBW_ARCHS_LINUX: x86_64
-      CIBW_ARCHS_MACOS: "arm64 x86_64"
+      CIBW_ARCHS_MACOS: arm64
 
 
   build-wheels:
