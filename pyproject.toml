@@ -33,6 +33,8 @@ dependencies = [
     'numpy>=1.22,<2.3; python_version=="3.10"', # Numpy dropped python 3.10 support after 2.3.
     'numpy>=1.24; python_version=="3.11"',
     'numpy>=1.26; python_version>="3.12"',
+    'numpy>=2.1; python_version>="3.13"',
+    'numpy>=2.3.2; python_version>="3.14"',
     # Keep Linux/Windows behavior aligned with the intended Python-minor floors.
     'numba>=0.55; python_version=="3.10" and sys_platform!="darwin"',
     'numba>=0.57; python_version=="3.11" and sys_platform!="darwin"',
@@ -94,7 +96,7 @@ extend-select = [
 # See: https://github.com/pypa/distutils/issues/283
 # Disable building musllinux due to: "Failed to build numba llvmlite"
 # Disable building wheels on Python 3.13 due to current numba restrictions.
-skip = "pp* *-musllinux* cp313* *-macosx_x86_64"
+skip = "pp* *-musllinux* *-macosx_x86_64"
 
 # Run basic_example.py for each wheel
 test-requires = "numpy"
