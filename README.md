@@ -76,5 +76,5 @@ See all releases [here][releases].
 [solver_development_notebook]: https://github.com/hi-chi/pipic/tree/main/tutorials/solver
 [releases]: https://github.com/hi-chi/pipic/blob/main/docs/RELEASES.md
 [arXiv:2302.01893]: https://arxiv.org/abs/2302.01893
-[readthedocs]: https://pipic.readthedocs.io/en/latest
+[readthedocs]: https://pi-pic.readthedocs.io/en/latest
 <!-- prettier-ignore-end -->
