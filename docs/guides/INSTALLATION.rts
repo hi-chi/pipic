@@ -8,7 +8,7 @@ System Requirements
 
 Before installing π-PIC, ensure you have the following:
 
-- **Python 3.8+**
+- **Python 3.10+**
 - **gcc** (C/C++ compiler, 64-bit)
 - **fftw3** (Fast Fourier Transform library, 64-bit)
 - **openmp** (OpenMP parallel computing library)
@@ -37,11 +37,19 @@ If using a non-standard compiler (e.g., custom gcc on macOS), specify it:
 
     CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 
-Conda
-^^^^^
+Conda (tested for Linux)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-For Conda-based environments, refer to:
-https://github.com/hi-chi/pipic/blob/main/tutorials/installation.ipynb
+If Conda is not installed, follow:
+https://www.anaconda.com/docs/getting-started/miniconda/install
+
+Then run:
+
+.. code-block:: bash
+
+    wget -O environment.yml https://raw.githubusercontent.com/hi-chi/pipic/main/environment.yml
+    conda env create -f environment.yml
+    conda activate pipic_env
 
 From GitHub (Latest Development Version)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
