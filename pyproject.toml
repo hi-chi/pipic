@@ -7,7 +7,9 @@ build-backend = "setuptools.build_meta"
 name = 'pipic'
 description = 'A Python library for particle-in-cell plasma simulation.'
 
-authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' }]
+authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' },
+           { name = 'Frida Brogren', email = 'frida.brogren@physics.gu.se'},
+           { name = 'Joel Magnusson'}]
 maintainers = [{ name = 'The pipic developers team' }]
 
 readme = 'README.md'
