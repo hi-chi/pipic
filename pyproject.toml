@@ -8,8 +8,7 @@ name = 'pipic'
 description = 'A Python library for particle-in-cell plasma simulation.'
 
 authors = [{ name = 'Arkady Gonoskov', email = 'arkady.gonoskov@physics.gu.se' },
-           { name = 'Frida Brogren', email = 'frida.brogren@physics.gu.se'},
-           { name = 'Joel Magnusson'}]
+           { name = 'Frida Brogren', email = 'frida.brogren@physics.gu.se'}]
 maintainers = [{ name = 'The pipic developers team' }]
 
 readme = 'README.md'
