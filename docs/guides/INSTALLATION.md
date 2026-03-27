@@ -35,6 +35,12 @@ conda activate pipic_env
 ## macOS
 Installation on macOS depends on which compiler is being used.
 
+> [!WARNING]
+> Official macOS wheels are currently built for Apple Silicon (`arm64`) only.
+> On Intel Macs (`x86_64`), `pip install pipic` will typically fall back to a source build
+> (`sdist`). This requires a working compiler toolchain and system libraries (`fftw`,
+> `openmp`/`libomp`) to be installed, otherwise installation may fail.
+
 #### gcc
 Assuming that `gcc` is installed through homebrew it will be named _e.g._ `gcc-14`. Note that the built-in `gcc` on macOS is in fact an Apple-compiled `clang` (this can be confirmed with the `gcc --version`), which lacks `openmp`.
 

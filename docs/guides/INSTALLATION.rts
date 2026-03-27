@@ -12,7 +12,6 @@ Before installing π-PIC, ensure you have the following:
 - **gcc** (C/C++ compiler, 64-bit)
 - **fftw3** (Fast Fourier Transform library, 64-bit)
 - **openmp** (OpenMP parallel computing library)
-- **pybind11** (automatically handled by pip installation)
 
 Python packages (automatically installed with pipic):
 
@@ -123,7 +122,14 @@ Then install pipic:
 macOS
 ^^^^^
 
-Installation on macOS depends on which compiler you use.
+Official macOS wheels are currently built for Apple Silicon (``arm64``) only. If you have this architecture 
+``pip install pipic`` should be sufficient.
+
+On Intel Macs (``x86_64``), ``pip install pipic`` will typically fall back to a
+source build (sdist). This requires a working compiler toolchain and system
+libraries (``fftw``, OpenMP/``libomp``), otherwise installation may fail.
+
+If ``pip install pipic`` fails, try installing the dependecies.  How to do that depends on which compiler you use.
 
 **Using GCC (via Homebrew)**
 
