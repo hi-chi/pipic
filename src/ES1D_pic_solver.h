@@ -14,9 +14,9 @@ You should have received a copy of the GNU General Public License along with pi-
 <https://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------------------------------
 Website: https://github.com/hi-chi/pipic
-Contact: arkady.gonoskov@gu.se.
+Contact: frida.brogren@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description: Implementation of an electrostatic 1D solver.
+// Electrostatic 1D PIC solver implementation.
 
 #include "ensemble.h"
 #include "ES1D_field_solver.h"
@@ -38,6 +38,7 @@ struct ES1DPicSolver: public pic_solver
     }
 
     void advance(double _timeStep){
+        // Run one PIC step using the ensemble single-loop method.
         timeStep = _timeStep;
         Ensemble->advance_singleLoop<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
     }
@@ -50,17 +51,18 @@ struct ES1DPicSolver: public pic_solver
     }
 
     void preStep(double timeStep){
+        // Pull momenta back by dt/2 before the first full push.
         for (int it = 0; it < int(Ensemble->type.size()); it++){
             for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
                 particle *P = &*iP;
-                // pull back momentum 1/2 timestep to initalize leapfrog scheme
                 halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, -timeStep);
             }
         }
     }
 
     void preLoop()
-    {
+    {c
+        // Advance field with current from previous iteration, then clear current.
         field->advance(timeStep);
         for(size_t ix = 0; ix < field->Jx.size(); ix++){
             field->Jx[ix] = 0;
@@ -76,9 +78,9 @@ struct ES1DPicSolver: public pic_solver
         P.r.x += timeStep*P.p.x/(mass); // advance particle position
         if (P.r.x < box.min.x) P.r.x += (box.max.x - box.min.x); // periodic boundary conditions
         else if (P.r.x > box.max.x) P.r.x += (-box.max.x + box.min.x); // periodic boundary conditions
-        // note that the momentum is defined as momentum per particle not per macroparticle
+        // Momentum is stored per physical particle, not per macroparticle.
 
-        // deposit current
+        // Deposit Jx to adjacent nodes using linear (CIC) weights.
         int indx = int((P.r.x - box.min.x)/box.step.x);
         double w_left = field->CIC(P.r.x, indx, box.step.x, box.min.x);
         double w_right = 1 - w_left;
@@ -88,22 +90,19 @@ struct ES1DPicSolver: public pic_solver
     }
 
     void postStep(double timeStep){
+        // Push momenta forward by dt/2 to leave leapfrog-centered representation.
         for (int it = 0; it < int(Ensemble->type.size()); it++){
             for(ensemble::nonOmpIterator iP = Ensemble->begin(it); iP < Ensemble->end(); iP++){
                 particle *P = &*iP;
-                // move forward momentum 1/2 timestep to remove leapfrog scheme
                 halfstep(*P, Ensemble->type[it].charge, Ensemble->type[it].mass, timeStep);
             }
         }
     }
 
-
-
-    // empty methods
+    // Hooks unused by this solver variant.
     void postLoop(){}
     void startSubLoop(int3 i3, double charge, double mass, double timeStep){}
     void endSubLoop(){}
-    
 
 };
 

@@ -14,14 +14,14 @@ You should have received a copy of the GNU General Public License along with pi-
 <https://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------------------------------
 Website: https://github.com/hi-chi/pipic
-Contact: arkady.gonoskov@gu.se.
+Contact: frida.brogren@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Description of the file: Implementation of an electrostatic 1D solver.
+// Electrostatic 1D field solver implementation.
 
 
 #include "interfaces.h"
 
-struct ES1DFieldSolver: public field_solver // spectral solver for electromagnetic field evolution with zero current
+struct ES1DFieldSolver: public field_solver // 1D electrostatic solver (Ex only)
 {
     string type;
     vector<double> Ex; // electric field at the nodes
@@ -46,7 +46,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
 
     void getEB(double3 r, double3 &E, double3 &B)
     {
-        // get electric field at the point r
+        // Interpolate Ex at position r.x from neighboring nodes.
         int ix = int((r.x - box.min.x)/box.step.x);
         double w_left = CIC(r.x, ix, box.step.x, box.min.x);
         double w_right = 1 - w_left;
@@ -55,27 +55,28 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         E.x += w_right * Ex[(ix + 1)%box.n.x];
         E.y = 0; 
         E.z = 0;
-        B = {0, 0, 0}; // magnetic field is zero in this solver
+        B = {0, 0, 0}; // No magnetic field in this electrostatic model.
     }
 
-    // interface for setting/modifying field state:
-    // makes a loop over all nodes and calls a function handler(ind, r, E, B, dataDouble_, dataInt_), which takes:
-    // three-index (ind[0], ind[1], ind[2]),
-    // field component code: ind[4] = 0 for Ex, 1 for Ey, 2 for Ez, 3 for Bx, 4 for By, 5 for Bz, 6 for all)
-    // coordinate of the node in question,
-    // field values (whatever is applicable according to ind[4]), and refernces to data of double and int type.
 
+    // fieldLoop is a mandatory method for field solver interface. It is called from python using Numba's cfunc wrapper
+    // ( @cfunc(field_loop) ) and is used to apply user-defined operations to the field at each node. 
     void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false){
+        // Cast opaque integer handles from Python/C API to typed pointers.
         void(*handler_)(int*, double*, double*, double*, double*, int*) = (void(*)(int*, double*, double*, double*, double*, int*))handler;
         double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
         int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
-        if(useOmp){
+
+        // useOmp=true activates parallel execution with OpenMP.
+        if(useOmp){ 
+            // Parallel loop over all logical nodes in the simulation box.
             #pragma omp parallel for collapse(3)
             for(int iz = 0; iz < box.n.z; iz++)
             for(int iy = 0; iy < box.n.y; iy++)
             for(int ix = 0; ix < box.n.x; ix++)
                 fieldLoopBody({ix, iy, iz}, handler_, dataDouble_, dataInt_);
         } else {
+            // Serial fallback for environments where OpenMP is disabled.
             for(int iz = 0; iz < box.n.z; iz++)
             for(int iy = 0; iy < box.n.y; iy++)
             for(int ix = 0; ix < box.n.x; ix++)
@@ -84,6 +85,7 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
     }
 
     void fieldLoopBody(int3 i, void(*handler_)(int*, double*, double*, double*, double*, int*), double* dataDouble_, int* dataInt_){
+        // Convert integer grid indices to physical coordinates.
         double3 r3 = box.min;
         r3.x += i.x*box.step.x;
         r3.y += i.y*box.step.y;
@@ -95,10 +97,13 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         E[0] = Ex[i.x]; B[0] = 0;
         E[1] = 0; B[1] = 0;
         E[2] = 0; B[2] = 0;
+        // Call the user-defined handler function with the current node's indices, coordinates, field values, and additional data.
         handler_(ind, r, E, B, dataDouble_, dataInt_);
         Ex[i.x] = E[0];
     }    
     
+    // cellSetField is a mandatory method for field solver interface. It is called by the ensemble to set field values 
+    // in the cellInterface so that it can be accesses by the particle extensions. 
     inline void cellSetField(cellInterface &CI, int3 i){
         setGridType(CI, 0); 
 
@@ -108,13 +113,16 @@ struct ES1DFieldSolver: public field_solver // spectral solver for electromagnet
         if(getCI_F_Data(CI) == nullptr) getCI_F_Data(CI) = new double[48];
         double* F_data = getCI_F_Data(CI);
 
+        // Periodic neighbor pair in x for this 1D field representation.
         int cig[2] = {i.x,i.x+1};
         if (cig[1] > box.n.x){cig[1] = 0;}
 
+        // Fill only Ex slots (stride 6 per node: Ex,Ey,Ez,Bx,By,Bz).
         for(int j = 0; j < (1 << box.dim); j++){
             F_data[6*j] = Ex[cig[j]];
         }
     }
     
+    // Trivial destructor: managed containers clean themselves up.
     ~ES1DFieldSolver(){}
 };
