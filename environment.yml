@@ -10,6 +10,4 @@ dependencies:
   - llvmlite
   - pytest
   - pip:
-      - --index-url https://test.pypi.org/simple/
-      - --extra-index-url https://pypi.org/simple
-      - pipic==1.3rc10
+      - pipic

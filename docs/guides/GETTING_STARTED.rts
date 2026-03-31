@@ -243,5 +243,5 @@ Explore additional ready-to-run notebooks in the tutorials folder:
 
 - `laser_wakefield_1d.ipynb <../tutorials/laser_wakefield_1d.ipynb>`_ — baseline 1D laser wakefield acceleration setup and diagnostics.
 - `plasma_oscillation.ipynb <../tutorials/plasma_oscillation.ipynb>`_ — the plasma oscillation walkthrough mirrored in notebook form.
-- `plasma_oscillation_with_boundaries.ipynb <../tutorials/extensions/plasma_oscillation_with_boundaries.ipynb>`_ — plasma oscillation with absorbing boundaries and boundary absorption diagnostics.
+- `plasma_oscillation_extension_development.ipynb <../tutorials/extensions/plasma_oscillation_extension_development.ipynb>`_ — plasma oscillation with absorbing boundaries and boundary absorption diagnostics.
 - `two_stream_instability.ipynb <../tutorials/solver/two_stream_instability.ipynb>`_ — classic two-stream instability setup and growth analysis.

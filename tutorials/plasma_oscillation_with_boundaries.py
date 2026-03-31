@@ -3,8 +3,9 @@ to simulate plasma oscillations in a 1D plasma with open boundaries. The absorbi
 boundaries extension removes particles leaving the simulation box and adds new
 particles according to a specified density profile, simulating an open plasma system.
 The script uses the absorbing boundary extension installable with pipic.
-For more details on installtion and usage of the extension, please refer to:
-https://'''
+For more details on installtion and usage of extensions, please refer to:
+https://pi-pic.readthedocs.io/en/latest/'''
+
 import pipic
 from pipic import consts, types
 import numpy as np
@@ -40,26 +41,11 @@ timestep = plasma_period / 64
 field_amplitude = (
     0.01 * 4 * np.pi * (xmax - xmin) * consts.electron_charge * density
 )
-dmin, dmax = -l / 4, l / 4  # region to apply field
+wavelength = l / 2 # wavelength of electric field perturbation 
+dmin, dmax = -wavelength / 2, wavelength / 2  # region to apply field
 
 # Initialize simulation with energy-conserving solver
 sim = pipic.init(solver="ec2", xmin=xmin, xmax=xmax, nx=nx)
-
-# =============================================================================
-# INITIAL FIELD
-# =============================================================================
-@cfunc(types.field_loop_callback)
-def initial_field(ind, r, E, B, data_double, data_int):
-    """Applies a sinusoidal initial electric field in the region dmin < x < dmax."""
-    if dmin < r[0] < dmax:
-        E[0] = (
-            field_amplitude
-            * np.sin(4 * np.pi * r[0] / (xmax - xmin))
-            * np.exp(-r[0] ** 2 / (2 * (0.2 * l) ** 2))
-        )
-
-# Apply initial field
-sim.field_loop(handler=initial_field.address)
 
 # =============================================================================
 # PARTICLES
@@ -80,41 +66,20 @@ sim.add_particles(
 )
 
 # =============================================================================
-# ABSORBING BOUNDARIES EXTENSION
+# INITIAL FIELD
 # =============================================================================
-data_int = np.zeros((1,), dtype=np.intc)  # used to pass iteration number
-boundary_size = xmax / 2
+@cfunc(types.field_loop_callback)
+def initial_field(ind, r, E, B, data_double, data_int):
+    """Applies a sinusoidal initial electric field in the region dmin < x < dmax."""
+    if dmin < r[0] < dmax:
+        E[0] = (
+            field_amplitude
+            * np.sin(2 * np.pi * r[0] / wavelength)
+            * np.exp(-r[0] ** 2 / (2 * (0.2 * l) ** 2)) # Gaussian envelope to localize perturbation
+        )
 
-sim.add_handler(
-    name=absorbing_boundaries.name,
-    subject="particle_name,cells",  # apply to both particles and cells
-    # particle handler
-    handler=absorbing_boundaries.handler(
-        # pass address to cell and particle data
-        ensemble_data = sim.ensemble_data(),
-        # pass address to simulation box geometry
-        simulation_box = sim.simulation_box(),
-        # characteristic wavelength for absorbing boundary
-        characteristic_wavelength = l / 2,
-        # pass adress to density profile function
-        density_profile=density_profile.address,
-        # size of boundary (in cm)
-        boundary_size=boundary_size,
-        # size of temperature of particles to be added
-        temperature=temperature,
-        # number of particles to be added per cell 
-        particles_per_cell=100,
-    ),
-    field_handler=absorbing_boundaries.field_handler(
-        # pass address to simulation box geometry
-        simulation_box = sim.simulation_box(), 
-        # characteristic wavelength for absorbing boundary
-        characteristic_wavelength = l / 2,
-    ),
-    # pass address to data_int for passing iteration number 
-    # (see RUN SIMULATION section)
-    data_int=pipic.addressof(data_int),
-)
+# Apply initial field
+sim.field_loop(handler=initial_field.address)
 
 # =============================================================================
 # DIAGNOSTICS
@@ -177,6 +142,45 @@ ax[1].set_xlabel("x (cm)")
 ax[0].set_ylabel("$p_x$ (cm g/s)")
 ax[1].set_ylabel("$E_x$ (StatV/cm)")
 
+
+# =============================================================================
+# ABSORBING BOUNDARIES EXTENSION
+# =============================================================================
+data_int = np.zeros((1,), dtype=np.intc)  # used to pass iteration number
+boundary_size = xmax / 2
+
+sim.add_handler(
+    name=absorbing_boundaries.name,
+    subject="particle_name,cells",  # apply to both particles and cells
+    # particle handler
+    handler=absorbing_boundaries.handler(
+        # pass address to cell and particle data
+        sim.ensemble_data(),
+        # pass address to simulation box geometry
+        sim.simulation_box(),
+        # characteristic wavelength (used for determining shape of absorption function)
+        characteristic_wavelength=wavelength,
+        # boundary size (size of absorbing layer at the boundaries)
+        boundary_size=boundary_size,
+        # pass adress to density profile function
+        density_profile=density_profile.address,
+        # size of temperature of particles to be added
+        temperature=temperature,
+        # number of particles to be added per cell 
+        particles_per_cell=100,
+    ),
+    field_handler=absorbing_boundaries.field_handler(
+        # pass address to simulation box geometry
+        sim.simulation_box(), 
+        # characteristic wavelength (used for determining shape of absorption function)
+        characteristic_wavelength=wavelength,
+    ),
+    # pass address to data_int for passing iteration number 
+    # (see RUN SIMULATION section)
+    data_int=pipic.addressof(data_int),
+)
+
+
 # =============================================================================
 # RUN SIMULATION
 # =============================================================================
@@ -219,5 +223,4 @@ for i in range(figures):
     xpx_plot.set_data(particle_dd)
 
     # Save figure
-    print(f"Saving figure {i:03d}...")
     plt.savefig(save_to + f"plasma_oscillation_{i:03d}.png", dpi=150)
