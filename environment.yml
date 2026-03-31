@@ -9,5 +9,7 @@ dependencies:
   - numba
   - llvmlite
   - pytest
+  - matplotlib
+  - ipykernel
   - pip:
       - pipic

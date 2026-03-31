@@ -50,10 +50,11 @@ Then run:
     conda env create -f environment.yml
     conda activate pipic_env
 
-From GitHub (Latest Development Version)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Build and install from source 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To install the latest version or a specific branch from GitHub:
+To install the latest version or a specific branch from GitHub follow these instructions.
+To build from a local modified version, navigate to project root directory and start from step 4.
 
 1. Create and enter a directory:
 
@@ -92,6 +93,7 @@ To install the latest version or a specific branch from GitHub:
    .. code-block:: bash
 
        python3 examples/basic_example.py
+
 
 Platform-Specific Instructions
 -------------------------------
