@@ -61,7 +61,7 @@ struct ES1DPicSolver: public pic_solver
     }
 
     void preLoop()
-    {c
+    {
         // Advance field with current from previous iteration, then clear current.
         field->advance(timeStep);
         for(size_t ix = 0; ix < field->Jx.size(); ix++){
