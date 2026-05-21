@@ -203,6 +203,7 @@ struct pic_solver
     string name;
 };
 
+// Note! only works for collocated grids! Meaning cellSetField must be implemented accordingly in the field solver.
 void cellInterface::interpolateField(double3 r, double3 &E, double3 &B){
     if(gridType == 0){ // collocated grid: E and B are defined at the corners of each cell
         double c[8];
