@@ -79,7 +79,6 @@ void Handler(int *I, double *D, double *F, double *P, double *NP, double *dataDo
 
     double cellMax[3] = {CI.cellMax().x, CI.cellMax().y, CI.cellMax().z};
     double cellMin[3] = {CI.cellMin().x, CI.cellMin().y, CI.cellMin().z};
-    Thread.resize(omp_get_max_threads());
 
     // check if the cell is in the boundary region
     if ((cellMax[ax] < gmin + boundarySize) || (cellMin[ax] > gmax - boundarySize)) {   
