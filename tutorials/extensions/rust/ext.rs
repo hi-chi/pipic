@@ -23,13 +23,15 @@ pub unsafe extern "C" fn remove_particles_near_border(
     let particle_subset_size = i[9] as isize;
     let number_of_attributes = i[7] as isize;
     let particle_type_index = i[8] as isize;
+    let buffer_capacity = i[10] as isize;
     let iz = i[2] as isize;
     let nz = i[5] as isize;
     let n_border = *data_int as isize;
 
+    if particle_subset_size <= 0 || buffer_capacity <= 0 {
+        return;
+    }
 
-
-    // This example only removes particles of type 0, which is the first particle added to the simulation.
     if particle_type_index != 0 {
         return;
     }
@@ -45,14 +47,28 @@ pub unsafe extern "C" fn remove_particles_near_border(
         p_data,
         (particle_subset_size * particle_stride) as usize,
     );
+    let new_particles = std::slice::from_raw_parts_mut(
+        np_data,
+        (buffer_capacity * particle_stride) as usize,
+    );
 
-
-    let added = 0usize;
+    let mut added = 0usize;
     for ip in 0..particle_subset_size as usize {
         let base = ip * particle_stride as usize;
+        // Copy the full record before zeroing the source weight.
+        let removed_particle = particles[base..base + particle_stride as usize].to_vec();
 
         // Slot 6 is the particle weight.
         particles[base + 6] = 0.0;
+
+        if added < buffer_capacity as usize {
+            let new_base = added * particle_stride as usize;
+            new_particles[new_base..new_base + particle_stride as usize]
+                .copy_from_slice(&removed_particle);
+            // Slot 7 is the type tag stored in the particle id field.
+            *(new_particles.as_mut_ptr().add(new_base + 7) as *mut u64) = 1;
+            added += 1;
+        }
     }
 
     // Tell the framework how many particles were placed into NP_data.
