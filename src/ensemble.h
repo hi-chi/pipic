@@ -357,8 +357,7 @@ struct ensemble
         }
     }
 
-    void particleLoop(int64_t handler = 0, string typeNamSend instant messages
-e = "all", int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) {
+    void particleLoop(int64_t handler = 0, string typeName = "all", int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) {
         void(*handler_)(double*, double*, double*, unsigned long long int*, double*, int*) = nullptr;
         if (handler != 0) handler_ = (void(*)(double*, double*, double*, unsigned long long int*, double*, int*))handler;
         double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
