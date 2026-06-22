@@ -147,15 +147,14 @@ if __name__ == '__main__':
     thickness = 2**5 # thickness (in dz) of the area where the density and field is restored/removed 
     particles_per_cell = 2.5
     window_speed = consts.light_velocity #speed of moving window
-    density_handler_adress = moving_window.handler(sim.ensemble_data(),
-                                                   sim.simulation_box(),
+    density_handler_adress = moving_window.handler(sim.simulation_box(),
                                                    thickness=thickness,
                                                    particles_per_cell=particles_per_cell,
                                                    temperature=temperature,
                                                    density_profile=density_profile.address,
                                                    velocity=window_speed,
                                                    axis='z',)
-    field_handler_adress = moving_window.field_handler(sim.simulation_box(),timestep)
+    field_handler_adress = moving_window.field_handler(sim.simulation_box())
 
     sim.add_handler(name=moving_window.name, 
                     subject='electron,cells',

@@ -40,7 +40,7 @@ Interfaces and functions of containers
     - `data_double` and `data_int` are addresses for exchanging data between `handler` function and the remaining Python script
     - `use_omp` defines whether to make parallel loop (via openMP), if `use_omp = True` the `handler` must be thread-safe
 
-- `custom_field_loop(number_of_iterations, it2r, field2data, data_double = 0, data_int = 0)` makes a loop over a subset of locations, at which electromagnetic field is interpolated and sent to callback `field2data` for output
+- `custom_field_loop(number_of_iterations, it2r, field2data, data_double = 0, data_int = 0)` makes a loop over a subset of locations, at which electromagnetic field is interpolated and sent to callback `field2data` for output. (Implemented for fourier_boris_solver.h, ec_solver.h, ec2_solver, emc2_solver.)
     - `number_of_iterations` defines the number of calls, i.e. the size of the subset
     - `it2r` is the address of a callback that defines the locations, at which the field interpolated is needed: `handler(it, r, data_double, data_int)` (decorator `@cfunc(types.it2r_callback)` must be placed before function definition)
         - `it[0]` is the index of the subset element (read only)
@@ -76,6 +76,8 @@ Interfaces and functions of containers
 
 - `ensemble_data()` returns a global pointer to data of all particles to be used in extensions if standard way of accessing particles is insufficient (see example of use in [downsampler_gonoskov2022](src/extensions/downsampler_gonoskov2022/downsampler_gonoskov2022.cpp))
 
+- `simulation_box()` returns a global pointer to a structure containing the geometry of the current simulation (box size, resolution, simulation time and current timestep). This instance can be used to pass information to extensions (see example of use in [moving_window](src/extensions/moving_window/moving_window.cpp)). The structure is defined in [interfaces.h](src/interfaces.h).
+
 - `en_corr_type(correction_type = 2)` can be used to change the way of correcting energy in `ec` and `ec2` solvers; the argument is an integer that enumerates the following options:
     - `0` no correction: the feedback to energy exchange is still accounted for (energy is preserved to the next order accuracy as compared to `boris` pusher) but the energy is not preserved to machine accuracy; the inaccuracy becomes larger if a particle goes from non-relativistic to relativistic motion (or vice versa) within single time step (5 - 10 % faster than other options);
     - `1` achieves machine accuracy for energy conservation by multiplying particle's momentum by a number close to 1, while keeping the precomputed change of electric field unchanged;
@@ -90,4 +92,4 @@ Conventions, assumptions and properties
 - 2D simulation is enabled by setting `nz=1`, 1D simulations is enabled by `nz=1` and `ny=1`
 - The topology of space is toroidal (periodic boundary conditions)
 - Before adding particles the field can be advanced over an arbitrary time, however particles should not traverse a distance larger then one spatial step over a single time step
-- All solvers are deterministic (results are exactly reproducible)
+- All solvers are deterministic (results are exactly reproducible) 

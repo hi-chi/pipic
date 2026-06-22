@@ -282,7 +282,7 @@ namespace py = pybind11;
 PYBIND11_MODULE(_absorbing_boundaries, object) {
     object.attr("name") = name;
     object.def("handler", &handler, 
-               py::arg("ensemble"), 
+               py::arg("ensemble_data"), 
                py::arg("simulation_box"), 
                py::arg("characteristic_wavelength"),
                py::arg("density_profile")=-1,

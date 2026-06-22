@@ -128,6 +128,39 @@ struct ensemble
             delete thread[iTh].CI;
         }
     }
+
+    void transferParticleState(const ensemble &source, bool deepCopy = false)
+    /* Overwrites the particle state of this ensemble with the source ensemble.
+       Assumes both ensembles have the same geometry (simulationBox and type vector). */
+    {
+        type = source.type;
+        totalNumberOfParticles = source.totalNumberOfParticles;
+        if(deepCopy){
+            fieldHandlerExists = source.fieldHandlerExists;
+            shuffle = source.shuffle;
+            advanceWithOmp = source.advanceWithOmp;
+            layout = source.layout;
+        }
+
+        // Clear all existing particle data
+        for(intg ig = 0; ig < box.ng; ig++) if(cell[ig] != nullptr){
+            for(int it = 0; it < int(type.size()); it++) if(cell[ig][it] != nullptr){
+                cell[ig][it]->P.clear();
+                cell[ig][it]->endShift = 0;
+            }
+        }
+
+        // Copy particle data from source
+        if(source.cell != nullptr){
+            for(intg ig = 0; ig < source.box.ng; ig++) if(source.cell[ig] != nullptr){
+                for(int it = 0; it < int(source.type.size()); it++) if(source.cell[ig][it] != nullptr){
+                    checkInitCell(ig, it);
+                    cell[ig][it]->P = source.cell[ig][it]->P;
+                    cell[ig][it]->endShift = source.cell[ig][it]->endShift;
+                }
+            }
+        }
+    }
     void checkInitCell(intg ig, int typeIndex) // checks if the data of a ig-th cell had been allocated and allocates it if not
     {
         if(cell[ig] == nullptr){
@@ -276,7 +309,7 @@ struct ensemble
     void apply_actOnCellHandlers(pic_solver *Solver, threadData &activeThread, bool &fieldBeenSet, intg ig, bool directOrder){
         fieldBeenSet = false;
         for(int ih = 0; ih < int(Manager.Handler.size()); ih++)
-        if(Manager.Handler[ih]->actOnCell){
+        if(Manager.Handler[ih]->actOnCell){ 
             if(!fieldBeenSet) ((field_solver*)(Solver->Field))->cellSetField(*activeThread.CI, activeThread.CI->i);
             fieldBeenSet = true;
             Manager.Handler[ih]->handle(activeThread.CI);
@@ -312,6 +345,7 @@ struct ensemble
             P.r += (timeStep*lightVelocity/sqrt(sqr(mass*lightVelocity) + P.p.norm()))*P.p;
     }
 
+    // no longer connected to the pyParticleLoop.
     void singleThreadParticleLoop(int64_t handler, string typeName, int64_t dataDouble = 0, int64_t dataInt = 0) {
         void(*handler_)(double*, double*, double*, unsigned long long int*, double*, int*) = (void(*)(double*, double*, double*, unsigned long long int*, double*, int*))handler;
         double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
@@ -321,6 +355,85 @@ struct ensemble
             particle *P = &*iP;
             handler_(&(P->r.x), &(P->p.x), &(P->w), &(P->id), dataDouble_, dataInt_);
         }
+    }
+
+    void particleLoop(int64_t handler = 0, string typeName = "all", int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) {
+        void(*handler_)(double*, double*, double*, unsigned long long int*, double*, int*) = nullptr;
+        if (handler != 0) handler_ = (void(*)(double*, double*, double*, unsigned long long int*, double*, int*))handler;
+        double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
+        int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
+        
+        int typesToProcess = 0;
+        if(typeName == "all"){
+            typesToProcess = int(type.size());
+        } else {
+            typesToProcess = 1;
+        }
+
+
+        layout.makePlan();
+        for(int iTh = 0; iTh < int(thread.size()); iTh++) thread[iTh].reset();
+
+        for(layout.stage = 0; layout.stage < 8; layout.stage++)
+        {
+            #pragma omp parallel for collapse(1) if(useOmp)
+            for(int ix = layout.offset[layout.stage]; ix < box.n.x; ix += 8)
+            for(int iz = 0; iz < box.n.z; iz += 1)
+            for(int iy = 0; iy < box.n.y; iy += 1)
+            {
+            for(int it = 0; it < typesToProcess; it++){
+                int typeIndex = (typeName == "all") ? it : getTypeIndex(typeName);
+                
+                RndGen.setTreadLocalRng(ix);
+                intg ig = box.ig({ix, iy, iz});
+                if((cell[ig] == nullptr)||(cell[ig][typeIndex] == nullptr)) continue;
+
+                threadData &activeThread(thread[omp_get_thread_num()]);
+                cellContainer *currentCell = cell[ig][typeIndex];
+                int particleCount = currentCell->P.size() - currentCell->endShift;
+                activeThread.CI->I[0] = ix; activeThread.CI->I[1] = iy; activeThread.CI->I[2] = iz;
+                activeThread.CI->I[8] = typeIndex;
+                if(!useOmp) RndGen.setTreadLocalRng(0);
+
+                activeThread.toRemove.clear();
+                activeThread.toRemoveLocal.clear();
+
+                for(int ip = 0; ip < particleCount; ip++){
+                    particle &P = currentCell->P[ip];
+                    if(likely(P.w != 0)){
+                        if (handler != 0) handler_(&(P.r.x), &(P.p.x), &(P.w), &(P.id), dataDouble_, dataInt_);
+                        if(likely(P.w != 0)){
+                            bool move, postOmpMove;
+                            checkMove(&P, move, postOmpMove);
+                            if(unlikely(move)){
+                                activeThread.toRemove.push_back(ip);
+                                if(likely(!postOmpMove)){
+                                    activeThread.toRemoveLocal.push_back(true);
+                                    activeThread.numMigrated++;
+                                } else {
+                                    activeThread.toRemoveLocal.push_back(false);
+                                }
+                            }
+                        } else {
+                            activeThread.toRemove.push_back(ip);
+                            activeThread.toRemoveLocal.push_back(true);
+                            activeThread.numDeleted++;
+                        }
+                    } else {
+                        activeThread.toRemove.push_back(ip);
+                        activeThread.toRemoveLocal.push_back(true);
+                        activeThread.numDeleted++;
+                    }
+                }
+
+                compresList(currentCell->P, activeThread, ig, typeIndex);
+                currentCell->endShift = 0;
+            }
+            }
+            RndGen.setTreadLocalRng(0);
+        }
+
+        relocatePostOmpMigrationList();
     }
 
     template<typename pic_solver, typename field_solver>
@@ -610,6 +723,27 @@ struct ensemble
         }
         for(int ip = int(P.size()) - shift; ip < int(P.size()); ip++) thread.postOmpMigrationList.push_back({ig, it, ip});
     }
+
+    void relocatePostOmpMigrationList(){
+        int overCellRelocated = 0;
+        for(int iTh = 0; iTh < int(thread.size()); iTh++)
+        {
+            for(int il = thread[iTh].postOmpMigrationList.size() - 1; il >= 0; il--)
+            {
+                int ig = thread[iTh].postOmpMigrationList[il].ig;
+                int it = thread[iTh].postOmpMigrationList[il].it;
+                int ip = thread[iTh].postOmpMigrationList[il].ip;
+                addParticle_general(cell[ig][it]->P[ip], it, true);
+                if(ip < int(cell[ig][it]->P.size()) - 1) memcpy(&(cell[ig][it]->P[ip]), &(cell[ig][it]->P.back()), sizeof(particle));
+                cell[ig][it]->P.pop_back();
+            }
+            overCellRelocated += thread[iTh].postOmpMigrationList.size();
+            thread[iTh].postOmpMigrationList.clear();
+            totalNumberOfParticles += thread[iTh].numCreated - thread[iTh].numDeleted;
+        }
+        if(overCellRelocated > 0) pipic_log.message("pi-PIC warning: " + to_string(overCellRelocated) + " overcell migrations; consider reducing time step");
+    }
+
     inline void cyclicShift(int &i, int s, int n, bool &limCross){ // optimized for likely cases of abs(s) < n
         i += s;
         if(unlikely(i >= n)) {i -= n; limCross = true;}

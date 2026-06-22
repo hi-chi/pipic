@@ -48,19 +48,7 @@ sim.add_particles(name='particle_name',
 
 
 
-# --------------------- add handler for absorbing boundaries ----------------------
-data_int = np.zeros((1, ), dtype=np.intc) 
-'''
-handler = moving_window.handler(sim.ensemble_data(),
-                                thickness=10,
-                                particles_per_cell=1,
-                                temperature=temperature,
-                                density=density_profile.address,)
-sim.add_handler(name=moving_window.name, 
-                subject='particle_name,cells',  #apply handler to both cells and particles
-                handler=handler,
-                data_int=pipic.addressof(data_int),) # using data_int to pass the iteration number
-'''
+
 # --------------------- add handler for reading field and particle loops ----------------------
 field_dd = np.zeros((nx, nz), dtype=np.double)  # array for saving Ez-field
 @cfunc(types.field_loop_callback)
@@ -87,7 +75,6 @@ def particle_callback(r, p, w, id, data_double, data_int):
 # --------------------- run simulation ----------------------
 for i in range(simulation_steps):    
     
-    data_int[0] = i # updating data int so the handler gets the right iteration number
     sim.advance(time_step=timestep,number_of_iterations=1)    
 
      # read and plot Ez-field and particle phase-space every 10 iterations

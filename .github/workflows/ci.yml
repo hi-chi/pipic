@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc, clang]
         exclude:
@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0  # This is needed in order to fetch version tags from git
 
       - name: Build and check sdist + wheel
-        uses: hynek/build-and-inspect-python-package@v1
+        uses: hynek/build-and-inspect-python-package@v2
 
   pass:
     if: always()

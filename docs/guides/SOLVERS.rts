@@ -1,0 +1,327 @@
+Solvers
+=================
+
+This document describes the available PIC solvers in π-PIC, their use cases, underlying algorithms, and implementation details.
+
+Overview
+--------
+
+π-PIC provides five built-in solvers:
+
+1. ``fourier_boris`` - Spectral electromagnetic solver with Boris particle pusher
+2. ``ec`` - First-order energy-conserving solver
+3. ``ec2`` - Second-order energy-conserving solver
+4. ``emc2`` - Electromagnetic energy-conserving solver
+5. ``electrostatic_1d`` - 1D electrostatic solver
+
+All solvers follow the same interface and can be selected via:
+
+.. code-block:: python
+
+    sim = pipic.init(solver='fourier_boris', nx=256, xmin=0, xmax=1e-3)
+
+Available Solvers
+-----------------
+
+Fourier-Boris Solver
+^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``fourier_boris``
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based) 
+- **Particle pusher:** Boris algorithm for relativistic particle motion
+- **Current deposition:** Cloud-in-Cell (CIC)
+- **Boundary conditions:** Periodic
+
+**Configuration:**
+
+.. code-block:: python
+
+    # Enable/disable divergence cleaning and filtering
+    sim.fourier_solver_settings(divergence_cleaning=1, sin2_kfilter=0)
+
+**Performance Notes:**
+
+- Grid dimensions should be powers of 2 for optimal FFT performance
+- Shuffle disabled to preserve particle order within cells
+- Overstep migration warning if particles move > 0.99999 cells per step
+
+Energy-Conserving Solver (EC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``ec``
+
+**Description:** Explicit energy conserving solver. See A. Gonoskov et al., PRE **84**, 026404 (2011) - `DOI: 10.1103/PhysRevE.84.026404 <https://doi.org/10.1103/PhysRevE.84.026404>`__, `arXiv:1106.4356 <https://arxiv.org/abs/1106.4356>`__.
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based) Maxwell solver
+- **Particle pusher:** First-order energy-conserving implicit scheme
+- **Current deposition:** Cloud-in-Cell (CIC)
+- **Boundary conditions:** Periodic
+
+
+
+**Configuration:**
+
+.. code-block:: python
+
+    sim = pipic.init(solver='ec', ...)
+    sim.en_corr_type(1)  # Type 1: momentum correction
+    sim.en_corr_type(2)  # Type 2: field correction (default)
+
+**Performance Notes:**
+
+- Particle shuffling enabled for better cache locality
+- Overstep move warnings if time step too large
+- Slightly slower than Boris due to implicit coupling
+
+Energy-Conserving Solver (EC2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``ec2``
+
+**Description:** Similar to EC, with second-order accuracy. See A. Gonoskov et al., PRE **84**, 026404 (2011) - `DOI: 10.1103/PhysRevE.84.026404 <https://doi.org/10.1103/PhysRevE.84.026404>`__, `arXiv:1106.4356 <https://arxiv.org/abs/1106.4356>`__.
+
+**Algorithm:**
+
+- **Field solver:** Spectral (FFT-based)
+- **Particle pusher:** Second-order energy-conserving scheme
+- **Current deposition:** Cloud-in-Cell (CIC)
+- **Boundary conditions:** Periodic
+
+
+**Configuration:**
+
+.. code-block:: python
+
+    sim = pipic.init(solver='ec2', ...)
+    sim.en_corr_type(2)  # Default
+
+Electromagnetic Energy-Conserving Solver (EMC2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``emc2``
+
+**Description:** Similar to EC, with second-order accuracy and approximate momentum-conservation. See `arXiv:2511.09950 <https://arxiv.org/abs/2511.09950>`__. (needs update)
+
+**Algorithm:**
+
+- **Field solver:** Spectral electromagnetic
+- **Particle pusher:** Energy-conserving and approximate momentum-conservation. 
+- **Current deposition:** Cloud-in-Cell (CIC)
+- **Boundary conditions:** Periodic
+
+
+Electrostatic 1D Solver (ES1D)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``electrostatic_1d``
+
+**Description:** A 1D-electrostatic PIC-code. Constructed as a reference implementation for solver development (see `solver tutorials <https://github.com/hi-chi/pipic/tree/main/tutorials/solver>`__). For implementation details see also `arXiv:2511.09950 <https://arxiv.org/abs/2511.09950>`__. (needs update)
+
+**Algorithm:**
+
+- **Field solver:** Time advancment using Forward Euler of Amperes-Maxwells law.
+- **Particle pusher:** Leapfrog with electrostatic force
+- **Current deposition:** CIC to node-centered current
+- **Boundary conditions:** Periodic
+
+**Implementation Details:**
+
+Field update (per node):
+
+.. math::
+
+    E_x \leftarrow E_x - 4\pi J_x \Delta t
+
+Particle push (leapfrog):
+
+1. ``preStep``: pull back momentum by half step:
+
+   .. math::
+
+       p_x \leftarrow p_x - \frac{q\Delta t}{2}E_x
+
+2. Main loop per iteration:
+
+   a. Advance field
+   b. Zero current: :math:`J_x = 0`
+   c. For each particle:
+
+      - Interpolate :math:`E_x` at particle position (CIC)
+      - Update momentum: :math:`p_x \leftarrow p_x + q\Delta t E_x`
+      - Update position: :math:`x \leftarrow x + \Delta t p_x / m`
+      - Apply periodic BC
+      - Deposit current to neighbors (CIC)
+
+3. ``postStep``: push forward momentum by half step:
+
+   .. math::
+
+       p_x \leftarrow p_x + \frac{q\Delta t}{2}E_x
+
+
+**Notes:**
+
+- Only :math:`E_x` component is active; :math:`E_y = E_z = B_x = B_y = B_z = 0`
+- Suitable only for 1D geometries (set ``ny=1, nz=1``)
+
+
+
+Deploying New Solvers
+---------------------------
+
+This guide explains the required structures for new solvers, namely: a `field_solver` and a `pic_solver`. Generally the pic_solver advances the particles and the field solver the fields, however, other constructs are possible within the framework. Both structures are constrained by templates defined in ``ìnterfaces.h`` (see `interfaces.h <https://github.com/hi-chi/pipic/blob/main/src/interfaces.h>`__). These interfaces defines a set of mandatory methods that are needed to maintain compatability with the rest of the framework. For a minimal example of a implementation of a field and pic solver see `ES1D_field_solver.h <https://github.com/hi-chi/pipic/blob/main/src/ES1D_field_solver.h>`__ and `ES1D_pic_solver.h <https://github.com/hi-chi/pipic/blob/main/src/ES1D_pic_solver.h>`__. 
+
+PIC Solver
+^^^^^^^^^^^^
+
+Derive from `pic_solver` base class and implement the following required members and methods:
+
+**Required Member Variables:**
+
+- ``field_solver *Field`` - Pointer to the field solver instance managing electromagnetic fields
+- ``ensemble *Ensemble`` - Pointer to the ensemble managing all particles 
+- ``string name`` - Solver name used by Python (e.g., ``"electrostatic_1d"`` used in ``pipic.init(solver="electrostatic_1d")``)
+
+**Required Methods:**
+
+- ``void advance(double timeStep)`` - *Pure virtual*. Main entry point called by ``sim.advance()`` in Python. Recommended implementation:
+
+  .. code-block:: cpp
+
+      void advance(double timeStep) {
+          Ensemble->advance_singleLoop<YourSolverClass, YourFieldSolverClass>(this, timeStep);
+      }
+
+**Lifecycle Hook Methods (optional):**
+
+These hooks can be used to implement the PIC algorithm and are called automatically by ``advance_singleLoop`` in the following order.
+
+**Execution Order per Time Step:**
+
+1. ``preStep(dt)``
+2. For each timestep:
+
+   a. Apply field extensions (``apply_fieldHandlers()``)
+   b. ``preLoop()``
+   c. For each cell:
+
+      i. Apply cell extensions with ``particleType = -1`` (``apply_actOnCellHandlers()``)
+      ii. For each particle type in cell:
+
+          - ``startSubLoop(i, charge, mass, dt)``
+          - Apply particle extensions (``apply_particleHandlers()``)
+          - For each particle: ``processParticle(P, charge, mass, dt)``
+          - ``endSubLoop()``
+
+   d. ``postLoop()``
+3. ``postStep(dt)``
+
+**Hook Method Descriptions:**
+
+- ``void preStep(double dt)`` - Called before the main time step loop begins. Parameter ``dt`` is the time step duration.
+
+- ``void preLoop()`` - Called at the start of each iteration, before processing any particles.
+
+- ``void startSubLoop(int3 i, double charge, double mass, double dt)`` - Called before processing particles of a given type in a cell. Parameters:
+
+  - ``i`` - Three-index (ix, iy, iz) of the cell grid coordinates
+  - ``charge`` - Charge of the particle type
+  - ``mass`` - Mass of the particle type
+  - ``dt`` - Time step duration
+
+- ``void processParticle(particle &P, double charge, double mass, double dt)`` - Advances a single particle by one time step. Parameters:
+
+  - ``P`` - Reference to the particle (position, momentum, weight modified in-place)
+  - ``charge`` - Particle charge
+  - ``mass`` - Particle mass
+  - ``dt`` - Time step duration
+
+- ``void endSubLoop()`` - Called after processing all particles of a type in a cell.
+
+- ``void postLoop()`` - Called after all particles in an iteration are processed, before advancing to the next iteration.
+
+- ``void postStep(double dt)`` - Called after the main time step loop completes. Parameter ``dt`` is the time step duration.
+
+
+
+Field Solver
+^^^^^^^^^^^^^^
+
+Derive from `field_solver` base class and implement the following required members and methods:
+
+**Required Member Variables:**
+
+- ``string type`` - Solver type identifier (optional, for internal use)
+- ``simulationBox box`` - Simulation domain with grid spacing and extents; passed to constructor and maintains grid information (``n``, ``min``, ``max``, ``step``, ``invStep``, ``dim``, ``timeStep``)
+
+**Constructor:**
+
+.. code-block:: cpp
+
+    field_solver(simulationBox box) : box(box) {}
+
+Initialize the field solver with the simulation box containing grid geometry.
+
+**Required Pure Virtual Methods:**
+
+- ``void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false)`` - *Must implement*. Iterates over all grid nodes and calls user-provided handler callback for each:
+
+  - ``handler`` - Function pointer to callback with signature: ``void handler(int *ind, double *r, double *E, double *B, double *dataDouble, int *dataInt)``
+  - ``ind[0], ind[1], ind[2]`` - Three-index of the node (grid coordinates)
+  - ``ind[4]`` - Field component code: 0=Ex, 1=Ey, 2=Ez, 3=Bx, 4=By, 5=Bz, 6=all
+  - ``r`` - Physical coordinates of the node
+  - ``E, B`` - Electric and magnetic field values (pointer to array of up to 3 components)
+  - ``dataDouble, dataInt`` - User data arrays passed through from Python
+  - ``useOmp`` - Whether to parallelize with OpenMP
+  
+  Common uses: field initialization, diagnostics, applying boundary conditions
+
+- ``void cellSetField(cellInterface &CI, int3 i)`` - *Must implement*. Transfers electromagnetic field data from the field solver to a cellInterface for a specific cell at grid position ``i``:
+
+  - Packs field values at surrounding nodes into ``CI.F_data`` array
+  - Called by the ensemble during particle processing loops
+  - Enables extensions/handlers to access field values via cellInterface
+
+**Optional Virtual Methods:**
+
+- ``void advance(double timeStep)`` - Update field state using accumulated sources (charge/current deposits). Default: empty. Implement to:
+
+  - Apply Maxwell's equations or Poisson solver
+  - Clear/reset source terms after field update
+  - Update time tracking if needed
+
+- ``void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0)`` - Read-only field access with custom iteration pattern. Default: empty. Use for:
+
+  - Accessing fields at user-specified points
+  - Diagnostics with non-standard grid sampling
+  - ``it2coord`` - Callback to convert iteration index to coordinates
+  - ``field2data`` - Callback to process field at each point
+
+**Helper Methods (do not override):**
+
+- ``void setGridType(cellInterface &CI, int gridType)`` - Set interpolation grid type for cellInterface (0=collocated grid where E and B are at cell corners)
+- ``double*& getCI_F_Data(cellInterface &CI)`` - Access field data pointer from cellInterface
+
+
+Registering New Solvers
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To make a new solver available to Python via ``pipic.init(solver=...)``, update the central constructor in `pipic.h <https://github.com/hi-chi/pipic/blob/main/src/pipic.h>`__:
+
+1. **Include the pic solver header** near the top of the file (e.g., add ``#include "your_solver.h"``).
+2. **Add a constructor mapping** inside ``pipic::pipic(...)``:
+
+   .. code-block:: cpp
+
+     if(solverName == "your_solver") Solver = new your_solver(box);
+
+3. **Ensure the solver name string matches** the ``pic_solver::name`` set inside your solver implementation (this is what ``pipic.init(solver=...)`` expects).
+
+After these changes, rebuild the Python extension so the new solver becomes selectable from Python.
+
+

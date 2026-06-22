@@ -1,0 +1,90 @@
+Ensemble
+============================
+
+This document describes the ensemble system in π-PIC, which serves as the execution engine for advancing particles and managing handler invocations during ``sim.advance()``.
+
+Overview
+--------
+
+The **ensemble** is the core particle storage and loop executor in π-PIC. It:
+
+- Stores all particles in a 3D cell-based structure
+- Manages particle types and their properties
+- Executes the main advancement loop with solver hooks and extension handlers
+- Handles particle migration between cells
+- Provides thread-safe parallelization with OpenMP
+- Tracks performance metrics and diagnostics
+
+PIC advancement 
+------------------
+
+When ``sim.advance(time_step, number_of_iterations)`` is called in Python, most solvers invokes the ``advance_singleLoop()`` method of the ensemble. An alternative advance method is ``advance_doubleLoop()``.
+
+
+advance_singleLoop()
+^^^^^^^^^^^^^^^^^^^^^
+The nested loop structure of this method shows how solver hooks and extension handlers interleave in the advance call:
+
+1. ``preStep()`` - pic solver hook (e.g., pull momentum back by half-step for leapfrog). Executes once per ``sim.advance()`` call.
+
+2. For each iteration (time step):
+
+   a. ``apply_fieldHandlers()`` - Execute field extensions before particle processing. (Parallelization strategy implemented in field solver.)
+   b. ``preLoop()`` - pic solver hook (e.g., advances fields). 
+   c. For each cell in the grid (with **OpenMP parallelization** of cells using x-slicing with stride-8 staging):
+      
+      - ``apply_actOnCellHandlers()`` - Particle extensions operate on cell interface (e.g for addition of particles). **Parallel execution**. 
+      - For each particle type within the cell:
+        
+        * ``startSubLoop()`` - pic solver hook. **Parallel execution**.
+        * ``apply_particleHandlers()`` - Particle extensions acts on particles of this type (e.g., QED, ionization, downsampling). **Parallel execution**.
+        * For each particle of this type:
+          
+          - ``processParticle()`` - pic solver hook (e.g particle-push, deposition of current). **Parallel execution**.
+        
+        * ``endSubLoop()`` - pic solver hook (e.g., upload field data). **Parallel execution**.
+   
+   d. Post-OMP migration handling - Process deferred migrations from ``postOmpMigrationList``. **Serial execution**.
+   e. ``postLoop()`` - pic solver hook. **Serial execution**.
+
+3. ``postStep()`` - pic solver hook (e.g., push momentum forward by half-step). Executes once per ``sim.advance()`` call. **Serial execution**.
+
+**Pseudocode:**
+
+.. code-block:: text
+
+    preStep()                                  
+    for n in numberOfIterations:
+        apply_fieldHandlers() # Parallelization strategy defined in field solver (see fieldLoop() method)
+        preLoop()                              
+        #pragma omp parallel for (stride-8 x-staging) # parallelized cell execution
+        for cell in CellInterface:             
+            apply_actOnCellHandlers()          
+            for particle_type in cell:
+                startSubLoop()                 
+                apply_particleHandlers()      
+                for particle in particles_of_this_type_in_cell:
+                    processParticle()          
+                endSubLoop()                   
+        handle_postOmpMigrations()            
+        postLoop()                             
+    postStep()                                 
+
+
+advance_doubleLoop()
+^^^^^^^^^^^^^^^^^^^^^
+
+Alternative two-pass loop for certain solvers (not commonly used).
+
+**First pass:** backward iteration (type index decreasing, spatial reverse)
+
+- Executes first half of particle update
+- No migration/deletion
+
+**Second pass:** forward iteration
+
+- Completes particle update
+- Handles migration/deletion
+
+Used when solver splits particle push into two stages.
+

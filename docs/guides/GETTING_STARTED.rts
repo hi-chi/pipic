@@ -1,0 +1,246 @@
+Getting Started
+============================
+
+Introduction
+--------------------------
+
+In this tutorial, you will learn how to set up and run a simple 1D plasma oscillation simulation using π-PIC. This is a fundamental plasma physics example that demonstrates particle-in-cell methods.
+
+**What is plasma oscillation?**
+
+Plasma oscillation (or Langmuir wave) is a collective oscillation of electrons in a plasma. When electrons are displaced from equilibrium in a uniform ion background, the Coulomb force restores them, causing oscillations at the plasma frequency (in CGS units):
+
+.. math::
+
+    \omega_p = \sqrt{\frac{4\pi n_e e^2}{m_e}}
+
+
+Step 1: Import Required Libraries
+----------------------------------
+
+Start by importing π-PIC and other necessary libraries:
+
+.. code-block:: python
+
+    import pipic
+    from pipic import consts, types
+    import numpy as np
+    from numba import cfunc, carray
+
+**Library descriptions:**
+
+- ``pipic`` — The π-PIC simulation framework
+- ``consts`` — Physical constants (electron charge, mass, speed of light)
+- ``types`` — Numba callback type signatures
+- ``numpy`` — Numerical array operations
+- ``numba`` — JIT compilation for Python callbacks
+
+Step 2: Define Simulation Parameters
+-------------------------------------
+
+Set up the physical and numerical parameters for the simulation:
+
+.. code-block:: python
+
+    # Physical parameters
+    temperature = 1e-6 * consts.electron_mass * consts.light_velocity**2
+    density = 1e18  # electrons/cm³
+    
+    # Derived quantities
+    debye_length = np.sqrt(temperature / (4 * np.pi * density * consts.electron_charge**2))
+    plasma_period = np.sqrt(np.pi * consts.electron_mass / (density * consts.electron_charge**2))
+    
+    # Spatial domain
+    l = 128 * debye_length  # Domain size (128 Debye lengths)
+    xmin, xmax = -l / 2, l / 2
+    ymin, ymax = -1, 1
+    zmin, zmax = -1, 1
+    
+    # Grid resolution
+    nx, ny, nz = 128, 1, 1  # 1D simulation with 128 cells
+    
+    # Time step (fractional plasma period)
+    timestep = plasma_period / 64
+    
+    # Field amplitude for initial perturbation
+    field_amplitude = 0.01 * 4 * np.pi * (xmax - xmin) * consts.electron_charge * density
+
+**Parameter explanations:**
+
+- **Temperature**: Initial thermal energy of electrons (in erg). We use :math:`10^{-6} m_e c^2` for cold plasma.
+- **Density**: Electron number density (cm⁻³). 
+- **Debye length**: Characteristic length scale of plasma (shielding distance).
+- **Plasma period**: Time scale for oscillations.
+- **Grid**: 128 cells in x-direction, 1 cell in y and z (pure 1D).
+- **Time step**: Chose small enough for stability (Courant condition).
+
+Step 3: Define Callbacks for Density and Fields
+------------------------------------------------
+
+Define Python callbacks (using Numba's @cfunc decorator) to initialize particles and fields. These decorators compile the functions to C-code so π-PIC can call them directly (no Python overhead) while keeping the authoring experience in Python.
+For the full list of callback signatures see `Callback Types <PYTHON_INTERFACE.html#callback-types>`_.
+
+.. code-block:: python
+
+    @cfunc(types.add_particles_callback)
+    def density_profile(r, data_double, data_int):
+        """Uniform electron density."""
+        return density
+    
+    
+    @cfunc(types.field_loop_callback)
+    def initial_field(ind, r, E, B, data_double, data_int):
+        """Initialize electric field with sinusoidal perturbation."""
+        x_left, x_right = -l / 4, l / 4
+        if x_left < r[0] < x_right:
+            E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin))
+
+**Callback details:**
+
+- ``density_profile``: Called during particle initialization; returns density at position ``r``. Here, uniform density everywhere.
+- ``initial_field``: Called for each grid node; modifies ``E`` and ``B`` fields. We apply a sinusoidal electric field in the middle half of the domain (x ∈ [-l/4, l/4]).
+
+Step 4: Initialize the Simulation
+----------------------------------
+
+Create the simulation object and add particles and fields:
+
+.. code-block:: python
+
+    # Initialize simulation with ec2 solver
+    sim = pipic.init(
+        solver='ec2',  # Energy-conserving (2nd order).
+        xmin=xmin, xmax=xmax,
+        ymin=ymin, ymax=ymax,
+        zmin=zmin, zmax=zmax,
+        nx=nx, ny=ny, nz=nz
+    )
+    
+    # Add electrons with the density profile
+    sim.add_particles(
+        name='electron',
+        number=nx * ny * nz * 200,  # Total macroparticles (200 per cell)
+        density=density_profile.address,
+        charge=consts.electron_charge,
+        mass=consts.electron_mass,
+        temperature=temperature
+    )
+    
+    # Set initial electromagnetic field
+    sim.field_loop(handler=initial_field.address)
+
+**Comments:**
+
+- **Solver**: ``ec2`` (energy-conserving, 2nd order) is ideal for long-time simulations where energy conservation is critical. See `SOLVERS <SOLVERS.html>`_ for the complete list of available solvers and their characteristics.
+
+Step 5: Run the Simulation
+---------------------------
+
+Advance the simulation in time:
+
+.. code-block:: python
+
+    # Number of time steps
+    num_steps = 256
+    
+    # Run the simulation
+    sim.advance(time_step=timestep, number_of_iterations=num_steps)
+    
+    # Total simulation time
+    total_time = timestep * num_steps
+    print(f"Simulated {num_steps} steps over {total_time:.2e} seconds")
+    print(f"Total plasma periods: {total_time / plasma_period:.2f}")
+
+This advances the simulation by 256 time steps, corresponding to ~4 plasma periods.
+
+Step 6: Extract Results
+-----------------------
+
+Define callbacks to read field and particle data during or after the simulation:
+
+.. code-block:: python
+
+    # Array to store electric field
+    field_data = np.zeros(nx, dtype=np.double)
+    
+    @cfunc(types.field_loop_callback)
+    def read_field(ind, r, E, B, data_double, data_int):
+        """Extract Ex field along x-axis (at y=0, z=0)."""
+        data = carray(data_double, (nx,), dtype=np.double)
+        if ind[1] == 0 and ind[2] == 0:  # y=0, z=0 plane
+            data[ind[0]] = E[0]
+    
+    
+    # Array to store particle phase space (position vs momentum)
+    phase_space = np.zeros((64, nx), dtype=np.double)
+    pmin = -np.sqrt(consts.electron_mass * temperature) * 5
+    pmax = np.sqrt(consts.electron_mass * temperature) * 5
+    
+    @cfunc(types.particle_loop_callback)
+    def read_particles(r, p, w, id, data_double, data_int):
+        """Extract particle positions and momenta."""
+        data = carray(data_double, (64, nx), dtype=np.double)
+        
+        # Bin particle into (x, p_x) grid
+        ip = int(64 * (p[0] - pmin) / (pmax - pmin))
+        ix = int(nx * (r[0] - xmin) / (xmax - xmin))
+        
+        if 0 <= ip < 64 and 0 <= ix < nx:
+            data[ip, ix] += w[0]
+
+**Reading data:**
+
+- Fields are sampled at grid nodes using ``field_loop``.
+- Particles are accessed with ``particle_loop``, which iterates over all particles and their properties (position, momentum, weight, ID).
+
+Step 7: Visualization
+---------------------
+
+Plot the results to verify the plasma oscillation:
+
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+    
+    # Read final field state
+    sim.field_loop(handler=read_field.address, data_double=pipic.addressof(field_data))
+    
+    # Read final particle state
+    sim.particle_loop(name='electron', handler=read_particles.address, 
+                      data_double=pipic.addressof(phase_space))
+    
+    # Create visualization
+    fig, (ax_particles, ax_field) = plt.subplots(2, 1, figsize=(10, 8))
+    
+    # Plot phase space
+    x_axis = np.linspace(xmin, xmax, nx)
+    p_axis = np.linspace(pmin, pmax, 64)
+    im = ax_particles.contourf(x_axis, p_axis, phase_space, levels=20, cmap='viridis')
+    ax_particles.set_ylabel(r'Momentum $p_x$ [g·cm/s]')
+    ax_particles.set_title('Particle Phase Space')
+    plt.colorbar(im, ax=ax_particles, label='Density')
+    
+    # Plot field
+    ax_field.plot(x_axis, field_data, 'b-', linewidth=2)
+    ax_field.set_xlabel(r'Position x [cm]')
+    ax_field.set_ylabel(r'Electric Field $E_x$ [V/cm]')
+    ax_field.set_title('Electric Field')
+    ax_field.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('plasma_oscillation.png', dpi=150)
+    plt.show()
+
+**Expected output:**
+
+- **Phase space plot**: Sinusoidal bunching of electrons in x-p_x plane, showing oscillatory motion.
+- **Field plot**: Sinusoidal variation of Ex along x.
+
+
+Examples
+--------
+Explore additional ready-to-run notebooks in the tutorials folder:
+
+- `plasma_oscillation.ipynb <https://github.com/hi-chi/pipic/blob/main/tutorials/plasma_oscillation.ipynb>`_ — the plasma oscillation walkthrough mirrored in notebook form.
+- `plasma_oscillation_extension_development.ipynb <https://github.com/hi-chi/pipic/blob/main/tutorials/extensions/plasma_oscillation_extension_development.ipynb>`_ — plasma oscillation with absorbing boundaries and boundary absorption diagnostics.
+- `two_stream_instability.ipynb <https://github.com/hi-chi/pipic/blob/main/tutorials/solver/two_stream_instability.ipynb>`_ — classic two-stream instability setup and growth analysis.

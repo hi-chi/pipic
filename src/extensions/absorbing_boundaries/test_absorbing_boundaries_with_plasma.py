@@ -197,11 +197,8 @@ sim.add_handler(name=absorbing_boundaries.name,
 
 
 field_handler_adress = moving_window.field_handler(sim.simulation_box(),
-                                                   time_step = timeStep,
                                                    thickness = 16)
-particle_handler_adress = moving_window.handler(sim.ensemble_data(),
-                                                sim.simulation_box(),
-                                                time_step = timeStep,
+particle_handler_adress = moving_window.handler(sim.simulation_box(),
                                                 thickness=16,
                                                 particles_per_cell=5,
                                                 temperature=1e-12,

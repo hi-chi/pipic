@@ -23,13 +23,23 @@ If using a non-standard compiler (for example using `gcc` installed through [`ho
 CC=<c-compiler> CXX=<c++-compiler> pip install pipic
 ```
 
-## Conda
-Follow the instructions at: https://github.com/hi-chi/pipic/blob/pipic_tutorial/tutorials/installation.ipynb
+## Conda (tested for Linux)
+
+If not installed, install conda following the guide at https://www.anaconda.com/docs/getting-started/miniconda/install, then run
+``` 
+wget -O environment.yml https://raw.githubusercontent.com/hi-chi/pipic/main/environment.yml
+conda env create -f environment.yml 
+conda activate pipic_env
 ```
 
-
-### macOS
+## macOS
 Installation on macOS depends on which compiler is being used.
+
+> [!WARNING]
+> Official macOS wheels are currently built for Apple Silicon (`arm64`) only.
+> On Intel Macs (`x86_64`), `pip install pipic` will typically fall back to a source build
+> (`sdist`). This requires a working compiler toolchain and system libraries (`fftw`,
+> `openmp`/`libomp`) to be installed, otherwise installation may fail.
 
 #### gcc
 Assuming that `gcc` is installed through homebrew it will be named _e.g._ `gcc-14`. Note that the built-in `gcc` on macOS is in fact an Apple-compiled `clang` (this can be confirmed with the `gcc --version`), which lacks `openmp`.
@@ -79,7 +89,7 @@ pip install pipic
 
 Note that the install command also here can be prefixed with `CC=<c-compiler> CXX=<c++-compiler>` in order to use a non-default compiler, and that `LDFLAGS`/`CPPFLAGS` may need to be supplied as shown earlier.
 
-<!---
+<!--
 ## CMake
 As an alternative, manual compilation is also available using `cmake`. This extends the above requirements to also include:
 - [`CMake`](https://cmake.org/) 3.1 or higher

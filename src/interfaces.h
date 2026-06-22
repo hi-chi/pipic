@@ -73,7 +73,7 @@ struct cellInterface // main structure for developing extensions; provides acces
 
     //access to particles being processed and new to be added (indices must be within limits):
     particle* Particle(int i){return (particle*)(P_data + i*(8 + I[7]));} // pointer to i-th particle to be processed (use of attributes requires manual compartibility control)
-    //Warning: It is foriden to change particles' coordinates Particle(i)->r
+    //Warning: It is forbidden to change particles' coordinates Particle(i)->r
     //To remove a particle set its weight Particle(i).w to zero.
     particle* newParticle(int i){return (particle*)(NP_data + i*(8 + I[7]));} // pointer to i-th particle in the buffer for new particles
     //The type is to be placed into id (by convention).
@@ -139,10 +139,13 @@ struct field_solver
     // field component code: ind[4] = 0 for Ex, 1 for Ey, 2 for Ez, 3 for Bx, 4 for By, 5 for Bz, 6 for all)
     // coordinate of the node in question,
     // field values (whatever is applicable according to ind[4]), and refernces to data of double and int type.
-    // Note that the 2 following function must be implemented in the derived class.
+    // The function must be implemented in the derived class.
     virtual void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false) = 0;
-    //read-only interface for accessing fields in a set of points:
-    virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0) = 0;
+    // Function used in ensemble to transfer EM-field data from field solver to cellInterface. Must be implemented in the derived class.
+    virtual void cellSetField(cellInterface &CI, int3 i) = 0;
+    
+    //read-only interface for accessing fields in a set of points (optional to implement in derived class)
+    virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){};
 
     //functions needed for cellInterface
     inline void setGridType(cellInterface &CI, int gridType){CI.I[12] = gridType;};
@@ -200,6 +203,7 @@ struct pic_solver
     string name;
 };
 
+// Note! only works for collocated grids! Meaning cellSetField must be implemented accordingly in the field solver.
 void cellInterface::interpolateField(double3 r, double3 &E, double3 &B){
     if(gridType == 0){ // collocated grid: E and B are defined at the corners of each cell
         double c[8];

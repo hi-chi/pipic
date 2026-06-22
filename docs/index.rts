@@ -1,0 +1,9 @@
+π-PIC Documentation
+===================
+
+.. toctree::
+   :maxdepth: 2
+
+   guides/INSTALLATION
+   guides/GETTING_STARTED
+   guides/CODE_ARCHITECTURE
