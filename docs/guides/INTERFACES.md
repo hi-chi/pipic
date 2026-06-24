@@ -41,7 +41,7 @@ Interfaces and functions of containers
     - `use_omp` defines whether to make parallel loop (via openMP), if `use_omp = True` the `handler` must be thread-safe
 
 - `custom_field_loop(handler, number_of_iterations = 0, it2r = 0, field = "", data_double = 0, data_int = 0)` makes a loop over a subset of locations, at which the selected field is interpolated and sent to callback `handler` saving output. The implementation of this method may vary between solvers. Check the documentation of the specific solver for details. 
-    - `handler` is the address of a callback that defines how the selected field contributes to data output via `data_double` and `data_int`: `handler(it, r, field, data_double, data_int)` (decorator `@cfunc(types.custom_field_callback)` must be placed before function definition)
+    - `handler` is the address of a callback that defines how the selected field contributes to data output via `data_double` and `data_int`: `handler(it, r, field, data_double, data_int)` (decorator `@cfunc(types.custom_field_loop_callback)` must be placed before function definition)
         - `it[0]` is the index of the subset element (read only)
         - `r[0]`, `r[1]` and `r[2]` are the coordinates along $x$, $y$ and $z$, respectively (read only)
         - `field[0]`, `field[1]`, and `field[2]` are the selected vector or scalar components 

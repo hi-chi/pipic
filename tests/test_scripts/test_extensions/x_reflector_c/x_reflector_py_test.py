@@ -94,7 +94,7 @@ def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(custom_field_callback)
+@cfunc(custom_field_loop_callback)
 def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 

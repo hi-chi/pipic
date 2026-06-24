@@ -218,12 +218,12 @@ def E_it2r(it, r, data_double, data_int):
     r[2] = 0
 
 
-@cfunc(types.custom_field_callback)
+@cfunc(types.custom_field_loop_callback)
 def get_Ep(it, r, E, data_double, data_int):
     data_double[it[0]] = -E[0] * np.cos(incidenceAngle) + E[1] * np.sin(incidenceAngle)
 
 
-@cfunc(types.custom_field_callback)
+@cfunc(types.custom_field_loop_callback)
 def get_Es(it, r, E, data_double, data_int):
     data_double[it[0]] = E[2]
 

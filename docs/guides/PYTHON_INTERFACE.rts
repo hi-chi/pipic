@@ -230,7 +230,7 @@ Callback type signatures via ``pipic.types``:
 - ``types.particle_loop_callback``: For particle iteration
 - ``types.field_loop_callback``: For field iteration
 - ``types.it2r_callback``: For mapping custom-loop iteration indices to coordinates
-- ``types.custom_field_callback``: For processing one selected custom-loop field
+- ``types.custom_field_loop_callback``: For processing one selected custom-loop field
 
 Utilities
 ^^^^^^^^^

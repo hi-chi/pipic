@@ -60,7 +60,7 @@ def fieldPlot_it2r(it, r, data_double, data_int):
     r[0] = xmin + stepx*(it[0] % nx)
     r[1] = ymin + stepy*(it[0] - (it[0] % nx))/nx
     r[2] = 0
-@cfunc(types.custom_field_callback)
+@cfunc(types.custom_field_loop_callback)
 def fieldPlot_cb(it, r, field, data_double, data_int):
     Field = carray(data_double, field_output.shape, dtype=np.double)
     Field[int((it[0] - (it[0] % nx))/nx), (it[0] % nx)] = np.sqrt(field[0]*field[0] + field[1]*field[1] + field[2]*field[2])

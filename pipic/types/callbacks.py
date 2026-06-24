@@ -27,7 +27,7 @@ __all__ = [
     "particle_loop_callback",
     "field_loop_callback",
     "it2r_callback",
-    "custom_field_callback",
+    "custom_field_loop_callback",
     "handler_callback",
 ]
 
@@ -63,7 +63,7 @@ it2r_callback = nb.types.void(
     nb.types.CPointer(nb.types.int32),
 )
 
-custom_field_callback = nb.types.void(
+custom_field_loop_callback = nb.types.void(
     nb.types.CPointer(nb.types.int32),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
