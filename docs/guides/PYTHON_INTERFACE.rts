@@ -13,7 +13,7 @@ Initialize a PIC simulation container.
 
 **Parameters:**
 
-- ``solver`` (str): Solver name. Available options: ``"fourier_boris"``, ``"ec"``, ``"ec2"``, ``"electrostatic_1d"``, ``"emc2"``.
+- ``solver`` (str): Solver name. Available options: ``"fourier_boris"``, ``"ec"``, ``"ec2"``, ``"electrostatic_1d"``, ``"electrostatic_1d_implicit"``, ``"emc2"``.
 - ``nx`` (int): Number of grid cells in x-direction (must be power of 2 for FFT-based solvers).
 - ``xmin``, ``xmax`` (float): Spatial domain boundaries in x-direction (cm).
 - ``ny`` (int, optional): Number of grid cells in y-direction. Default: 1 (for 2D/1D).
@@ -229,6 +229,8 @@ Callback type signatures via ``pipic.types``:
 - ``types.add_particles_callback``: For density profiles
 - ``types.particle_loop_callback``: For particle iteration
 - ``types.field_loop_callback``: For field iteration
+- ``types.it2r_callback``: For mapping custom-loop iteration indices to coordinates
+- ``types.custom_field_callback``: For processing one selected custom-loop field
 
 Utilities
 ^^^^^^^^^
@@ -280,16 +282,17 @@ Get internal index for a particle type.
 Custom Field Sampling
 ^^^^^^^^^^^^^^^^^^^^^
 
-``sim.custom_field_loop(number_of_iterations, it2r, field2data, data_double=0, data_int=0)``
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+``sim.custom_field_loop(handler, number_of_iterations=0, it2r=0, field="", data_double=0, data_int=0)``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Sample fields at arbitrary coordinates.
+Sample a selected field at arbitrary coordinates.
 
 **Parameters:**
 
-- ``number_of_iterations`` (int): Number of sample points.
-- ``it2r`` (int): Address of coordinate callback.
-- ``field2data`` (int): Address of field-to-data callback.
+- ``handler`` (int): Address of custom field callback, with signature ``handler(it, r, field, data_double, data_int)``.
+- ``number_of_iterations`` (int, optional): Number of sample points.
+- ``it2r`` (int, optional): Address of coordinate callback.
+- ``field`` (str, optional): Field selector. Generic ``getEB`` solvers support ``E`` and ``B``.
 - ``data_double`` (int, optional): Address of double-precision data array.
 - ``data_int`` (int, optional): Address of integer data array.
 

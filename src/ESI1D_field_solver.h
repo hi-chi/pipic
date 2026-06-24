@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: frida.brogren@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Electrostatic 1D field solver implementation.
+// Electrostatic 1D implicit field solver implementation.
 
 #ifndef ESI1D_FIELD_SOLVER_H
 #define ESI1D_FIELD_SOLVER_H
@@ -34,9 +34,6 @@ struct ESI1DFieldSolver: public field_solver // 1D electrostatic solver (Ex only
         Ex.resize(box.n.x, 0.0); // initialize electric field
         Jx.resize(box.n.x, 0.0); // initialize current density
     }
-
-    // the advance of fields is done in the pic solver for this electrostatic model, so this method is not implemented here.
-    void advance(double timeStep){}
 
     // CIC weighting function (not mandatory method for field solver interface)
     double CIC(double x, int i, double dx, double xmin){
@@ -121,6 +118,36 @@ struct ESI1DFieldSolver: public field_solver // 1D electrostatic solver (Ex only
             F_data[6*j] = Ex[cig[j]];
         }
     }
+
+    void customFieldLoop(int64_t handler, int numberOfIterations = 0, int64_t it2coord=0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0){
+        // Cast opaque integer handles from Python/C API to typed pointers.
+        double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
+        int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
+        void(*handler_)(int*, double*, double*, double*, int*) = (void(*)(int*, double*, double*, double*, int*))handler;
+
+        if(numberOfIterations != 0) cout << "ESI1DFieldSolver::customFieldLoop warning: numberOfIterations is not used in this implementation." << endl;
+        if(it2coord != 0) cout << "ESI1DFieldSolver::customFieldLoop warning: it2coord is not used in this implementation." << endl;
+
+        if (field == "Ex"){
+            // Loop over all logical nodes in the simulation box.
+            for(int ix = 0; ix < box.n.x; ix++){
+                int ind[1] = {ix};
+                double r[3] = {box.min.x + ix*box.step.x/2, 0, 0};
+                double selectedField = Ex[ix];
+                handler_(ind, r, &selectedField, dataDouble_, dataInt_);
+            }
+        } else if (field == "Jx"){
+            for (int ix = 0; ix < box.n.x; ix++){
+                int ind[1] = {ix};
+                double r[3] = {box.min.x + ix*box.step.x/2, 0, 0};
+                double selectedField = Jx[ix];
+                handler_(ind, r, &selectedField, dataDouble_, dataInt_);
+            }
+        } else {
+            cout << "ESI1DFieldSolver::customFieldLoop error: unknown field "<< field << ". Only 'Ex' and 'Jx' are supported." << endl;
+        }
+    }
+
     
     // Trivial destructor: managed containers clean themselves up.
     ~ESI1DFieldSolver(){}

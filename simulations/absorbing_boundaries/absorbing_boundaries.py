@@ -15,7 +15,7 @@ from numba import cfunc, carray, types as nbt
 arg = sys.argv
 fall = float(arg[1])
 boundarySize_mult = float(arg[2])
-
+angle = float(arg[3])
 
 #===========================SIMULATION INITIALIZATION===========================
 wavelength = 1e-4 #units? cm?
@@ -39,8 +39,8 @@ PulseDuration = 10e-15
 
 k = 2*np.pi/wavelength
 #fp = f'data_ts_0,25_fall_{str(fall)}_bs_4.txt'
-fp = f'./data/data_ts_{ts}_fall_{str(fall)}_bs_{str(boundarySize_mult)}.txt'
-rot = np.pi/4
+fp = f'./data/data_ts_{ts}_fall_{str(fall)}_bs_{str(boundarySize_mult)}_angle_{str(angle)}.txt'
+rot = np.pi*angle/180
 
 
 @cfunc(types.field_loop_callback)
@@ -164,7 +164,7 @@ fig.colorbar(E_plot,ax=axs)
 dataInt = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
 #s = round((dx/consts.light_velocity/4)/timeStep*3000) 
 
-prop_length = 2*np.sqrt(XMax**2 + YMax**2)
+prop_length = (YMax-YMin)/np.sin(rot) # propagation length of the laser pulse in the simulation box
 s = round(prop_length/consts.light_velocity/timeStep+10)
 #s = round(2**5*np.sqrt(2)*wavelength/consts.light_velocity/timeStep + 10) # total number of time steps
 u = np.empty((s//20+1,2))

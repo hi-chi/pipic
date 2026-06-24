@@ -96,8 +96,8 @@ def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(types.field2data_callback)
-def get_Ex(it, r, E, B, data_double, data_int):
+@cfunc(types.custom_field_callback)
+def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 
 
@@ -105,15 +105,22 @@ axs[1].set_xlim([xmin, xmax])
 axs[1].set_ylim([-field_amplitude, field_amplitude])
 axs[1].set(xlabel="$x$ (cm)", ylabel="$E_x$ (cgs units)")
 x_axis = np.linspace(xmin, xmax, Ex.shape[0])
-sim.custom_field_loop(Ex.shape[0], Ex_it2r.address, get_Ex.address, pipic.addressof(Ex))
+sim.custom_field_loop(
+    handler=get_Ex.address,
+    number_of_iterations=Ex.shape[0],
+    it2r=Ex_it2r.address,
+    field="E",
+    data_double=pipic.addressof(Ex),
+)
 (plot_Ex_,) = axs[1].plot(x_axis, Ex)
 
 
 def plot_Ex():
     sim.custom_field_loop(
+        handler=get_Ex.address,
         number_of_iterations=Ex.shape[0],
         it2r=Ex_it2r.address,
-        field2data=get_Ex.address,
+        field="E",
         data_double=pipic.addressof(Ex),
     )
     plot_Ex_.set_ydata(Ex)

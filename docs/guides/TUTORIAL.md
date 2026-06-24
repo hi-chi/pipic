@@ -82,7 +82,7 @@ def plot_xpx():
                       data_double=pipic.addressof(xpx_dist))
     plot0.set_data(xpx_dist)
 ```
-The state of electromagnetic field can be retrieved by making a loop over all grid nodes using previously mentioned function `field_loop()`. However, to make a loop through a subset of locations one can use a different function `custom_field_loop()` that offers a possibility to define an arbitrary set of points for the field interpolation. To do so one needs to introduce two callback functions: the first function defines the location for a give element of subset `it[0]` and the second function defines how the electromagnetic field at this locations contribute to the output. The addresses of these functions are passed to the container together with the size of subset `number_of_iterations`, i.e. `it[0]` will be varied from `0` to `number_of_iterations - 1`. In the following example we apply the routine to fetch $E_x$ as a function of $x$ at 32 locations:
+The state of electromagnetic field can be retrieved by making a loop over all grid nodes using previously mentioned function `field_loop()`. However, to make a loop through a subset of locations one can use a different function `custom_field_loop()` that offers a possibility to define an arbitrary set of points for the field interpolation. To do so one needs to introduce two callback functions: the first function defines the location for a give element of subset `it[0]` and the second function defines how the selected field at this location contributes to the output. The addresses of these functions are passed to the container together with the field selector and size of subset `number_of_iterations`, i.e. `it[0]` will be varied from `0` to `number_of_iterations - 1`. In the following example we apply the routine to fetch $E_x$ as a function of $x$ at 32 locations:
 ```
 Ex = np.zeros((32,), dtype=np.double)
 
@@ -90,8 +90,8 @@ Ex = np.zeros((32,), dtype=np.double)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax-xmin) / Ex.shape[0]
 
-@cfunc(types.field2data_callback)
-def get_Ex(it, r, E, B, data_double, data_int):
+@cfunc(types.custom_field_callback)
+def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 
 axs[1].set_xlim([xmin, xmax])
@@ -101,8 +101,8 @@ x_axis = np.linspace(xmin, xmax, Ex.shape[0])
 plot_Ex_, = axs[1].plot(x_axis, Ex)
 
 def plot_Ex():
-    sim.custom_field_loop(number_of_iterations=Ex.shape[0], it2r=Ex_it2r.address,
-                          field2data=get_Ex.address, data_double=pipic.addressof(Ex))
+    sim.custom_field_loop(handler=get_Ex.address, number_of_iterations=Ex.shape[0],
+                          it2r=Ex_it2r.address, field="E", data_double=pipic.addressof(Ex))
     plot_Ex_.set_ydata(Ex)
 ```
 We now can advance the state of the system in the container, making output whenever needed:

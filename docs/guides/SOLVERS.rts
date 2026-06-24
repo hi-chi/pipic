@@ -6,13 +6,14 @@ This document describes the available PIC solvers in π-PIC, their use cases, un
 Overview
 --------
 
-π-PIC provides five built-in solvers:
+π-PIC provides the following built-in solvers:
 
 1. ``fourier_boris`` - Spectral electromagnetic solver with Boris particle pusher
 2. ``ec`` - First-order energy-conserving solver
 3. ``ec2`` - Second-order energy-conserving solver
 4. ``emc2`` - Electromagnetic energy-conserving solver
 5. ``electrostatic_1d`` - 1D electrostatic solver
+6. ``electrostatic_1d_implicit`` - 1D implicit electrostatic solver
 
 All solvers follow the same interface and can be selected via:
 
@@ -48,6 +49,9 @@ Fourier-Boris Solver
 - Shuffle disabled to preserve particle order within cells
 - Overstep migration warning if particles move > 0.99999 cells per step
 
+**Notes:**
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="E"`` and ``field="B"``
+
 Energy-Conserving Solver (EC)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -62,6 +66,8 @@ Energy-Conserving Solver (EC)
 - **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
 
+**Notes:**
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="E"`` and ``field="B"``
 
 
 **Configuration:**
@@ -78,6 +84,9 @@ Energy-Conserving Solver (EC)
 - Overstep move warnings if time step too large
 - Slightly slower than Boris due to implicit coupling
 
+**Notes:**
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="E"`` and ``field="B"``
+
 Energy-Conserving Solver (EC2)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -92,6 +101,8 @@ Energy-Conserving Solver (EC2)
 - **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
 
+**Notes:**
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="E"`` and ``field="B"``
 
 **Configuration:**
 
@@ -113,6 +124,9 @@ Electromagnetic Energy-Conserving Solver (EMC2)
 - **Particle pusher:** Energy-conserving and approximate momentum-conservation. 
 - **Current deposition:** Cloud-in-Cell (CIC)
 - **Boundary conditions:** Periodic
+
+**Notes:**
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="E"`` and ``field="B"``
 
 
 Electrostatic 1D Solver (ES1D)
@@ -168,6 +182,81 @@ Particle push (leapfrog):
 
 - Only :math:`E_x` component is active; :math:`E_y = E_z = B_x = B_y = B_z = 0`
 - Suitable only for 1D geometries (set ``ny=1, nz=1``)
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="Ex"`` and ``field="Jx"``. Arguments ``number_of_iterations`` and ``it2r`` of ``sim.custom_field_loop()`` are deactivated.
+
+
+Electrostatic 1D Implicit Solver (ESI1D)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Name:** ``electrostatic_1d_implicit``
+
+**Description:** A 1D electrostatic PIC solver that uses an implicit, time-centered particle-field iteration (See S. Markidis and G. Lapenta, J. Comp. Phys 230 (2011) 7037–7052 - `DOI: 10.1016/j.jcp.2011.05.033 <https://doi.org/10.1016/j.jcp.2011.05.033>`__). Like ``electrostatic_1d``, it is intended for 1D electrostatic geometries with only :math:`E_x` active, but it solves the coupled particle/current/field update iteratively inside each time step.
+
+
+**Algorithm:**
+
+- **Field solver:** Electrostatic :math:`E_x` update from iterated time-centered current
+- **Particle pusher:** Implicit time-centered particle position and momentum update
+- **Current deposition:** CIC to node-centered :math:`J_x` at intermediate particle positions
+- **Boundary conditions:** Periodic
+- **Convergence:** Fixed-point iteration until the maximum normalized field/momentum change is below ``1e-12`` or 100 iterations are reached
+
+**Implementation Details:**
+
+The solver keeps auxiliary copies of the field and ensemble state:
+
+- ``field_intermediate`` and ``field_last`` store the current and previous implicit field iterates
+- ``Ensemble_avg_intermediate`` and ``Ensemble_avg_last`` store the corresponding time-centered particle states
+
+The coupled implicit update is performed in ``postLoop``.
+
+Implicit iteration:
+
+1. Copy the current particle and field state into the auxiliary intermediate and last states.
+2. Repeat until convergence:
+
+   a. Reset the intermediate current :math:`J_x`.
+   b. Swap the previous and intermediate particle/field states.
+   c. For each particle, estimate the time-centered position:
+
+      .. math::
+
+          x^{n+1/2,k} \leftarrow x^n + \frac{\Delta t}{2m}p^{n+1/2,k-1}
+
+   d. Interpolate the electric field at the intermediate/previous iterate and update the intermediate momentum:
+
+      .. math::
+
+          p^{n+1/2,k} \leftarrow p^n + \frac{q\Delta t}{4}
+          \left(E_x^{n} + E_x^{k-1}\right)
+
+   e. Deposit the intermediate current :math:`J_x^{k}` using CIC weights.
+   f. Update the intermediate electric field:
+
+      .. math::
+
+          E_x^{k} \leftarrow E_x^{n} - 4\pi J_x^{k}\Delta t
+
+   g. Compute convergence from the field and momentum changes.
+
+3. After convergence, convert the time-centered particle state back to the stored full-step state:
+
+   .. math::
+
+       x^{n+1} \leftarrow x^n + \frac{\Delta t}{m}p^{n+1/2}
+
+   .. math::
+
+       p^{n+1} \leftarrow 2p^{n+1/2} - p^n
+
+4. Redistribute migrated particles with ``particleLoop`` and store the converged field/current.
+
+**Notes:**
+
+- Only :math:`E_x` and :math:`J_x` are evolved; magnetic field components are zero
+- Suitable only for 1D geometries (set ``ny=1, nz=1``)
+- The diagnostic ``custom_field_loop`` implementation for this solver exposes ``field="Ex"`` and ``field="Jx"``. Arguments ``number_of_iterations`` and ``it2r`` of ``sim.custom_field_loop()`` are deactivated.
+- A warning is printed if the implicit iteration reaches 100 iterations without convergence
 
 
 
@@ -295,12 +384,19 @@ Initialize the field solver with the simulation box containing grid geometry.
   - Clear/reset source terms after field update
   - Update time tracking if needed
 
-- ``void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0)`` - Read-only field access with custom iteration pattern. Default: empty. Use for:
-
-  - Accessing fields at user-specified points
-  - Diagnostics with non-standard grid sampling
+- ``void customFieldLoop(int64_t handler, int numberOfIterations = 0, int64_t it2coord = 0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0)`` - Read-only field access with custom iteration pattern. Default: empty. 
+  
+  - ``handler`` - Callback to process the selected field at each point
   - ``it2coord`` - Callback to convert iteration index to coordinates
-  - ``field2data`` - Callback to process field at each point
+  - ``field`` - Solver-specific field selection
+  - Use for:
+
+    - Accessing fields at user-specified points
+    - Diagnostics with non-standard grid sampling
+    - Accessing fields internal to the solver such as current or scalar potentials
+  
+  - For example usage see: `examples/laser_solid_interaction.py <https://github.com/hi-chi/pipic/blob/main/examples/laser_solid_interaction.py>`__:
+
 
 **Helper Methods (do not override):**
 
@@ -323,5 +419,3 @@ To make a new solver available to Python via ``pipic.init(solver=...)``, update 
 3. **Ensure the solver name string matches** the ``pic_solver::name`` set inside your solver implementation (this is what ``pipic.init(solver=...)`` expects).
 
 After these changes, rebuild the Python extension so the new solver becomes selectable from Python.
-
-

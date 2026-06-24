@@ -54,12 +54,15 @@ def fieldPlot_it2r(it, r, data_double, data_int):
     r[0] = xmin + stepx*(it[0] % nx)
     r[1] = ymin + stepy*(it[0] - (it[0] % nx))/nx
     r[2] = 0
-@cfunc(types.field_loop_callback)
-def fieldPlot_cb(it, r, E, B, data_double, data_int):
+@cfunc(types.custom_field_callback)
+def fieldPlot_cb(it, r, field, data_double, data_int):
     Field = carray(data_double, field_output.shape, dtype=np.double)
-    Field[int((it[0] - (it[0] % nx))/nx), (it[0] % nx)] = np.sqrt(E[0]*E[0] + E[1]*E[1] + E[2]*E[2] + B[0]*B[0] + B[1]*B[1] + B[2]*B[2])
+    Field[int((it[0] - (it[0] % nx))/nx), (it[0] % nx)] = np.sqrt(field[0]*field[0] + field[1]*field[1] + field[2]*field[2])
+
 sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
-                      field2data=fieldPlot_cb.address, data_double=pipic.addressof(field_output))
+                      handler=fieldPlot_cb.address, field="E", data_double=pipic.addressof(field_output))
+sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
+                      handler=fieldPlot_cb.address, field="B", data_double=pipic.addressof(field_output))
 plot0 = ax.imshow(field_output, vmin=0, vmax=3,
                   extent=[sim.xmin,sim.xmax,sim.ymin,sim.ymax], interpolation='none',
                   aspect='equal', cmap='YlOrBr', origin='lower')
@@ -74,8 +77,11 @@ if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 for i in range(frames):
     sim.advance(time_step=time_step)
+    field_output.fill(0)
     sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
-                      field2data=fieldPlot_cb.address, data_double=pipic.addressof(field_output))
+                      handler=fieldPlot_cb.address, field="E", data_double=pipic.addressof(field_output))
+    sim.custom_field_loop(number_of_iterations=nx*ny, it2r=fieldPlot_it2r.address,
+                      handler=fieldPlot_cb.address, field="B", data_double=pipic.addressof(field_output))
     plot0.set_data(field_output)
     fig.savefig(output_folder + '/im' + str(i) + '.png')
     print(i)

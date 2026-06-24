@@ -145,7 +145,7 @@ struct field_solver
     virtual void cellSetField(cellInterface &CI, int3 i) = 0;
     
     //read-only interface for accessing fields in a set of points (optional to implement in derived class)
-    virtual void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){};
+    virtual void customFieldLoop(int64_t handler, int numberOfIterations = 0, int64_t it2coord = 0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0){};
 
     //functions needed for cellInterface
     inline void setGridType(cellInterface &CI, int gridType){CI.I[12] = gridType;};

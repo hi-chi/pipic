@@ -104,8 +104,8 @@ def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(field2data_callback)
-def get_Ex(it, r, E, B, data_double, data_int):
+@cfunc(custom_field_callback)
+def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 
 
@@ -118,9 +118,10 @@ x_axis = numpy.linspace(xmin, xmax, Ex.shape[0])
 
 def plot_Ex():
     sim.custom_field_loop(
+        handler=get_Ex.address,
         number_of_iterations=Ex.shape[0],
         it2r=Ex_it2r.address,
-        field2data=get_Ex.address,
+        field="E",
         data_double=addressof(Ex),
     )
     plot_Ex_.set_ydata(Ex)
