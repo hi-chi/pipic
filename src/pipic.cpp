@@ -62,7 +62,7 @@ PYBIND11_MODULE(_pipic, object) {
         .def("add_particles", &pipic::pyAddParticles, py::arg("name"), py::arg("number"), py::arg("charge"), py::arg("mass"), py::arg("temperature"), py::arg("density"), py::arg("data_double") = 0, py::arg("data_int") = 0)
         .def("particle_loop", &pipic::pyParticleLoop, py::arg("name"), py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0, py::arg("use_omp") = false)
         .def("field_loop", &pipic::pyFieldLoop, py::arg("handler"), py::arg("data_double") = 0, py::arg("data_int") = 0, py::arg("use_omp") = false)
-        .def("custom_field_loop", &pipic::pyCustomFieldLoop, py::arg("number_of_iterations"), py::arg("it2r"), py::arg("field2data"), py::arg("data_double") = 0, py::arg("data_int") = 0)
+        .def("custom_field_loop", &pipic::pyCustomFieldLoop, py::arg("handler"), py::arg("number_of_iterations") = 0, py::arg("it2r") = 0, py::arg("field") = "", py::arg("data_double") = 0, py::arg("data_int") = 0)
         .def("advance", &pipic::pyAdvance, py::arg("time_step"), py::arg("number_of_iterations") = 1, py::arg("use_omp") = true)
         .def("fourier_solver_settings", &pipic::pyFourierSolverSettings, py::arg("divergence_cleaning") = -1, py::arg("sin2_kfilter") = -1)
         .def("log_policy", &pipic::pyLogPolicy, py::arg("log_to_file") = true, py::arg("log_to_screen") = false)

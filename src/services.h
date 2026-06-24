@@ -334,9 +334,9 @@ struct handlerManager
 };
 
 template <typename fieldSolver>
-void customFieldLoop_via_getEB(fieldSolver *field, int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){
+void customFieldLoop_via_getEB(fieldSolver *fieldSolverPtr, int64_t handler, int numberOfIterations = 0, int64_t it2coord = 0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0){
     void(*it2coord_)(int*, double*, double*, int*) = (void(*)(int*, double*, double*, int*))it2coord;
-    void(*field2data_)(int*, double*, double*, double*, double*, int*) = (void(*)(int*, double*, double*, double*, double*, int*))field2data;
+    void(*handler_)(int*, double*, double*, double*, int*) = (void(*)(int*, double*, double*, double*, int*))handler;
     double* dataDouble_ = nullptr; if(dataDouble != 0) dataDouble_ = (double*)dataDouble;
     int* dataInt_ = nullptr; if(dataInt != 0) dataInt_ = (int*)dataInt;
     for(int it_ = 0; it_ < numberOfIterations; it_++)
@@ -345,8 +345,15 @@ void customFieldLoop_via_getEB(fieldSolver *field, int numberOfIterations, int64
         double3 r;
         it2coord_(it, (double*)&r, dataDouble_, dataInt_);
         double3 E({0, 0, 0}), B({0, 0, 0});
-        field->getEB(r, E, B);
-        field2data_(it, (double*)&r, (double*)&E, (double*)&B, dataDouble_, dataInt_);
+        fieldSolverPtr->getEB(r, E, B);
+        double* selectedField = nullptr;
+        if(field == "E") selectedField = (double*)&E;
+        else if(field == "B") selectedField = (double*)&B;
+        else {
+            cout << "customFieldLoop_via_getEB error: unknown field " << field << ". Supported fields are 'E' and 'B'." << endl;
+            return;
+        }
+        handler_(it, (double*)&r, selectedField, dataDouble_, dataInt_);
     }
 };
 

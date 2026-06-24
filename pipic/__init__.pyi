@@ -47,9 +47,10 @@ class init:
     def advance(self, time_step: float, number_of_iterations: int = ...) -> None: ...
     def custom_field_loop(
         self,
-        number_of_iterations: int,
-        it2r: int,
-        field2data: int,
+        handler: int,
+        number_of_iterations: int = ...,
+        it2r: int = ...,
+        field: str = ...,
         data_double: int = ...,
         data_int: int = ...,
     ) -> None: ...

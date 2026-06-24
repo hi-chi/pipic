@@ -128,8 +128,8 @@ struct fourierSolver: public field_solver // spectral solver for electromagnetic
             B.z += c[i]*Bz(cig[i]);
         }
     }
-    void customFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){
-        customFieldLoop_via_getEB<fourierSolver>(this, numberOfIterations, it2coord, field2data, dataDouble, dataInt);
+    void customFieldLoop(int64_t handler, int numberOfIterations = 0, int64_t it2coord = 0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0){
+        customFieldLoop_via_getEB<fourierSolver>(this, handler, numberOfIterations, it2coord, field, dataDouble, dataInt);
     }
     void enableDivergenceCleaning(){
         pipic_log.message("pi-PIC::fourierSolver: enable divergence cleaning.");

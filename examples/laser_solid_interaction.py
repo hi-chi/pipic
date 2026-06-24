@@ -218,13 +218,13 @@ def E_it2r(it, r, data_double, data_int):
     r[2] = 0
 
 
-@cfunc(types.field2data_callback)
-def get_Ep(it, r, E, B, data_double, data_int):
+@cfunc(types.custom_field_callback)
+def get_Ep(it, r, E, data_double, data_int):
     data_double[it[0]] = -E[0] * np.cos(incidenceAngle) + E[1] * np.sin(incidenceAngle)
 
 
-@cfunc(types.field2data_callback)
-def get_Es(it, r, E, B, data_double, data_int):
+@cfunc(types.custom_field_callback)
+def get_Es(it, r, E, data_double, data_int):
     data_double[it[0]] = E[2]
 
 
@@ -245,9 +245,10 @@ res_X = res_X_0 + -arrivalDelay * consts.light_velocity
 
 def plot_E(i):
     sim.custom_field_loop(
+        handler=get_Ep.address,
         number_of_iterations=oEp.shape[0],
         it2r=E_it2r.address,
-        field2data=get_Ep.address,
+        field="E",
         data_double=pipic.addressof(oEp),
     )
     plot_Ep.set_ydata(oEp)

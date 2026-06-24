@@ -2,7 +2,7 @@
 
 from .callbacks import (
     add_particles_callback,
-    field2data_callback,
+    custom_field_callback,
     field_loop_callback,
     handler_callback,
     it2r_callback,
@@ -16,7 +16,7 @@ __all__ = [
     "particle_loop_callback",
     "field_loop_callback",
     "it2r_callback",
-    "field2data_callback",
+    "custom_field_callback",
     "handler_callback",
     "Int3",
     "Double3",

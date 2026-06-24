@@ -69,8 +69,8 @@ struct pipic
     void pyFieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false){
         Field->fieldLoop(handler, dataDouble, dataInt, useOmp);
     }
-    void pyCustomFieldLoop(int numberOfIterations, int64_t it2coord, int64_t field2data, int64_t dataDouble = 0, int64_t dataInt = 0){
-        Field->customFieldLoop(numberOfIterations, it2coord, field2data, dataDouble, dataInt);
+    void pyCustomFieldLoop(int64_t handler, int numberOfIterations = 0, int64_t it2coord = 0, std::string field = "", int64_t dataDouble = 0, int64_t dataInt = 0){
+        Field->customFieldLoop(handler, numberOfIterations, it2coord, field, dataDouble, dataInt);
     }
     void pyAdvance(double timeStep, int numberOfIterations = 1, bool useOmp = true){
         Ensemble -> box.timeStep = timeStep;
