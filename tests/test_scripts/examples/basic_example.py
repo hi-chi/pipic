@@ -28,8 +28,8 @@ time_step = plasma_period / 64
 sim = pipic.init(solver="electrostatic_1d", nx=nx, xmin=xmin, xmax=xmax)
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):
+@cfunc(types.add_particles)
+def init_density(r, data_double, data_int):
     return density #* (abs(r[0]) < l / 4)
 
 
@@ -39,16 +39,16 @@ sim.add_particles(
     charge=consts.electron_charge,
     mass=consts.electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=init_density.address,
 )
 
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(types.field_loop_callback)
-def setField_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def setField(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin)) #* (abs(r[0]) < l / 4)
 
-sim.field_loop(handler=setField_callback.address)
+sim.field_loop(handler=setField.address)
 
 
 # ===============================SIMULATION======================================

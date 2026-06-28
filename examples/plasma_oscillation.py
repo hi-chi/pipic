@@ -23,8 +23,8 @@ sim = pipic.init(solver="ec", nx=nx, xmin=xmin, xmax=xmax)
 
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):  # callback function
+@cfunc(types.add_particles)
+def density_profile(r, data_double, data_int):  # callback function
     return density  # can be any function of coordinate r[0]
 
 
@@ -34,17 +34,17 @@ sim.add_particles(
     charge=-consts.electron_charge,
     mass=consts.electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=density_profile.address,
 )
 
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(types.field_loop_callback)
-def setField_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def setField(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(2 * np.pi * r[0] / (xmax - xmin))
 
 
-sim.field_loop(handler=setField_callback.address)
+sim.field_loop(handler=setField.address)
 
 
 # =================================OUTPUT========================================
@@ -56,8 +56,8 @@ pxLim = 5 * np.sqrt(temperature * consts.electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1] / (xmax - xmin)) * (xpx_dist.shape[0] / (2 * pxLim))
 
 
-@cfunc(types.particle_loop_callback)
-def xpx_callback(r, p, w, id, data_double, data_int):
+@cfunc(types.particle_loop)
+def xpx(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1] * (r[0] - xmin) / (xmax - xmin))
     iy = int(xpx_dist.shape[0] * 0.5 * (1 + p[0] / pxLim))
     data = carray(data_double, xpx_dist.shape, dtype=np.double)
@@ -82,7 +82,7 @@ fig.colorbar(plot0, ax=axs[0], location="right")
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(
-        name="electron", handler=xpx_callback.address, data_double=pipic.addressof(xpx_dist)
+        name="electron", handler=xpx.address, data_double=pipic.addressof(xpx_dist)
     )
     plot0.set_data(xpx_dist)
 
@@ -91,12 +91,12 @@ def plot_xpx():
 Ex = np.zeros((32,), dtype=np.double)
 
 
-@cfunc(types.it2r_callback)
+@cfunc(types.it2r)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(types.custom_field_loop_callback)
+@cfunc(types.custom_field_loop)
 def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 

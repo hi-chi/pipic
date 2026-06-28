@@ -37,11 +37,11 @@ The implementation of new solvers is exemplified [here][solver_development_noteb
 
 
 # New in $\pi$-PIC v1.3
-The following updates has been made for $\pi$-PIC v.3. For more details see Ref.[2].
+The following updates have been made for $\pi$-PIC v1.3. For more details see Ref.[2].
 - [`extension`][extensions] for moving window simulations.
 - [`extension`][extensions] for absorbing boundaries.
-- Improved structure for handeling fields and particles in C++ extensions.
-- An energy conserving solver with improved momentum conservation `emc`.
+- Improved structure for handling fields and particles in C++ extensions.
+- An energy-conserving solver with improved momentum conservation `emc2`.
 
 
 # New in $\pi$-PIC v1.2

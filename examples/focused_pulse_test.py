@@ -49,12 +49,12 @@ field_output = np.zeros((sim.ny, sim.nx), dtype=np.double)
 xmin, ymin = sim.xmin, sim.ymin
 nx, ny = sim.nx, sim.ny
 stepx, stepy = L/nx, L/ny
-@cfunc(types.it2r_callback)
+@cfunc(types.it2r)
 def fieldPlot_it2r(it, r, data_double, data_int):
     r[0] = xmin + stepx*(it[0] % nx)
     r[1] = ymin + stepy*(it[0] - (it[0] % nx))/nx
     r[2] = 0
-@cfunc(types.custom_field_loop_callback)
+@cfunc(types.custom_field_loop)
 def fieldPlot_cb(it, r, field, data_double, data_int):
     Field = carray(data_double, field_output.shape, dtype=np.double)
     Field[int((it[0] - (it[0] % nx))/nx), (it[0] % nx)] = np.sqrt(field[0]*field[0] + field[1]*field[1] + field[2]*field[2])
@@ -88,7 +88,7 @@ for i in range(frames):
 
 
 # An example of setting field directly in Python
-# @cfunc(types.field_loop_callback)
+# @cfunc(types.field_loop)
 # def setField_cb(ind, r, E, B, data_double, data_int):
 #     R = np.sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
 #     if R == 0:

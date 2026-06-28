@@ -34,6 +34,7 @@ EXTENSION_TEST_FILES = collect_extension_test_files(EXTENSIONS_DIR)
 
 SOLVERS = [
     'electrostatic_1d',
+    'electrostatic_1d_implicit',
     'ec',
     'ec2',
     'emc2',

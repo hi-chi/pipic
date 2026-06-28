@@ -27,11 +27,11 @@ timestep = plasma_period / 64
 simulation_steps = get_pic_steps(int(2 * plasma_period / timestep))
 
 # --------------------- initial state functions ----------------------
-@cfunc(types.add_particles_callback)
+@cfunc(types.add_particles)
 def density_profile(r, data_double, data_int):
    return density
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def initial_field(ind, r, E, B, data_double, data_int):
     E[2] = field_amplitude * np.sin(np.pi * r[2]/ zmax)
 
@@ -58,8 +58,8 @@ sim.add_particles(name='particle_name',
 
 # --------------------- add handler for reading field and particle loops ----------------------
 field_dd = np.zeros((nx, nz), dtype=np.double)  # array for saving Ez-field
-@cfunc(types.field_loop_callback)
-def field_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def get_field(ind, r, E, B, data_double, data_int):
     # read Ez in the xz plane at y=0
     data = carray(data_double, field_dd.shape, dtype=np.double)
     if ind[1] == ny // 2:
@@ -68,8 +68,8 @@ def field_callback(ind, r, E, B, data_double, data_int):
 particle_dd = np.zeros((100, 100), dtype=np.double)  # array for saving particle (integrated) phase-space
 pmin = -np.sqrt(consts.electron_mass * temperature)*5 # minimum momentum
 pmax = np.sqrt(consts.electron_mass * temperature)*5 # maximum momentum
-@cfunc(types.particle_loop_callback)
-def particle_callback(r, p, w, id, data_double, data_int):
+@cfunc(types.particle_loop)
+def get_particle_phase(r, p, w, id, data_double, data_int):
     # save particle momentum and position
     data = carray(data_double, particle_dd.shape, dtype=np.double)
     ip = int(particle_dd.shape[0] * (p[2] - pmin) / (pmax - pmin))
@@ -84,10 +84,10 @@ for i in range(simulation_steps):
     
     sim.advance(time_step=timestep,number_of_iterations=1)    
 
-    sim.field_loop(handler=field_callback.address, 
+    sim.field_loop(handler=get_field.address, 
                     data_double=pipic.addressof(field_dd),
                     use_omp=True)
     
     sim.particle_loop(name='particle_name', 
-                            handler=particle_callback.address, 
+                            handler=get_particle_phase.address, 
                                 data_double=pipic.addressof(particle_dd))

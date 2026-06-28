@@ -19,10 +19,17 @@ Contact: arkady.gonoskov@gu.se.
 -------------------------------------------------------------------------------------------------------*/
 """
 
+import warnings
+
 import numba as nb
 
 # __all__ is used to not pollute the namespace when using 'from xyz import *'
 __all__ = [
+    "add_particles",
+    "particle_loop",
+    "field_loop",
+    "it2r",
+    "custom_field_loop",
     "add_particles_callback",
     "particle_loop_callback",
     "field_loop_callback",
@@ -31,14 +38,31 @@ __all__ = [
     "handler_callback",
 ]
 
+_LEGACY_CALLBACK_NAMES = {
+    "add_particles_callback": "add_particles",
+    "particle_loop_callback": "particle_loop",
+    "field_loop_callback": "field_loop",
+    "it2r_callback": "it2r",
+    "custom_field_loop_callback": "custom_field_loop",
+}
 
-add_particles_callback = nb.types.double(
+
+def _warn_legacy_callback_name(name, replacement, stacklevel=2):
+    warnings.warn(
+        f"`{name}` is deprecated and will be removed in a future release. "
+        f"Use `{replacement}` instead.",
+        FutureWarning,
+        stacklevel=stacklevel,
+    )
+
+
+add_particles = nb.types.double(
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.int32),
 )
 
-particle_loop_callback = nb.types.void(
+particle_loop = nb.types.void(
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
@@ -47,7 +71,7 @@ particle_loop_callback = nb.types.void(
     nb.types.CPointer(nb.types.int32),
 )
 
-field_loop_callback = nb.types.void(
+field_loop = nb.types.void(
     nb.types.CPointer(nb.types.int32),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
@@ -56,14 +80,14 @@ field_loop_callback = nb.types.void(
     nb.types.CPointer(nb.types.int32),
 )
 
-it2r_callback = nb.types.void(
+it2r = nb.types.void(
     nb.types.CPointer(nb.types.int32),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.int32),
 )
 
-custom_field_loop_callback = nb.types.void(
+custom_field_loop = nb.types.void(
     nb.types.CPointer(nb.types.int32),
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.double),
@@ -80,3 +104,11 @@ handler_callback = nb.types.void(
     nb.types.CPointer(nb.types.double),
     nb.types.CPointer(nb.types.int32),
 )
+
+
+def __getattr__(name):
+    if name in _LEGACY_CALLBACK_NAMES:
+        replacement = _LEGACY_CALLBACK_NAMES[name]
+        _warn_legacy_callback_name(name, replacement, stacklevel=3)
+        return globals()[replacement]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -45,7 +45,7 @@ Here we list extensions with short descriptions, references and contacts of deve
         # par[3] is the angle between r and e_axis (\in [0, pi))
       return "any function of par"
       ```
-      The use of the extension is examplified with the case of setting electric dipole wave in 'examples/focused_pulse_test.py'.
+      The use of the extension is exemplified with the case of setting electric dipole wave in 'examples/focused_pulse_test.py'.
 
 - **absorbing_boundaries** is an extension for applying absorbing boundaries to a simulation box. Fields and density modulations are damped according to the smooth function $f(r(x))=exp(-sr(x)\Delta t/T),\,\,r(x) = cos(\pi x/2) - \frac{1}{cos(\pi x/2)}$ where $x$ is normalized between the edge of the boundary and the simulation box, $s$ is a shape parameter and $\Delta t$ is the timestep. For optimal damping it is recommended that $s\Delta t\approx1$ and the boundary is $\approx4\lambda$ where $\lambda$ is the wavelength of the electromagnetic signal being absorbed.<br>
 *implemented by Frida Brogren* (frida.brogren@gu.se) *and Arkady Gonoskov* </br>
@@ -56,8 +56,10 @@ Here we list extensions with short descriptions, references and contacts of deve
                   subject="particle_name,cells",  # apply to both particles and cells
                   handler=absorbing_boundaries.handler(sim.ensemble_data(),
                                                        sim.simulation_box(),
+                                                       characteristic_wavelength,
                                                        ...),
                   field_handler=absorbing_boundaries.field_handler(sim.simulation_box(),
+                                                                   characteristic_wavelength,
                                                                    ...),
                   data_int=pipic.addressof(data_int),)
   ```
@@ -66,22 +68,25 @@ Here we list extensions with short descriptions, references and contacts of deve
     - **ensemble_data** (`C++ object address`)  
       The particle ensemble data from the simulation.
 
-    - **simulation_box** (`C++ object address`)  
+    - **simulation_box** (`C++ object address`)
       Geometry of the simulation box.
 
-    - **density_profile** (`address to callable` | optional, default = `-1`)  
-      Address to callback function (`@cfunc(types.add_particles_callback)`) for retrieving the particle density profile.  
+    - **characteristic_wavelength** (`float`)
+      Characteristic wavelength (in cm), used to set default boundary size and damping rate.
+
+    - **density_profile** (`address to callable` | optional, default = `-1`)
+      Address to function with decorator `@cfunc(types.add_particles)` for retrieving the particle density profile.
       If `-1`, no density profile is used and the density is 0 at the boundary.
 
-    - **boundary_size** (`float`, optional, default = `l/8`)  
-      Size of the absorbing boundary region (in cm).  
-      Defaults to simulation box size in the direction of the boundary divided by 8.
+    - **boundary_size** (`float`, optional, default = `-1.0`)
+      Size of the absorbing boundary region (in cm).
+      If negative, defaults to `8 * characteristic_wavelength`.
 
     - **axis** (`str`, optional, default = `'x'`)  
       Axis along which the absorbing boundary is applied. Must be `'x'`, `'y'`,     or `'z'`.
 
-    - **fall** (`float`, optional, default = `0.01`)  
-      Shape parameter ($s$) for the damping function. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectivly end of the boundary.
+    - **fall** (`float`, optional, default = `-1.0`)
+      Shape parameter ($s$) for the damping function. If negative, defaults to `lightVelocity / characteristic_wavelength`; otherwise the provided value is scaled by `lightVelocity / characteristic_wavelength`. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectively end of the boundary.
 
     - **temperature** (`float`, optional, default = `0.0`)  
       Temperature for injecting replacement particles in the absorbing region.
@@ -99,17 +104,20 @@ Here we list extensions with short descriptions, references and contacts of deve
       Direction of the moving window.
 
   - **Field handler variables:**
-    - **simulation_box** (`C++ object address`)  
+    - **simulation_box** (`C++ object address`)
       Geometry of the simulation box.
 
-    - **boundary_size** (`float`, optional, default = `-1.0`)  
+    - **characteristic_wavelength** (`float`)
+      Characteristic wavelength (in cm), used to set default boundary size and damping rate.
+
+    - **boundary_size** (`float`, optional, default = `-1.0`)
       Size (in cm) of the absorbing boundary region for fields.
 
     - **axis** (`str`, optional, default = `'x'`)  
       Axis along which the field absorbing layer is applied. Must be `'x'`, `'y'` or `'z'`.
 
-    - **fall** (`float`, optional, default = `0.01`)  
-      Shape parameter ($s$) for the damping function. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectivly end of the boundary.
+    - **fall** (`float`, optional, default = `-1.0`)
+      Shape parameter ($s$) for the damping function. If negative, defaults to `lightVelocity / characteristic_wavelength`; otherwise the provided value is scaled by `lightVelocity / characteristic_wavelength`. For large $s>>1$ and small $0<s<<1$ the function approaches a step function at the start respectively end of the boundary.
 
 
 
@@ -119,7 +127,7 @@ Here we list extensions with short descriptions, references and contacts of deve
   **Usage:**  
   ```python
   sim.add_handler(name=moving_window.name,
-                  subject="particle_name,cells",  # apply to both particles and fields
+                  subject="particle_name,cells",  # apply to both particles and cells
                   handler=moving_window.handler(sim.simulation_box(),
                                                 particles_per_cell,
                                                 temperature,
@@ -141,7 +149,7 @@ Here we list extensions with short descriptions, references and contacts of deve
       Temperature of injected particles.
 
     - **density_profile** (`address to callable`)  
-      Callback function (`@cfunc(types.add_particles_callback)`) for retrieving the particle density profile.  
+      Callback function (`@cfunc(types.add_particles)`) for retrieving the particle density profile.  
 
     - **thickness** (`float`, optional, default = `n//8`)  
       Thickness of the moving window re-injection region in space steps.  

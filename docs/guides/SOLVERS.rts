@@ -358,9 +358,9 @@ Initialize the field solver with the simulation box containing grid geometry.
 
 **Required Pure Virtual Methods:**
 
-- ``void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false)`` - *Must implement*. Iterates over all grid nodes and calls user-provided handler callback for each:
+- ``void fieldLoop(int64_t handler, int64_t dataDouble = 0, int64_t dataInt = 0, bool useOmp = false)`` - *Must implement*. Iterates over all grid nodes and calls user-provided handler for each grid node.
 
-  - ``handler`` - Function pointer to callback with signature: ``void handler(int *ind, double *r, double *E, double *B, double *dataDouble, int *dataInt)``
+  - ``handler`` - Pointer to function with signature: ``void handler(int *ind, double *r, double *E, double *B, double *dataDouble, int *dataInt)``
   - ``ind[0], ind[1], ind[2]`` - Three-index of the node (grid coordinates)
   - ``ind[4]`` - Field component code: 0=Ex, 1=Ey, 2=Ez, 3=Bx, 4=By, 5=Bz, 6=all
   - ``r`` - Physical coordinates of the node

@@ -8,7 +8,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Run basic pi-PIC example with a selected solver.")
 parser.add_argument(
     "--solver",
-    default="electrostatic_1d",
+    default="fourier_boris",
     help="Solver to use.",
 )
 parser.add_argument(
@@ -37,8 +37,8 @@ time_step = plasma_period / 64
 sim = pipic.init(solver=solver_name, nx=nx, xmin=xmin, xmax=xmax)
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):
+@cfunc(types.add_particles)
+def init_density(r, data_double, data_int):
     return density #* (abs(r[0]) < l / 4)
 
 print(consts.electron_charge)
@@ -49,24 +49,24 @@ sim.add_particles(
     charge=consts.electron_charge,
     mass=consts.electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=init_density.address,
 )
 
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(types.field_loop_callback)
-def setField_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def setField(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4 * np.pi * r[0] / (xmax - xmin)) #* (abs(r[0]) < l / 4)
 
 
-sim.field_loop(handler=setField_callback.address)
+sim.field_loop(handler=setField.address)
 
 
 # -------------------------preparing output of Ex(x)-----------------------------
 Ex = np.zeros((nx,1), dtype=np.double)
 
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_Ex(ind, r, E, B, data_double, data_int):
     data = carray(data_double, Ex.shape, dtype=np.double)
     if ind[0] < nx:

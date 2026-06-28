@@ -21,8 +21,8 @@ sim = pipic.init(solver="ec", nx=nx, xmin=xmin, xmax=xmax)
 
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(add_particles_callback)
-def density_callback(r, data_double, data_int):  # callback function
+@cfunc(add_particles)
+def density(r, data_double, data_int): 
     return density * (abs(r[0]) < 32 * debye_length) * (r[0] >= 0)
 
 
@@ -32,12 +32,12 @@ sim.add_particles(
     charge=electron_charge,
     mass=electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=density.address,
 )
 
 
-@cfunc(add_particles_callback)
-def density_callback1(r, data_double, data_int):  # callback function
+@cfunc(add_particles)
+def density1(r, data_double, data_int): 
     return density * (abs(r[0]) < 32 * debye_length) * (r[0] < 0)
 
 
@@ -47,7 +47,7 @@ sim.add_particles(
     charge=electron_charge,
     mass=electron_mass,
     temperature=temperature,
-    density=density_callback1.address,
+    density=density1.address,
 )
 
 # ------------------------------adding extension---------------------------------
@@ -58,12 +58,12 @@ sim.add_handler(name=x_converter_c.name, subject="electron1", handler=extension_
 
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(field_loop_callback)
-def setField_callback(ind, r, E, B, data_double, data_int):
+@cfunc(field_loop)
+def setField(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * math.sin(4 * math.pi * r[0] / (xmax - xmin)) * (abs(r[0]) < L / 4)
 
 
-sim.field_loop(handler=setField_callback.address)
+sim.field_loop(handler=setField.address)
 
 
 # =================================OUTPUT========================================
@@ -73,8 +73,8 @@ pxLim = 5 * math.sqrt(temperature * electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1] / (xmax - xmin)) * (xpx_dist.shape[0] / (2 * pxLim))
 
 
-@cfunc(particle_loop_callback)
-def xpx_callback(r, p, w, id, data_double, data_int):
+@cfunc(particle_loop)
+def xpx(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1] * (r[0] - xmin) / (xmax - xmin))
     iy = int(xpx_dist.shape[0] * 0.5 * (1 + p[0] / pxLim))
     data = carray(data_double, xpx_dist.shape, dtype=numpy.double)
@@ -85,11 +85,11 @@ def xpx_callback(r, p, w, id, data_double, data_int):
 def plot_xpx():
     xpx_dist.fill(0)
     sim.particle_loop(
-        name="electron", handler=xpx_callback.address, data_double=addressof(xpx_dist)
+        name="electron", handler=xpx.address, data_double=addressof(xpx_dist)
     )
     xpx_dist.fill(0)
     sim.particle_loop(
-        name="electron1", handler=xpx_callback.address, data_double=addressof(xpx_dist)
+        name="electron1", handler=xpx.address, data_double=addressof(xpx_dist)
     )
     return xpx_dist.sum()
 
@@ -98,12 +98,12 @@ def plot_xpx():
 Ex = numpy.zeros((32,), dtype=numpy.double)
 
 
-@cfunc(it2r_callback)
+@cfunc(it2r)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax - xmin) / Ex.shape[0]
 
 
-@cfunc(custom_field_loop_callback)
+@cfunc(custom_field_loop)
 def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 

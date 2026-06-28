@@ -68,7 +68,7 @@ Iterate over grid nodes to initialize or read field values.
 
 **Parameters:**
 
-- ``handler`` (int): Address of field loop callback.
+- ``handler`` (int): Address of field loop function.
 - ``data_double`` (int, optional): Address of double-precision data array.
 - ``data_int`` (int, optional): Address of integer data array.
 - ``use_omp`` (bool, optional): Enable OpenMP parallelization. Default: False.
@@ -80,7 +80,7 @@ Iterate over grid nodes to initialize or read field values.
     from numba import cfunc
     from pipic import types
     
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def field_handler(ind, r, E, B, data_double, data_int):
         # ind: grid indices [ix, iy, iz, component_code]
         # r: position [x, y, z]
@@ -91,7 +91,7 @@ Iterate over grid nodes to initialize or read field values.
 
 .. code-block:: python
 
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def set_field(ind, r, E, B, data_double, data_int):
         E[0] = 1e4 * np.sin(2*np.pi*r[0]/L)
     
@@ -112,7 +112,7 @@ Add particles to the simulation.
 - ``charge`` (float): Particle charge in esu (use ``pipic.consts.electron_charge`` for electrons).
 - ``mass`` (float): Particle mass in grams (use ``pipic.consts.electron_mass`` for electrons).
 - ``temperature`` (float): Initial thermal energy in erg, defined as :math:`\\frac{2}{3}\\langle E_k \\rangle`.
-- ``density`` (int): Address of density callback function (see below).
+- ``density`` (int): Address of density function (see below).
 - ``data_double`` (int, optional): Address of double-precision data array. Default: 0.
 - ``data_int`` (int, optional): Address of integer data array. Default: 0.
 
@@ -123,7 +123,7 @@ Add particles to the simulation.
     from numba import cfunc
     from pipic import types
     
-    @cfunc(types.add_particles_callback)
+    @cfunc(types.add_particles)
     def uniform_density(r, data_double, data_int):
         return 1e18  # cm⁻³
     
@@ -141,22 +141,23 @@ Add particles to the simulation.
     from numba import cfunc
     from pipic import types
     
-    @cfunc(types.add_particles_callback)
+    @cfunc(types.add_particles)
     def density_profile(r, data_double, data_int):
         # r[0] = x, r[1] = y, r[2] = z
         return density_value  # particles per cm³
 
-``sim.particle_loop(name, handler, data_double=0, data_int=0)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``sim.particle_loop(name, handler, data_double=0, data_int=0, use_omp=False)``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Iterate over particles of a specific type (single-threaded).
+Iterate over particles of a specific type.
 
 **Parameters:**
 
 - ``name`` (str): Particle species to loop over.
-- ``handler`` (int): Address of particle loop callback.
+- ``handler`` (int): Address of particle loop function.
 - ``data_double`` (int, optional): Address of double-precision data array.
 - ``data_int`` (int, optional): Address of integer data array.
+- ``use_omp`` (bool, optional): Enable OpenMP parallelization. Default: False.
 
 **Handler signature:**
 
@@ -165,13 +166,13 @@ Iterate over particles of a specific type (single-threaded).
     from numba import cfunc, carray
     from pipic import types
     
-    @cfunc(types.particle_loop_callback)
+    @cfunc(types.particle_loop)
     def particle_handler(r, p, w, id, data_double, data_int):
         # r: position array [x, y, z]
-        # p: momentum array [px, py, pz]
-        # w: weight array [weight]
+        # p: momentum array [px, py, pz] - can be modified
+        # w: weight array [weight] - set to 0 to remove the particle
         # id: particle ID array [id]
-        # Read but DO NOT modify r, p, w, id directly
+        # Do not modify id directly
         # Use data arrays for output
 
 Add Handler
@@ -186,8 +187,8 @@ Register a custom extension handler.
 
 - ``name`` (str): Handler identifier.
 - ``subject`` (str, optional): Target particle types (e.g., ``"electron, positron"``), ``"all_types"``, or ``"cells"``. Default: empty.
-- ``handler`` (int, optional): Address of particle/cell handler callback. Default: 0.
-- ``field_handler`` (int, optional): Address of field handler callback. Default: 0.
+- ``handler`` (int, optional): Address of particle/cell handler. Default: 0.
+- ``field_handler`` (int, optional): Address of field handler. Default: 0.
 - ``data_double`` (int, optional): Address of double-precision shared data.
 - ``data_int`` (int, optional): Address of integer shared data.
 
@@ -197,9 +198,12 @@ Register a custom extension handler.
 
     import pipic.extensions.qed_gonoskov2015 as qed
     
-    handler_ptr = qed.handler()
+    electron_type = sim.get_type_index('electron')
+    positron_type = sim.get_type_index('positron')
+    photon_type = sim.get_type_index('photon')
+    handler_ptr = qed.handler(electron_type, positron_type, photon_type)
     sim.add_handler(name='qed_gonoskov2015',
-                   subject='electron, positron',
+                   subject='electron, positron, photon',
                    handler=handler_ptr)
 
 Constants and Utilities
@@ -221,16 +225,19 @@ Access physical constants via ``pipic.consts``:
     consts.pi                  # π = 3.14159...
     consts.hbar                # ℏ = 1.055×10⁻²⁷ erg·s
 
-Callback Types
+Decorators
 ^^^^^^^^^^^^^^
 
-Callback type signatures via ``pipic.types``:
+Decorators via ``pipic.types``:
 
-- ``types.add_particles_callback``: For density profiles
-- ``types.particle_loop_callback``: For particle iteration
-- ``types.field_loop_callback``: For field iteration
-- ``types.it2r_callback``: For mapping custom-loop iteration indices to coordinates
-- ``types.custom_field_loop_callback``: For processing one selected custom-loop field
+- ``types.add_particles``: For density profiles
+- ``types.particle_loop``: For particle iteration
+- ``types.field_loop``: For field iteration
+- ``types.it2r``: For mapping custom-loop iteration indices to coordinates
+- ``types.custom_field_loop``: For processing one selected custom-loop field
+
+The previous ``*_callback`` names for these signatures are still accepted for compatibility,
+but they emit a ``FutureWarning``.
 
 Utilities
 ^^^^^^^^^
@@ -238,7 +245,7 @@ Utilities
 ``pipic.addressof(array)``
 """"""""""""""""""""""""""
 
-Get memory address of NumPy array for passing to callbacks.
+Get memory address of NumPy array for passing to function.
 
 **Parameters:**
 
@@ -252,7 +259,7 @@ Get memory address of NumPy array for passing to callbacks.
 
     import numpy as np
     data = np.zeros(100, dtype=np.double)
-    sim.field_loop(handler=callback.address,
+    sim.field_loop(handler=function.address,
                   data_double=pipic.addressof(data))
 
 Advanced Usage
@@ -289,9 +296,9 @@ Sample a selected field at arbitrary coordinates.
 
 **Parameters:**
 
-- ``handler`` (int): Address of custom field callback, with signature ``handler(it, r, field, data_double, data_int)``.
+- ``handler`` (int): Address of custom function, with signature ``handler(it, r, field, data_double, data_int)``.
 - ``number_of_iterations`` (int, optional): Number of sample points.
-- ``it2r`` (int, optional): Address of coordinate callback.
+- ``it2r`` (int, optional): Address of coordinate function.
 - ``field`` (str, optional): Field selector. Generic ``getEB`` solvers support ``E`` and ``B``.
 - ``data_double`` (int, optional): Address of double-precision data array.
 - ``data_int`` (int, optional): Address of integer data array.

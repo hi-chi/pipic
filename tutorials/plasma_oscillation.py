@@ -21,7 +21,7 @@ sim=pipic.init(solver='ec2', # using energy-conserving (ec) solver, other option
                xmin=xmin,xmax=xmax,
                nx=nx)
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def initial_field(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4*np.pi * r[0]/ (xmax-xmin))
 
@@ -29,7 +29,7 @@ def initial_field(ind, r, E, B, data_double, data_int):
 sim.field_loop(handler=initial_field.address) # setting initial field
 
 # Define functions for initiating the simulation
-@cfunc(types.add_particles_callback)
+@cfunc(types.add_particles)
 def density_profile(r, data_double, data_int):
     return density
 
@@ -46,8 +46,8 @@ sim.add_particles(name='particle_name',
 # define functions and arrays for reading and saving field and particle phase space 
 # For reading Ex field 
 field_dd = np.zeros((nx,), dtype=np.double)  # array for saving Ez-field
-@cfunc(types.field_loop_callback)
-def field_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def field_loop(ind, r, E, B, data_double, data_int):
     # read Ez in the xz plane at y=0
     data = carray(data_double, field_dd.shape, dtype=np.double)
     data[ind[0]] = E[0]
@@ -58,8 +58,8 @@ pmin = -np.sqrt(consts.electron_mass * temperature)*5 # minimum momentum
 pmax = np.sqrt(consts.electron_mass * temperature)*5 # maximum momentum
 dp = (pmax - pmin) / particle_dd.shape[0] # momentum step
 dx = (xmax - xmin) / particle_dd.shape[1] # position step
-@cfunc(types.particle_loop_callback)
-def particle_callback(r, p, w, id, data_double, data_int):
+@cfunc(types.particle_loop)
+def particle_loop(r, p, w, id, data_double, data_int):
     # save particle momentum and position
     data = carray(data_double, particle_dd.shape, dtype=np.double)
     ip = int(particle_dd.shape[0] * (p[0] - pmin) / (pmax - pmin))
@@ -98,15 +98,14 @@ if not os.path.exists(save_to):
 
 for i in range(frames):
     sim.advance(time_step=timestep, number_of_iterations=8,use_omp=True)
-    sim.field_loop(handler=field_callback.address, 
+    sim.field_loop(handler=field_loop.address,
                    data_double=pipic.addressof(field_dd),
                    use_omp=True)
     
     particle_dd.fill(0)
     sim.particle_loop(name='particle_name', 
-                      handler=particle_callback.address, 
+                      handler=particle_loop.address,
                       data_double=pipic.addressof(particle_dd))
     Ex_plot.set_ydata(field_dd)
     xpx_plot.set_data(particle_dd)
     plt.savefig(save_to + f'plasma_oscillation_{i:03d}.png', dpi=150)
-

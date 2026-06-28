@@ -56,8 +56,8 @@ def pulse(eta, phi):
     )
 
 
-@cfunc(types.field_loop_callback)
-def field_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def set_field(ind, r, E, B, data_double, data_int):
     if data_int[0] == 0 or ymax - r[1] < boundarySize:
         # computing longitudinal and transverse coordinates:
         lCoord = (
@@ -106,8 +106,8 @@ temperature = 4 * np.pi * density * (consts.electron_charge**2) * debye_length**
 particlesPerCell = 100
 
 
-@cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):  # callback function
+@cfunc(types.add_particles)
+def init_density(r, data_double, data_int):  
     return density * cos2shape(r[1] + wavelength, wavelength, wavelength)
 
 
@@ -117,7 +117,7 @@ sim.add_particles(
     charge=-consts.electron_charge,
     mass=consts.electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=init_density.address,
 )
 
 
@@ -127,7 +127,7 @@ oBz = np.zeros((ny, nx), dtype=np.double)
 maxField = 2 * fieldAmplitude
 
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def fieldBz_cb(ind, r, E, B, data_double, data_int):
     Bz = carray(data_double, oBz.shape, dtype=np.double)
     Bz[ind[1], ind[0]] = B[2]
@@ -143,7 +143,7 @@ def plot_field():
 oN = np.zeros((ny, nx), dtype=np.double)
 
 
-@cfunc(types.particle_loop_callback)
+@cfunc(types.particle_loop)
 def density_cb(r, p, w, id, data_double, data_int):
     ix = int(oN.shape[1] * (r[0] - xmin) / (xmax - xmin))
     iy = int(oN.shape[0] * (r[1] - ymin) / (ymax - ymin))
@@ -163,7 +163,7 @@ oEp = np.zeros((2 * nx,), dtype=np.double)  # field P-component of the pulse
 EpSize = 8 * wavelength  # size of the output
 
 
-@cfunc(types.it2r_callback)
+@cfunc(types.it2r)
 def E_it2r(it, r, data_double, data_int):
     lCoord = (it[0] + 0.5) * EpSize / oEp.shape[0]
     r[0] = lCoord * np.sin(incidenceAngle)
@@ -171,12 +171,12 @@ def E_it2r(it, r, data_double, data_int):
     r[2] = 0
 
 
-@cfunc(types.custom_field_loop_callback)
+@cfunc(types.custom_field_loop)
 def get_Ep(it, r, E, data_double, data_int):
     data_double[it[0]] = -E[0] * np.cos(incidenceAngle) + E[1] * np.sin(incidenceAngle)
 
 
-@cfunc(types.custom_field_loop_callback)
+@cfunc(types.custom_field_loop)
 def get_Es(it, r, E, data_double, data_int):
     data_double[it[0]] = E[2]
 
@@ -204,7 +204,7 @@ data_int = np.zeros((1,), dtype=np.intc)  # data for passing the iteration numbe
 steps = get_pic_steps(figStride * 21 + 1)
 for i in range(steps):
     data_int[0] = i
-    sim.field_loop(handler=field_callback.address, data_int=pipic.addressof(data_int), use_omp=True)
+    sim.field_loop(handler=set_field.address, data_int=pipic.addressof(data_int), use_omp=True)
     if i % figStride == 0:
         field_sum = plot_field()
         density_sum = plot_density()

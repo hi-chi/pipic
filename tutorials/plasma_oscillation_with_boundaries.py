@@ -50,7 +50,7 @@ sim = pipic.init(solver="ec2", xmin=xmin, xmax=xmax, nx=nx)
 # =============================================================================
 # PARTICLES
 # =============================================================================
-@cfunc(types.add_particles_callback)
+@cfunc(types.add_particles)
 def density_profile(r, data_double, data_int):
     """Uniform density profile."""
     return density
@@ -68,7 +68,7 @@ sim.add_particles(
 # =============================================================================
 # INITIAL FIELD
 # =============================================================================
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def initial_field(ind, r, E, B, data_double, data_int):
     """Applies a sinusoidal initial electric field in the region dmin < x < dmax."""
     if dmin < r[0] < dmax:
@@ -88,9 +88,9 @@ sim.field_loop(handler=initial_field.address)
 # --- Field diagnostic ---
 # array for saving Ex field
 field_dd = np.zeros((nx,), dtype=np.double)  # array for saving Ex field
-# callback function for field diagnostic
-@cfunc(types.field_loop_callback)
-def field_callback(ind, r, E, B, data_double, data_int):
+# function for field diagnostic
+@cfunc(types.field_loop)
+def field_loop(ind, r, E, B, data_double, data_int):
     """Store Ex."""
     data = carray(data_double, field_dd.shape, dtype=np.double)
     data[ind[0]] = E[0]
@@ -104,9 +104,9 @@ pmax = 5 * np.sqrt(consts.electron_mass * temperature)
 # momentum and position steps
 dp = (pmax - pmin) / particle_dd.shape[0]
 dx = (xmax - xmin) / particle_dd.shape[1]
-# callback function for particle phase space diagnostic
-@cfunc(types.particle_loop_callback)
-def particle_callback(r, p, w, id, data_double, data_int):
+# function for particle phase space diagnostic
+@cfunc(types.particle_loop)
+def particle_loop(r, p, w, id, data_double, data_int):
     """Calculate particle momentum-position phase space density."""
     data = carray(data_double, particle_dd.shape, dtype=np.double)
     ip = int(particle_dd.shape[0] * (p[0] - pmin) / (pmax - pmin))
@@ -203,7 +203,7 @@ for i in range(figures):
 
     # Collect diagnostics
     sim.field_loop(
-        handler=field_callback.address,
+        handler=field_loop.address,
         # pass address to field_dd array for storing Ex
         data_double=pipic.addressof(field_dd),
         # enable OpenMP parallelization
@@ -213,7 +213,7 @@ for i in range(figures):
     sim.particle_loop(
         # name of particle species to be processed
         name="particle_name",
-        handler=particle_callback.address,
+        handler=particle_loop.address,
         # pass address to particle_dd array for storing phase space
         data_double=pipic.addressof(particle_dd),
     )

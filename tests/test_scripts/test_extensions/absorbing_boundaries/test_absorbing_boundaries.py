@@ -39,8 +39,8 @@ boundarySize = (4)*wavelength
 fall = 1
 rot = -np.pi/4
 
-@cfunc(types.field_loop_callback)
-def setField_callback(ind, r, E, B, dataDouble, dataInt):
+@cfunc(types.field_loop)
+def setField(ind, r, E, B, dataDouble, dataInt):
     if dataInt[0] == 0:
 
         r_rot = (r[0]*np.cos(rot)+r[1]*np.sin(rot), -r[0]*np.sin(rot)+r[1]*np.cos(rot))
@@ -76,32 +76,32 @@ Bx = np.zeros((nx,ny), dtype=np.double)
 
 #------------------get functions-----------------------------------------------
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Bz(ind, r, E, B, dataDouble, dataInt):
     _Bz = carray(dataDouble, Bz.shape, dtype=np.double)
     _Bz[ind[1], ind[0]] = B[2]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ez(ind, r, E, B, dataDouble, dataInt):
     _Ez = carray(dataDouble, Ez.shape, dtype=np.double)
     _Ez[ind[1], ind[0]] = E[2]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_By(ind, r, E, B, dataDouble, dataInt):
     _By = carray(dataDouble, By.shape, dtype=np.double)
     _By[ind[1], ind[0]] = B[1]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ey(ind, r, E, B, dataDouble, dataInt):
     _Ey = carray(dataDouble, Ey.shape, dtype=np.double)
     _Ey[ind[1], ind[0]] = E[1]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ex(ind, r, E, B, dataDouble, dataInt):
     _Ex = carray(dataDouble, Ex.shape, dtype=np.double)
     _Ex[ind[1], ind[0]] = E[0]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Bx(ind, r, E, B, dataDouble, dataInt):
     _Bx = carray(dataDouble, Bx.shape, dtype=np.double)
     _Bx[ind[1], ind[0]] = B[0]
@@ -133,7 +133,7 @@ s = 1000
 s = get_pic_steps(s)
 for i in range(s):
     dataInt[0] = i
-    sim.field_loop(handler=setField_callback.address, data_int=pipic.addressof(dataInt), \
+    sim.field_loop(handler=setField.address, data_int=pipic.addressof(dataInt), \
                   use_omp=True)
     sim.advance(time_step=timeStep, number_of_iterations=1,use_omp=True)
     if i%20==0:

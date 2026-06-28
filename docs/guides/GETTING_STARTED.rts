@@ -31,9 +31,9 @@ Start by importing π-PIC and other necessary libraries:
 
 - ``pipic`` — The π-PIC simulation framework
 - ``consts`` — Physical constants (electron charge, mass, speed of light)
-- ``types`` — Numba callback type signatures
+- ``types`` — Numba signatures for compiling Python code into C++
 - ``numpy`` — Numerical array operations
-- ``numba`` — JIT compilation for Python callbacks
+- ``numba`` — C++ compatible type definition for data exchange between C++ backend and Python interface
 
 Step 2: Define Simulation Parameters
 -------------------------------------
@@ -74,21 +74,21 @@ Set up the physical and numerical parameters for the simulation:
 - **Grid**: 128 cells in x-direction, 1 cell in y and z (pure 1D).
 - **Time step**: Chose small enough for stability (Courant condition).
 
-Step 3: Define Callbacks for Density and Fields
+Step 3: Initialize Density and Fields
 ------------------------------------------------
 
-Define Python callbacks (using Numba's @cfunc decorator) to initialize particles and fields. These decorators compile the functions to C-code so π-PIC can call them directly (no Python overhead) while keeping the authoring experience in Python.
-For the full list of callback signatures see `Callback Types <PYTHON_INTERFACE.html#callback-types>`_.
+Define Python functions (using Numba's @cfunc decorator) to initialize particles and fields. The decorators compile the functions to C-code so π-PIC can call them directly (no Python overhead) while keeping the authoring experience in Python.
+For the full list of decorators see `Types <PYTHON_INTERFACE.html#callback-types>`_.
 
 .. code-block:: python
 
-    @cfunc(types.add_particles_callback)
+    @cfunc(types.add_particles)
     def density_profile(r, data_double, data_int):
         """Uniform electron density."""
         return density
     
     
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def initial_field(ind, r, E, B, data_double, data_int):
         """Initialize electric field with sinusoidal perturbation."""
         x_left, x_right = -l / 4, l / 4
@@ -156,14 +156,14 @@ This advances the simulation by 256 time steps, corresponding to ~4 plasma perio
 Step 6: Extract Results
 -----------------------
 
-Define callbacks to read field and particle data during or after the simulation:
+Define functions to read field and particle data during or after the simulation:
 
 .. code-block:: python
 
     # Array to store electric field
     field_data = np.zeros(nx, dtype=np.double)
     
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def read_field(ind, r, E, B, data_double, data_int):
         """Extract Ex field along x-axis (at y=0, z=0)."""
         data = carray(data_double, (nx,), dtype=np.double)
@@ -176,7 +176,7 @@ Define callbacks to read field and particle data during or after the simulation:
     pmin = -np.sqrt(consts.electron_mass * temperature) * 5
     pmax = np.sqrt(consts.electron_mass * temperature) * 5
     
-    @cfunc(types.particle_loop_callback)
+    @cfunc(types.particle_loop)
     def read_particles(r, p, w, id, data_double, data_int):
         """Extract particle positions and momenta."""
         data = carray(data_double, (64, nx), dtype=np.double)

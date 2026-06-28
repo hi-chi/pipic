@@ -28,8 +28,9 @@ class init:
     def add_handler(
         self,
         name: str,
-        subject: str,
-        handler: int,
+        subject: str = ...,
+        handler: int = ...,
+        field_handler: int = ...,
         data_double: int = ...,
         data_int: int = ...,
     ) -> None: ...
@@ -44,7 +45,12 @@ class init:
         data_double: int = ...,
         data_int: int = ...,
     ) -> None: ...
-    def advance(self, time_step: float, number_of_iterations: int = ...) -> None: ...
+    def advance(
+        self,
+        time_step: float,
+        number_of_iterations: int = ...,
+        use_omp: bool = ...,
+    ) -> None: ...
     def custom_field_loop(
         self,
         handler: int,
@@ -67,14 +73,18 @@ class init:
     def get_number_of_particles(self) -> int: ...
     def get_type_index(self, type_name: str) -> int: ...
     def log_policy(self, log_to_file: bool = ..., log_to_screen: bool = ...) -> None: ...
+    def en_corr_type(self, correction_type: int = ...) -> None: ...
+    def ensemble_data(self) -> int: ...
     def particle_loop(
         self,
         name: str,
         handler: int,
         data_double: int = ...,
         data_int: int = ...,
+        use_omp: bool = ...,
     ) -> None: ...
     def set_rng_seed(self, seed: int) -> None: ...
+    def simulation_box(self) -> int: ...
     @property
     def nx(self) -> int: ...
     @property

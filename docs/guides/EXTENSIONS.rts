@@ -251,7 +251,7 @@ Field Generation
 focused_pulse
 """""""""""""
 
-**Description:** Inject a focused Gaussian laser pulse via a field handler (paraxial approximation).
+**Description:** Precompute and set the initial state of a tightly focused electromagnetic pulse via a field handler.
 
 **Configuration functions:**
 
@@ -263,7 +263,7 @@ focused_pulse
     focused_pulse.set_e_axis(x, y, z)        # Polarization direction
     focused_pulse.set_theta_max(theta_max)   # Angular aperture
     focused_pulse.set_l_size(l_size)         # Characteristic length
-    focused_pulse.set_shape(shape)           # Temporal shape function
+    focused_pulse.set_shape(shape_address)   # Numba callback address
     focused_pulse.add_pulse()                # Add configured pulse
     focused_pulse.clear_pulse()              # Clear all pulses
 
@@ -272,6 +272,7 @@ focused_pulse
 .. code-block:: python
 
     import pipic.extensions.focused_pulse as fp
+    from numba import cfunc, types as nbt
     
     fp.set_box(sim.nx, sim.ny, sim.nz,
               sim.xmin, sim.ymin, sim.zmin,
@@ -281,7 +282,12 @@ focused_pulse
     fp.set_e_axis(0, 1, 0)
     fp.set_theta_max(30.0)
     fp.set_l_size(3e-4)
-    fp.set_shape(lambda t: ...)
+
+    @cfunc(nbt.double(nbt.CPointer(nbt.double)))
+    def pulse_shape(par):
+        return ...
+
+    fp.set_shape(pulse_shape.address)
     fp.add_pulse()
 
     field_handler_ptr = fp.field_loop_cb()
@@ -292,7 +298,7 @@ focused_pulse
 **Notes:**
 
 - Only use as a field handler (no particle handler).
-- Paraxial approximation; keep beam waist and angle consistent with grid.
+- The shape function must be a C-callable function address, not a Python lambda.
 
 Boundary Handling
 ^^^^^^^^^^^^^^^^^
@@ -376,12 +382,12 @@ absorbing_boundaries
 - ``ensemble_data`` (int): Ensemble data pointer from ``sim.ensemble_data()``.
 - ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
 - ``characteristic_wavelength`` (float): Characteristic wavelength (cm).
-- ``density_profile`` (int): Density profile callback address. Default: -1.
+- ``density_profile`` (int): Density profile address. Default: -1.
 - ``boundary_size`` (float): Layer thickness (cm). Default: -1.0 (auto).
 - ``axis`` (char): Boundary axis. Default: 'x'.
 - ``fall`` (float): Field damping coefficient. Default: -1.0.
 - ``temperature`` (float): Temperature for re-injected particles. Default: 0.0.
-- ``particles_per_cell`` (float): Density for re-injection. Default: 1.0.
+- ``particles_per_cell`` (float): Number of macroparticles per cell used for re-injection. Default: 1.0.
 - ``remove_particles_every`` (int): Removal frequency. Default: 10.
 - ``moving_window_velocity`` (float): Moving window speed (cm/s). Default: 0.0.
 - ``moving_window_direction`` (char): Moving window axis. Default: 'x'.
@@ -418,7 +424,7 @@ absorbing_boundaries
                                                axis='x')
     
     sim.add_handler(name='absorber',
-                   subject='all_types',
+                   subject='all_types,cells',
                    handler=handler_ptr,
                    field_handler=field_handler_ptr)
 
@@ -444,10 +450,10 @@ moving_window
                         thickness=-1, velocity=lightVelocity, axis='x', angle=0)
 
 - ``simulation_box`` (int): Pointer from ``sim.simulation_box()``.
-- ``particles_per_cell`` (float): Particle density for re-injection.
+- ``particles_per_cell`` (float): Number of macroparticles per cell used for re-injection.
 - ``temperature`` (float): Temperature for re-injected particles (erg).
-- ``density_profile`` (int): Density profile callback address.
-- ``thickness`` (float): Boundary thickness (cm). Default: -1.
+- ``density_profile`` (int): Density profile address.
+- ``thickness`` (int): Boundary thickness in grid cells. Default: -1, which uses one eighth of the grid in the selected direction.
 - ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
 - ``axis`` (char): Movement axis. Default: 'x'.
 - ``angle`` (float): Window angle (radians). Default: 0.
@@ -460,7 +466,7 @@ moving_window
                                      velocity=lightVelocity, axis='x', angle=0)
 
 - ``simulation_box`` (int): Simulation box pointer.
-- ``thickness`` (float): Boundary thickness (cm). Default: -1.
+- ``thickness`` (int): Boundary thickness in grid cells. Default: -1, which uses one eighth of the grid in the selected direction.
 - ``velocity`` (float): Window velocity (cm/s). Default: ``lightVelocity``.
 - ``axis`` (char): Movement axis. Default: 'x'.
 - ``angle`` (float): Window angle (radians). Default: 0.
@@ -472,7 +478,7 @@ moving_window
     import pipic.extensions.moving_window as mw
     from pipic import consts, types
     
-    @cfunc(types.add_particles_callback)
+    @cfunc(types.add_particles)
     def density_profile(r, data_double, data_int):
         return 1e18
     
@@ -489,7 +495,7 @@ moving_window
                                         axis='x')
     
     sim.add_handler(name='moving_window',
-                   subject='all_types',
+                   subject='all_types,cells',
                    handler=handler_ptr,
                    field_handler=field_handler_ptr)
 
@@ -506,7 +512,7 @@ Extension Development
 Overview
 ^^^^^^^^
 
-Extensions connect to π-PIC via two types of an interfaces: one for particles and one for fields. The particle interface is based on the ``cellInterface`` structure, which provides direct data access without performance loss. The field access is realized through the ``fieldLoop()`` method defined for every ``field_solver``. The interfaces are defined in:
+Extensions connect to π-PIC via two interfaces: one for particles and one for fields. The Python particle interface is based on the ``CellInterface`` class, and the C/C++ particle interface is based on the ``cellInterface`` structure. The field access is realized through the ``field_loop()`` Python method. The interfaces are defined in:
 
 - Python: ``/pipic/interfaces/cellinterface.py``
 - C/C++: ``src/interfaces.h``
@@ -560,11 +566,10 @@ Python extensions use `Numba C callbacks <https://numba.readthedocs.io/en/stable
 
    .. code-block:: python
 
-       from numba import int32, float64
-       from ctypes import c_double, c_int
+       import numpy as np
        
-       DataDouble = (c_double * 10)()  # Array of 10 doubles
-       DataInt = (c_int * 5)()         # Array of 5 integers
+       DataDouble = np.zeros((10,), dtype=np.double)
+       DataInt = np.zeros((5,), dtype=np.intc)
 
 3. **Implement Handler** using ``CellInterface``:
 
@@ -572,30 +577,37 @@ Python extensions use `Numba C callbacks <https://numba.readthedocs.io/en/stable
 
        from numba import cfunc
        from pipic.types import handler_callback
+       from pipic.types import Double3
        from pipic.interfaces import CellInterface
        
        @cfunc(handler_callback)
        def Handler(CI_I, CI_D, CI_F, CI_P, CI_NP, data_double, data_int):
            C = CellInterface(CI_I, CI_D, CI_F, CI_P, CI_NP)
+           r = Double3(0, 0, 0)
+           p = Double3(0, 0, 0)
+           E = Double3(0, 0, 0)
+           B = Double3(0, 0, 0)
            
            # Process each particle in the subset
-           for ip in range(C.particleSubsetSize):
-               P = C.Particle(ip)
+           for ip in range(C.particle_subset_size):
+               C.get_r(ip, r)
+               C.get_p(ip, p)
                
                # Access electromagnetic field at particle position
-               E, B = C.interpolateField(P.r)
+               C.interpolate_field(r, E, B)
+
+               # Modify particle momentum. Do not modify particle positions.
+               p.x += ...
+               C.set_p(ip, p)
                
-               # Modify particle momentum/position
-               P.p.x += ...
+               # Remove particle if needed
+               if condition:
+                   C.set_w(ip, 0.0)
                
-               # Add new particle if needed
-               if C.particleBufferSize < C.particleBufferCapacity:
-                   newP = C.newParticle(C.particleBufferSize)
-                   newP.r = P.r
-                   newP.p = ...
-                   newP.w = P.w
-                   newP.id = target_type_index
-                   C.particleBufferSize += 1
+               # Add new particle if needed. The type index is stored in
+               # the new-particle buffer by add_particle().
+               if condition:
+                   C.add_particle(r, p, 1.0, target_type_index)
 
 4. **Create initialization function** returning Handler address:
 
@@ -611,7 +623,7 @@ Python extensions use `Numba C callbacks <https://numba.readthedocs.io/en/stable
 
    .. code-block:: python
 
-       from ctypes import addressof
+       from pipic import addressof
        
        def data_double():
            return addressof(DataDouble)
@@ -949,5 +961,3 @@ Performance Tips
 - **Minimize allocations** inside hot loops (particle/cell processing).
 - **Use thread-local RNG** via ``CI.rngSeed`` for deterministic random number generation.
 - **Disable threading** during debugging: ``sim.advance(..., use_omp=False)``.
-
-

@@ -43,8 +43,8 @@ if __name__ == '__main__':
     E0 = -a0 * consts.electron_mass * consts.light_velocity * omega / consts.electron_charge #[statV/cm] 
 
 
-    @cfunc(types.field_loop_callback)
-    def initiate_field_callback(ind, r, E, B, data_double, data_int):
+    @cfunc(types.field_loop)
+    def initiate_field(ind, r, E, B, data_double, data_int):
 
         if data_int[0] == 0:       
             x = r[0]
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     density_drop = end_upramp
     end_of_plasma = density_drop + 2*xmax
 
-    @cfunc(types.add_particles_callback)
+    @cfunc(types.add_particles)
     def density_profile(r, data_double, data_int):
         # r is the position in the 'lab frame'  
         R = r[0]  # moving window position
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     #------------------get functions-----------------------------------------------
         
-    @cfunc(types.particle_loop_callback)
+    @cfunc(types.particle_loop)
     def get_density(r, p, w, id, data_double, data_int):  
         ix = int(rho.shape[0]*(r[0] - xmin)/(xmax - xmin))
 
@@ -100,17 +100,17 @@ if __name__ == '__main__':
             data[ix] += w[0]/(dx)
     
 
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def get_field_Ey(ind, r, E, B, data_double, data_int):
         _E = carray(data_double, Ey.shape, dtype=np.double)
         _E[ind[0],] = E[1]
  
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def get_field_Ex(ind, r, E, B, data_double, data_int):       
         _E = carray(data_double, Ex.shape, dtype=np.double)
         _E[ind[0],] = E[0]
   
-    @cfunc(types.field_loop_callback)
+    @cfunc(types.field_loop)
     def get_field_Ez(ind, r, E, B, data_double, data_int):      
         _E = carray(data_double, Ez.shape, dtype=np.double)
         _E[ind[0],] = E[2]
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     data_int = np.zeros((1, ), dtype=np.intc) # data for passing the iteration number
 
     #-----------------------initiate field and plasma-------------------------
-    sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof(data_int),
+    sim.field_loop(handler=initiate_field.address, data_int=pipic.addressof(data_int),
                     use_omp=True)
 
     # This part is just for initiating the electron species, 

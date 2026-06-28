@@ -27,21 +27,21 @@ Here we instruct the container to use first-order energy-conserving solver and a
 > [!NOTE]
 > Note that all physical quantities are in CGS units.
 
-To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `-electron_charge` and mass `electron_mass`, and then distribute `sim.nx*50` macriparticles to achieve uniform density `Density` within region $x \in \,$`[L/4, L/4]` at temperature `temperature` (two-thirds of the average kinetic energy). Assuming `xmax=-xmin=L/2` this corresponds to 100 particles per cell (ppc) on average.
+To add particles one first defines the density as a function of coordinate ($x=$ `r[0]`) and then passes the function address to the container together with other necessary parameters. In the following example, we define particle type with name `electron`, charge `electron_charge` and mass `electron_mass`, and then distribute `500*nx` macroparticles to achieve uniform density `Density` within region $x \in \,$`[L/4, L/4]` at temperature `temperature` (two-thirds of the average kinetic energy). Assuming `xmax=-xmin=L/2` this corresponds to 1000 particles per cell (ppc) on average in the occupied region.
 ```
-@cfunc(types.add_particles_callback)
+@cfunc(types.add_particles)
 def density_callback(r, data_double, data_int):
     return density * (abs(r[0]) < l/4)
 
 sim.add_particles(name='electron', number=500*nx,
-                  charge=-consts.electron_charge, mass=consts.electron_mass,
+                  charge=consts.electron_charge, mass=consts.electron_mass,
                   temperature=temperature, density=density_callback.address)
 ```
 The algorithm can include mathematical functions and most of the programming elements within the functionality of `numba` callbacks (see https://numba.readthedocs.io/en/stable/user/cfunc.html). Note that one can use global variables defined earlier, but their later change within Python routines will not take effect for the function. To communicate data between callback environment and Python environment one can pass address to allocated data blocks of double or integer type, `data_double` and `data_int`, respectively.
 
 To set the initial state of electromagnetic field one defines and pass to container the address to the function that computes the field for a given point of space. Indices `[0]`, `[1]` and `[2]` correspond to $x$, $y$ and $z$, respectively. In the following example, we assign $E_x$ field component in the form of one sinusoidal oscillation with amplitude `field_amplitude` and period `L/2` along $x$ coordinate, other components are set to zero by default:
 ```
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def setField_callback(ind, r, E, B, data_double, data_int):
     E[0] = field_amplitude * np.sin(4*np.pi * r[0] / (xmax-xmin)) * (abs(r[0]) < l/4)
 
@@ -60,7 +60,7 @@ xpx_dist = np.zeros((64, 128), dtype=np.double)
 pxLim = 5 * np.sqrt(temperature * consts.electron_mass)
 inv_dx_dpx = (xpx_dist.shape[1] / (xmax-xmin)) * (xpx_dist.shape[0] / (2 * pxLim))
 
-@cfunc(types.particle_loop_callback)
+@cfunc(types.particle_loop)
 def xpx_callback(r, p, w, id, data_double, data_int):
     ix = int(xpx_dist.shape[1] * (r[0] - xmin) / (xmax-xmin))
     iy = int(xpx_dist.shape[0] * 0.5 * (1 + p[0] / pxLim))
@@ -86,11 +86,11 @@ The state of electromagnetic field can be retrieved by making a loop over all gr
 ```
 Ex = np.zeros((32,), dtype=np.double)
 
-@cfunc(types.it2r_callback)
+@cfunc(types.it2r)
 def Ex_it2r(it, r, data_double, data_int):
     r[0] = xmin + (it[0] + 0.5) * (xmax-xmin) / Ex.shape[0]
 
-@cfunc(types.custom_field_loop_callback)
+@cfunc(types.custom_field_loop)
 def get_Ex(it, r, E, data_double, data_int):
     data_double[it[0]] = E[0]
 

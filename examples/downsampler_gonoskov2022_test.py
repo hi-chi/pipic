@@ -24,8 +24,8 @@ sim.set_rng_seed(1)
 
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(add_particles_callback)
-def density_callback(r, data_double, data_int):  # callback function
+@cfunc(add_particles)
+def density_profile(r, data_double, data_int):  # callback function
     return density * (abs(r[0] - r[1]) < L / 4)  # *2*abs(r[1])/L
 
 
@@ -35,7 +35,7 @@ sim.add_particles(
     charge=electron_charge,
     mass=electron_mass,
     temperature=temperature,
-    density=density_callback.address,
+    density=density_profile.address,
 )
 
 # ------------------------------adding extension---------------------------------
@@ -57,7 +57,7 @@ Ne = numpy.zeros((ny, nx), dtype=numpy.double)
 dxdy = (xmax - xmin) * (ymax - ymin) / (nx * ny)
 
 
-@cfunc(particle_loop_callback)
+@cfunc(particle_loop)
 def Ne_cb(r, p, w, id, data_double, data_int):
     data = carray(data_double, Ne.shape, dtype=numpy.double)
     # CIC cell-wise counting (2D):

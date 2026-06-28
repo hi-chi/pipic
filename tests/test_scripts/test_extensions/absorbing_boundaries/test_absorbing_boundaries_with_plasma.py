@@ -36,8 +36,8 @@ E0 = -a0 * consts.electron_mass * consts.light_velocity * omega / consts.electro
 initial_pos = XMax - XMax/2
 focusPosition = XMax
 
-@cfunc(types.field_loop_callback)
-def initiate_field_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def initiate_field(ind, r, E, B, data_double, data_int):
     if data_int[0] == 0:  
         x = r[0] - initial_pos     
         rho = x**2+r[1]**2 #+ initial_pos
@@ -61,8 +61,8 @@ def initiate_field_callback(ind, r, E, B, data_double, data_int):
 
 
 start_plasma = XMax
-@cfunc(types.add_particles_callback)
-def density_callback_electron(r, data_double, data_int):  # callback function
+@cfunc(types.add_particles)
+def density_electron(r, data_double, data_int):
     if r[0] > start_plasma:
         return density
     else:
@@ -80,7 +80,7 @@ Bx = np.zeros((nx,ny), dtype=np.double)
 rho = np.zeros((nx,ny), dtype=np.double) # density
 
 #------------------get functions-----------------------------------------------
-@cfunc(types.particle_loop_callback)
+@cfunc(types.particle_loop)
 def get_density(r, p, w, id, data_double, data_int):   
     ix = int(nx*(r[0] - XMin)/(XMax - XMin))
     iy = int(ny*(r[1] - YMin)/(YMax - YMin))
@@ -90,32 +90,32 @@ def get_density(r, p, w, id, data_double, data_int):
         data[ix,iy] += w[0]/(dx*dy)
 
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Bz(ind, r, E, B, dataDouble, dataInt):
     _Bz = carray(dataDouble, Bz.shape, dtype=np.double)
     _Bz[ind[0], ind[1]] = B[2]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ez(ind, r, E, B, dataDouble, dataInt):
     _Ez = carray(dataDouble, Ez.shape, dtype=np.double)
     _Ez[ind[0], ind[1]] = E[2]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_By(ind, r, E, B, dataDouble, dataInt):
     _By = carray(dataDouble, By.shape, dtype=np.double)
     _By[ind[0], ind[1]] = B[1]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ey(ind, r, E, B, dataDouble, dataInt):
     _Ey = carray(dataDouble, Ey.shape, dtype=np.double)
     _Ey[ind[0], ind[1]] = E[1]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Ex(ind, r, E, B, dataDouble, dataInt):
     _Ex = carray(dataDouble, Ex.shape, dtype=np.double)
     _Ex[ind[0], ind[1]] = E[0]
 
-@cfunc(types.field_loop_callback)
+@cfunc(types.field_loop)
 def get_field_Bx(ind, r, E, B, dataDouble, dataInt):
     _Bx = carray(dataDouble, Bx.shape, dtype=np.double)
     _Bx[ind[0], ind[1]] = B[0]
@@ -142,11 +142,11 @@ sim.add_particles(
     charge= -consts.electron_charge,
     mass= consts.electron_mass,
     temperature=1e-12,
-    density=density_callback_electron.address,
+    density=density_electron.address,
 )
 
 #-----------------------initiate field-------------------------
-sim.field_loop(handler=initiate_field_callback.address, data_int=pipic.addressof(np.zeros((1,), dtype=np.intc)),
+sim.field_loop(handler=initiate_field.address, data_int=pipic.addressof(np.zeros((1,), dtype=np.intc)),
 use_omp=True)
 
 #------------------set absorbing boundaries-----------------------------------
@@ -156,7 +156,7 @@ field_handler_adress = absorbing_boundaries.field_handler(sim.simulation_box(), 
 particle_handler_adress = absorbing_boundaries.handler(sim.ensemble_data(), 
                                                        sim.simulation_box(), 
                                                        wavelength,
-                                                       density_profile=density_callback_electron.address, 
+                                                       density_profile=density_electron.address, 
                                                        boundary_size=boundarySize, 
                                                        axis='y', 
                                                        fall=fall, 
@@ -181,7 +181,7 @@ particle_handler_adress = moving_window.handler(sim.simulation_box(),
                                                 thickness=16,
                                                 particles_per_cell=5,
                                                 temperature=1e-12,
-                                                density_profile=density_callback_electron.address,)
+                                                density_profile=density_electron.address,)
 sim.add_handler(name=moving_window.name,
                 subject='cells,electron',
                 field_handler=field_handler_adress,

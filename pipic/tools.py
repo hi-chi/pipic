@@ -20,7 +20,26 @@ Contact: arkady.gonoskov@gu.se.
 """
 
 # .tools is used as shorthand for pulling everything into the namespace
-from .consts import *
-from .ctypes import *
-from .interfaces import *
-from .types import *
+from . import consts as _consts
+from . import ctypes as _ctypes
+from . import interfaces as _interfaces
+from . import types as _types
+
+__all__ = []
+
+for _module in (_consts, _ctypes, _interfaces, _types):
+    for _name in _module.__all__:
+        if _name in _types._LEGACY_CALLBACK_NAMES:
+            continue
+        globals()[_name] = getattr(_module, _name)
+        __all__.append(_name)
+
+__all__.extend(_types._LEGACY_CALLBACK_NAMES)
+
+
+def __getattr__(name):
+    if name in _types._LEGACY_CALLBACK_NAMES:
+        replacement = _types._LEGACY_CALLBACK_NAMES[name]
+        _types._warn_legacy_callback_name(name, replacement, stacklevel=3)
+        return getattr(_types, replacement)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

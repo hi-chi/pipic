@@ -35,8 +35,8 @@ sim = pipic.init(solver="fourier_boris", nx=nx, xmin=xmin, xmax=xmax)
 
 
 # ------------------------------adding electrons---------------------------------
-@cfunc(types.add_particles_callback)
-def density_callback(r, data_double, data_int):
+@cfunc(types.add_particles)
+def density_profile(r, data_double, data_int):
     return density
 
 
@@ -46,18 +46,18 @@ sim.add_particles(
     charge=consts.electron_charge,
     mass=consts.electron_mass,
     temperature=0,
-    density=density_callback.address,
+    density=density_profile.address,
 )
 
 
 # ----------------------adding photons and postirons----------------------------
-@cfunc(types.add_particles_callback)
-def null_callback(r, data_double, data_int):
+@cfunc(types.add_particles)
+def null(r, data_double, data_int):
     return 0
 
 
 sim.add_particles(
-    name="photon", number=0, charge=0, mass=0, temperature=0, density=null_callback.address
+    name="photon", number=0, charge=0, mass=0, temperature=0, density=null.address
 )
 
 sim.add_particles(
@@ -66,7 +66,7 @@ sim.add_particles(
     charge=-consts.electron_charge,
     mass=consts.electron_mass,
     temperature=0,
-    density=null_callback.address,
+    density=null.address,
 )
 
 
@@ -82,19 +82,19 @@ sim.add_handler(
 
 
 # --------------------------setting electron momentum----------------------------
-@cfunc(types.particle_loop_callback)
-def set_p_callback(r, p, w, id, data_double, data_int):
+@cfunc(types.particle_loop)
+def set_p(r, p, w, id, data_double, data_int):
     p[0] = gamma * consts.electron_mass * consts.light_velocity
     p[1] = 0
     p[2] = 0
 
 
-sim.particle_loop(name="electron", handler=set_p_callback.address)
+sim.particle_loop(name="electron", handler=set_p.address)
 
 
 # ---------------------------setting initial field-------------------------------
-@cfunc(types.field_loop_callback)
-def setField_callback(ind, r, E, B, data_double, data_int):
+@cfunc(types.field_loop)
+def setField(ind, r, E, B, data_double, data_int):
     E[0] = 0
     E[1] = 0
     E[2] = 0
@@ -103,7 +103,7 @@ def setField_callback(ind, r, E, B, data_double, data_int):
     B[2] = 0
 
 
-sim.field_loop(handler=setField_callback.address)
+sim.field_loop(handler=setField.address)
 
 # =================================OUTPUT========================================
 # fig, axs = plt.subplots(2, constrained_layout=True)
@@ -112,7 +112,7 @@ sim.field_loop(handler=setField_callback.address)
 N_e_ep = np.zeros((1,), dtype=np.double)
 
 
-@cfunc(types.particle_loop_callback)
+@cfunc(types.particle_loop)
 def N_e_ep_cb(r, p, w, id, data_double, data_int):
     if (
         math.sqrt(p[0] ** 2 + p[1] ** 2 + p[2] ** 2)
@@ -134,7 +134,7 @@ def get_N_e_ep():
     return N_e_ep[0]
 
 
-@cfunc(types.particle_loop_callback)
+@cfunc(types.particle_loop)
 def ph_cb(r, p, w, id, data_double, data_int):
     if (
         math.sqrt(p[0] ** 2 + p[1] ** 2 + p[2] ** 2)
@@ -151,7 +151,7 @@ def remove_low_en_ph():
 N0 = get_N_e_ep()
 Nsteps = round(t_sim / time_step)
 for i in range(Nsteps):
-    # sim.field_loop(handler=setField_callback.address)
+    # sim.field_loop(handler=setField.address)
     sim.advance(time_step=time_step, number_of_iterations=1)
     remove_low_en_ph()
     print(
