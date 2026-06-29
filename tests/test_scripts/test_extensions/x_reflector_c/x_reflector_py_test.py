@@ -38,7 +38,7 @@ sim.add_handler(
 
 # ------------------------------adding electrons---------------------------------
 @cfunc(add_particles)
-def density(r, data_double, data_int):
+def density_profile(r, data_double, data_int):
     return density * (abs(r[0]) < L / 4)
 
 
@@ -48,7 +48,7 @@ sim.add_particles(
     charge=electron_charge,
     mass=electron_mass,
     temperature=temperature,
-    density=density.address,
+    density=density_profile.address,
 )
 
 
