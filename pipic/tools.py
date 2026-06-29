@@ -33,9 +33,7 @@ for _module in (_consts, _ctypes, _interfaces, _types):
             continue
         globals()[_name] = getattr(_module, _name)
         __all__.append(_name)
-
-__all__.extend(_types._LEGACY_CALLBACK_NAMES)
-
+ 
 
 def __getattr__(name):
     if name in _types._LEGACY_CALLBACK_NAMES:
