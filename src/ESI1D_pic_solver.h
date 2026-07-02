@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License along with pi-
 Website: https://github.com/hi-chi/pipic
 Contact: frida.brogren@gu.se.
 -------------------------------------------------------------------------------------------------------*/
-// Electrostatic 1D PIC solver implementation.
+// Electrostatic 1D implicit PIC solver implementation.
 
 #include "ensemble.h"
 #include "ESI1D_field_solver.h"
