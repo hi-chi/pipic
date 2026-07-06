@@ -50,6 +50,8 @@ Here we list extensions with short descriptions, references and contacts of deve
 - **absorbing_boundaries** is an extension for applying absorbing boundaries to a simulation box. Fields and density modulations are damped according to the smooth function $f(r(x))=exp(-sr(x)\Delta t/T),\,\,r(x) = cos(\pi x/2) - \frac{1}{cos(\pi x/2)}$ where $x$ is normalized between the edge of the boundary and the simulation box, $s$ is a shape parameter and $\Delta t$ is the timestep. For optimal damping it is recommended that $s\Delta t\approx1$ and the boundary is $\approx4\lambda$ where $\lambda$ is the wavelength of the electromagnetic signal being absorbed.<br>
 *implemented by Frida Brogren* (frida.brogren@gu.se) *and Arkady Gonoskov* </br>
 
+  See `examples/test_absorbing_boundaries.py` and `examples/test_absorbing_boundaries_with_plasma.py` for usage examples.
+
   Usage:  
   ```python
   sim.add_handler(name=absorbing_boundaries.name,
@@ -123,6 +125,8 @@ Here we list extensions with short descriptions, references and contacts of deve
 
 - **moving_window** is an extension for following a region of interest (e.g. laser pulse or particle bunch) as it propagates, reducing computational cost while keeping the relevant physics inside the simulation box.  
 *implemented by Frida Brogren* (frida.brogren@gu.se) *and Arkady Gonoskov* </br>
+
+  See `examples/test_moving_window.py`, `examples/test_moving_window_1d.py`, and `examples/test_moving_window_rotated.py` for usage examples.
 
   **Usage:**  
   ```python
