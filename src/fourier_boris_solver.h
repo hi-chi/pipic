@@ -202,6 +202,6 @@ struct fourier_boris_solver: public pic_solver
     }
     void advance(double _timeStep){
         timeStep = _timeStep;
-        Ensemble->advance_singleLoop<fourier_boris_solver, fourierSolver>(this, timeStep);
+        Ensemble->advance<fourier_boris_solver, fourierSolver>(this, timeStep);
     }
 };

@@ -437,7 +437,7 @@ struct ensemble
     }
 
     template<typename pic_solver, typename field_solver>
-    void advance_singleLoop(pic_solver *Solver, double timeStep){
+    void advance(pic_solver *Solver, double timeStep){
         chronometer chronometerCells;
         apply_fieldHandlers<field_solver>((field_solver*)(Solver->Field));
         chronometerCells.start();

@@ -1,9 +1,9 @@
-''' Description: this file demonstrates the use of the absorbing boundaries extension
-to simulate plasma oscillations in a 1D plasma with open boundaries. The absorbing
-boundaries extension removes particles leaving the simulation box and adds new
+''' Description: this file demonstrates the use of the pi-PIC framework to simulate plasma 
+oscillations in a 1D plasma using the absorbing boundary extension to emulate open boundaries.
+The absorbing boundaries extension removes particles leaving the simulation box and adds new
 particles according to a specified density profile, simulating an open plasma system.
 The script uses the absorbing boundary extension installable with pipic.
-For more details on installtion and usage of extensions, please refer to:
+For more details on installation and usage of extensions, please refer to:
 https://pi-pic.readthedocs.io/en/latest/'''
 
 import pipic
@@ -45,7 +45,7 @@ wavelength = l / 2 # wavelength of electric field perturbation
 dmin, dmax = -wavelength / 2, wavelength / 2  # region to apply field
 
 # Initialize simulation with energy-conserving solver
-sim = pipic.init(solver="ec2", xmin=xmin, xmax=xmax, nx=nx)
+sim = pipic.init(solver="electrostatic_1d", xmin=xmin, xmax=xmax, nx=nx)
 
 # =============================================================================
 # PARTICLES
@@ -95,6 +95,16 @@ def field_loop(ind, r, E, B, data_double, data_int):
     data = carray(data_double, field_dd.shape, dtype=np.double)
     data[ind[0]] = E[0]
 
+# --- Current diagnostic ---
+# array for saving Jx field
+jx_dd = np.zeros((nx,), dtype=np.double)  # array for saving Jx field
+# function for current diagnostic
+@cfunc(types.custom_field_loop)
+def current_loop(ind, r, Jx, data_double, data_int):
+    """Store Jx."""
+    data = carray(data_double, jx_dd.shape, dtype=np.double)
+    data[ind[0]] = Jx[0]
+
 # --- Particle phase space diagnostic ---
 # array for saving particle (integrated) phase-space
 particle_dd = np.zeros((64, nx), dtype=np.double)
@@ -117,12 +127,19 @@ def particle_loop(r, p, w, id, data_double, data_int):
 # =============================================================================
 # PLOTTING SETUP
 # =============================================================================
-fig, ax = plt.subplots(2, 1, constrained_layout=True)
+fig, ax = plt.subplots(3, 1, constrained_layout=True)
 
 # Field plot
 x_axis = np.linspace(xmin, xmax, nx)
 Ex_plot = ax[1].plot(x_axis, field_dd)[0]
 ax[1].set_ylim(field_amplitude, -field_amplitude)
+
+# Current plot
+Jx_plot = ax[2].plot(x_axis, jx_dd)[0]
+# Set y-limits for Jx plot based on maximum expected current density 
+# (using dE/dt ~ omega_p * E and J = - (1/4pi) * dE/dt)
+Jx_max = (2*np.pi/plasma_period) * field_amplitude / (4 * np.pi)
+ax[2].set_ylim(Jx_max, -Jx_max)
 
 # Phase space plot
 xpx_plot = ax[0].imshow(
@@ -141,6 +158,8 @@ ax[0].set_title("Plasma oscillations")
 ax[1].set_xlabel("x (cm)")
 ax[0].set_ylabel("$p_x$ (cm g/s)")
 ax[1].set_ylabel("$E_x$ (StatV/cm)")
+ax[2].set_xlabel("x (cm)")
+ax[2].set_ylabel("$J_x$ (statA/cm$^2$)")
 
 
 # =============================================================================
@@ -209,6 +228,11 @@ for i in range(figures):
         # enable OpenMP parallelization
         use_omp=True,
     )
+    sim.custom_field_loop(
+        handler=current_loop.address,
+        field="Jx",
+        data_double=pipic.addressof(jx_dd),
+    )
     particle_dd.fill(0)
     sim.particle_loop(
         # name of particle species to be processed
@@ -220,6 +244,7 @@ for i in range(figures):
 
     # Update plots
     Ex_plot.set_ydata(field_dd)
+    Jx_plot.set_ydata(jx_dd)
     xpx_plot.set_data(particle_dd)
 
     # Save figure

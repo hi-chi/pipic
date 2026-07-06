@@ -18,10 +18,10 @@ The **ensemble** is the core particle storage and loop executor in π-PIC. It:
 PIC advancement 
 ------------------
 
-When ``sim.advance(time_step, number_of_iterations)`` is called in Python, most solvers invokes the ``advance_singleLoop()`` method of the ensemble. An alternative advance method is ``advance_doubleLoop()``.
+When ``sim.advance(time_step, number_of_iterations)`` is called in Python, most solvers invokes the ``advance()`` method of the ensemble. An alternative advance method is ``advance_doubleLoop()``.
 
 
-advance_singleLoop()
+advance()
 ^^^^^^^^^^^^^^^^^^^^^
 The nested loop structure of this method shows how solver hooks and extension handlers interleave in the advance call:
 

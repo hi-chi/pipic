@@ -40,7 +40,7 @@ struct ES1DPicSolver: public pic_solver
     void advance(double _timeStep){
         // Run one PIC step using the ensemble single-loop method.
         timeStep = _timeStep;
-        Ensemble->advance_singleLoop<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
+        Ensemble->advance<ES1DPicSolver, ES1DFieldSolver>(this, timeStep);
     }
 
     void halfstep(particle &P, double charge, double mass, double timeStep){

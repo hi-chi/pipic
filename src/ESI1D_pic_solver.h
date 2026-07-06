@@ -57,7 +57,7 @@ struct ESI1DPicSolver: public pic_solver
     void advance(double _timeStep){
         // Run one PIC step using the ensemble single-loop method.
         timeStep = _timeStep;
-        Ensemble->advance_singleLoop<ESI1DPicSolver, ESI1DFieldSolver>(this, timeStep);
+        Ensemble->advance<ESI1DPicSolver, ESI1DFieldSolver>(this, timeStep);
     }
 
     void updateImplicitParticle(particle &P_orig, particle &P_intermediate, particle &P_last, double charge, double mass, double dx, double &epsMomentum){

@@ -234,7 +234,7 @@ Decorators via ``pipic.types``:
 - ``types.particle_loop``: For particle iteration
 - ``types.field_loop``: For field iteration
 - ``types.it2r``: For mapping custom-loop iteration indices to coordinates
-- ``types.custom_field_loop``: For processing one selected custom-loop field
+- ``types.custom_field_loop``: For processing one selected custom-loop field. See ``tutorials/plasma_oscillation_extension_development.ipynb`` for a showcase of how it can be used with absorbing boundaries and current diagnostics.
 
 The previous ``*_callback`` names for these signatures are still accepted for compatibility,
 but they emit a ``FutureWarning``.

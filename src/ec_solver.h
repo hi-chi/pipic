@@ -219,6 +219,6 @@ struct ec_solver: public pic_solver //energy-conserving solver
     }
     void advance(double _timeStep){
         timeStep = _timeStep;
-        Ensemble->advance_singleLoop<ec_solver, fourierSolver>(this, timeStep);
+        Ensemble->advance<ec_solver, fourierSolver>(this, timeStep);
     }
 };

@@ -283,12 +283,12 @@ Derive from `pic_solver` base class and implement the following required members
   .. code-block:: cpp
 
       void advance(double timeStep) {
-          Ensemble->advance_singleLoop<YourSolverClass, YourFieldSolverClass>(this, timeStep);
+          Ensemble->advance<YourSolverClass, YourFieldSolverClass>(this, timeStep);
       }
 
 **Lifecycle Hook Methods (optional):**
 
-These hooks can be used to implement the PIC algorithm and are called automatically by ``advance_singleLoop`` in the following order.
+These hooks can be used to implement the PIC algorithm and are called automatically by ``advance()`` in the following order.
 
 **Execution Order per Time Step:**
 
