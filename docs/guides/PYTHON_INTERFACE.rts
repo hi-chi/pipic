@@ -58,7 +58,7 @@ Advance the simulation by one or more time steps.
     dt = 1e-16  # seconds
     sim.advance(time_step=dt, number_of_iterations=100)
 
-Field Callbacks
+Field Loops
 ---------------
 
 ``sim.field_loop(handler, data_double=0, data_int=0, use_omp=False)``
@@ -97,7 +97,7 @@ Iterate over grid nodes to initialize or read field values.
     
     sim.field_loop(handler=set_field.address)
 
-Particle Callbacks
+Particle Loops
 ------------------
 
 ``sim.add_particles(name, number, charge, mass, temperature, density, data_double=0, data_int=0)``
@@ -134,7 +134,7 @@ Add particles to the simulation.
                      temperature=1e-6 * pipic.consts.electron_mass * pipic.consts.light_velocity**2,
                      density=uniform_density.address)
 
-**Density Callback (for add_particles)**
+**Particle initialization **
 
 .. code-block:: python
 
